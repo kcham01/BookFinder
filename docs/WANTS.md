@@ -136,8 +136,28 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
 - The mock-up page (map panel, click rules, Show menu, settings) was shown; no markup on it yet. Its journey card
   and journey states no longer apply.
 
+- **None of Shortest Path's other features either**: not the Nearby services or dungeons list, not the flight and boat
+  icons or departure times, not travel times on books, not the arrow or compass. Shortest Path leaves BookFinder
+  entirely, and ForeverCore (its library) with it. A click on a quest, book or search result sets the game's own map
+  pin and tracking arrow.
+
+## Done in 2.0.0 (for you to test)
+- **Shortest Path is gone, with ForeverCore**: no journeys, travel times, Nearby services, flight and boat icons of
+  its own, arrow or compass. OpenMap's own docks, flight masters and town icons are back on its map.
+- **A click on a quest, book or search result puts the game's own map pin on it**, with the game's arrow. Questie's
+  "Set TomTom Target" is "Map pin", and Ctrl-click on a quest icon does it too.
+- **One search** is now the BookFinder tab's search box (it was inside Shortest Path's Nearby services).
+- **The scrollbar bug** is fixed: the bar beside the quest list is now Questie's own and moves with the list.
+- **One map menu**: OpenMap's panel has every map switch again (Questie icons and the books too); BookFinder adds
+  nothing to the game's Show menu.
+- The self-test checks the map pin, the search in the BookFinder tab, the scrollbar and every switch on OpenMap's panel.
+
+## Still to do
+- **Every setting into OpenMap's panel**, redundancy removed (you asked for this; next).
+- **The look**: the mock-ups (map panel, settings) wait for your markup; the journey card in them no longer applies.
+
 ## Still to do (waiting on your data)
-- **If a journey still doesn't start**, it now says why. Send `BookFinder.lua`: `attempts` has each one.
+
 - **Routing quality**: run `/bookfinder selftest` somewhere, `/reload`, and send `BookFinder.lua`. Its 15 routes, plus
   the journey log from normal play, are what the routing work starts from.
 - **Native duplicates** in the Show menu (the game's own "Low-Level Quests" vs Questie's low-level quests): needs the
