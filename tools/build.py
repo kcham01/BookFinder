@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 MERGE = os.path.join(ROOT, "merge")
 NAME = "BookFinder"
-VERSION = "1.1.2"
+VERSION = "1.2.0"
 
 OPENMAP_REPO = "https://github.com/openmap-world/openmap.git"
 OPENMAP_COMMIT = "91c84b3bf633f3ae4840309e4620d63b249f626e"
@@ -35,6 +35,10 @@ OPENMAP_VERSION = "v0.8.7"  # Data/Forever/Changelog.lua's newest entry at that 
 
 # key in the private table, folder, its toc, the version its own code should report
 COMPONENTS = [
+    # (Questie's database first, then Questie: the map and journeys find both already loaded, as their standalone
+    # tocs' OptionalDeps had it)
+    ("QuestieDB", "QuestieDB", "QuestieDB_Forever.toc", None),
+    ("Questie", "Questie", "Questie_Forever.toc", None),
     ("OpenMap", "OpenMap", "OpenMap.toc", OPENMAP_VERSION),
     ("SPF", "ShortestPathForever", "ShortestPathForever.toc", None),
     ("Books", "Books_on_map_Forever", "Books_on_map_Forever.toc", None),
@@ -42,6 +46,12 @@ COMPONENTS = [
 SKIP_FILES = {"OpenMap.toc", "OpenMap_Mainline.toc", "LICENSE.repo", "ShortestPathForever.toc",
               "Books_on_map_Forever.toc", "Bindings.xml", "README.md"}
 LIB_DIRS = ("Libs",)
+# Parts whose files mostly never read their private table: each file gets a first-line guard instead, so the part
+# stands aside when its standalone addon runs (Questie and its database stand aside together)
+INJECT_GUARD = {"QuestieDB": "Questie", "Questie": "Questie"}
+# QuestieDB's database is its toc's metadata (its "baked" mode), read by the addon's name: BookFinder's toc carries
+# it. Not these: they'd clash with or say nothing about BookFinder
+DATA_META_SKIP = re.compile(r"^X-(BUILD-|Curse|Wago)")
 
 errors = []
 
@@ -83,8 +93,8 @@ def toc_files(toc_text):
 
 # --- 2. private tables ---------------------------------------------------------------------------
 CAPTURES = [
-    # local _, ns = ...        local ADDON, ns = ...
-    (re.compile(r"^(local\s+\w+\s*,\s*ns\s*=\s*\.\.\.)[ \t]*$", re.M), r"\1; ns = ns.{key}; if ns.__skip then return end"),
+    # local _, ns = ...        local ADDON, ns = ...      local _, LibQuestieDB = ...  (any name for the table)
+    (re.compile(r"^(local\s+\w+\s*,\s*(\w+)\s*=\s*\.\.\.)[ \t]*$", re.M), r"\1; \2 = \2.{key}; if \2.__skip then return end"),
     # local ns = select(2, ...)
     (re.compile(r"^(local\s+ns\s*=\s*select\(2,\s*\.\.\.\))[ \t]*$", re.M), r"\1.{key}; if ns.__skip then return end"),
 ]
@@ -106,8 +116,35 @@ def rewrite_namespace(path, rel, key):
 
 # --- 3. paths ------------------------------------------------------------------------------------
 # Interface\AddOns\<Folder>\  ->  Interface\AddOns\BookFinder\<Folder>\  (escaped Lua and plain XML/toc)
-PATH_RE = re.compile(r"(AddOns)(\\\\|\\|/)(OpenMap|ShortestPathForever|Books_on_map_Forever)(?=\\\\|\\|/)",
-                     re.I)
+PARTS_RE = "QuestieDB|Questie|OpenMap|ShortestPathForever|Books_on_map_Forever"
+PATH_RE = re.compile(r"(AddOns)(\\\\|\\|/)(" + PARTS_RE + r")(?=\\\\|\\|/)", re.I)
+
+
+# "Is Questie loaded?" and Questie's or QuestieDB's version, asked by name: answered by BookFinder for the built-in
+# ones (BookFinder.Loaded, and its toc's X-Questie-Version, X-QuestieDB-Version, X-QuestieDB-Contract)
+NAME_RULES = [
+    (re.compile(r'(?:C_AddOns\s*\.\s*)?IsAddOnLoaded\(\s*"(Questie|QuestieDB)"\s*\)'), r'BookFinder.Loaded("\1")'),
+    (re.compile(r'\bloaded\(\s*"(Questie|QuestieDB)"\s*\)'), r'BookFinder.Loaded("\1")'),
+    (re.compile(r'\(\s*"Questie"\s*,\s*"Version"\s*\)'), r'("BookFinder", "X-Questie-Version")'),
+    (re.compile(r'\(\s*"Questie"\s*,\s*"X-QuestieDB-Contract"\s*\)'), r'("BookFinder", "X-QuestieDB-Contract")'),
+    (re.compile(r'\(\s*"QuestieDB"\s*,\s*"Version"\s*\)'), r'("BookFinder", "X-QuestieDB-Version")'),
+]
+
+
+def rewrite_names(text):
+    for pattern, repl in NAME_RULES:
+        text = pattern.sub(repl, text)
+    return text
+
+
+def inject_guard(path, skip_key):
+    text = read(path)
+    bom = text.startswith("\ufeff")
+    if bom:
+        text = text[1:]
+    # (on the first line, so every line number still matches upstream's)
+    text = f'if BookFinder and BookFinder.Skip and BookFinder.Skip("{skip_key}") then return end ' + text
+    write(path, ("\ufeff" if bom else "") + text)
 
 
 def rewrite_paths(text):
@@ -195,7 +232,7 @@ def build(textures, make_zip, out_root):
         metas[key] = meta
         for dirpath, _, names in os.walk(src):
             for fn in names:
-                if dirpath == src and fn in SKIP_FILES:
+                if dirpath == src and (fn in SKIP_FILES or fn.endswith(".toc")):
                     continue
                 s = os.path.join(dirpath, fn)
                 rel = os.path.relpath(s, src)
@@ -203,9 +240,13 @@ def build(textures, make_zip, out_root):
                 os.makedirs(os.path.dirname(d), exist_ok=True)
                 if fn.endswith((".lua", ".xml")):
                     text = rewrite_paths(read(s))
+                    if fn.endswith(".lua"):
+                        text = rewrite_names(text)
                     write(d, text)
                     if fn.endswith(".lua") and not rel.startswith(LIB_DIRS):
                         rewrite_namespace(d, f"{folder}/{rel}", key)
+                        if key in INJECT_GUARD:
+                            inject_guard(d, INJECT_GUARD[key])
                 else:
                     shutil.copy2(s, d)
         for line in toc_files(toc_text):
@@ -219,7 +260,7 @@ def build(textures, make_zip, out_root):
     apply_patches(out)
 
     # every listed path rewritten; none left pointing at a standalone folder
-    stale = re.compile(r"AddOns(\\\\|\\|/)(OpenMap|ShortestPathForever|Books_on_map_Forever)(\\\\|\\|/)", re.I)
+    stale = re.compile(r"AddOns(\\\\|\\|/)(" + PARTS_RE + r")(\\\\|\\|/)", re.I)
     for dirpath, _, names in os.walk(out):
         for fn in names:
             if fn.endswith((".lua", ".xml")):
@@ -232,10 +273,13 @@ def build(textures, make_zip, out_root):
         shutil.copy2(os.path.join(MERGE, fn), os.path.join(out, "Merge", fn))
 
     om, spf, books = metas["OpenMap"], metas["SPF"], metas["Books"]
+    questie, questiedb = metas["Questie"], metas["QuestieDB"]
+    # QuestieDB's database: every X- field of its toc but the build stamps
+    data_lines = [f"## {k}: {v}" for k, v in questiedb.items() if k.startswith("X-") and not DATA_META_SKIP.match(k)]
     optional = []
     for meta in metas.values():
         for dep in re.split(r"[,\s]+", meta.get("OptionalDeps", "")):
-            if dep and dep not in optional and dep not in ("OpenMap", "ShortestPathForever", "ForeverCore"):
+            if dep and dep not in optional and dep not in ("OpenMap", "ShortestPathForever", "ForeverCore", "Questie", "QuestieDB"):
                 optional.append(dep)
     saved, saved_char = ["BookFinderDB"], []
     for meta in metas.values():
@@ -244,12 +288,16 @@ def build(textures, make_zip, out_root):
 
     header = f"""## Interface: 16001
 ## Title: |cff33ff99Book|rFinder
-## Notes: OpenMap's seamless world map, Shortest Path Forever's journeys and Books on map's library books, in one addon. /bookfinder
-## Author: {om.get("Author")}; {spf.get("Author")}; {books.get("Author")}; merged as BookFinder
+## Notes: One addon for the world: a seamless map, journeys anywhere, every quest and the library books. /bookfinder
+## Author: {om.get("Author")}; {spf.get("Author")}; {books.get("Author")}; Questie: {questie.get("Author")}; merged as BookFinder
 ## Version: {VERSION}
 ## X-OpenMap-Version: {om["Version"]}
 ## X-SPF-Version: {spf["Version"]}
 ## X-Books-Version: {books["Version"]}
+## X-Questie-Version: {questie["Version"]}
+## X-QuestieDB-Version: {questiedb["Version"]}
+## X-QuestieDB-Contract: {questie["X-QuestieDB-Contract"]}
+## LoadSavedVariablesFirst: 1
 ## Category: Map
 ## X-Category: Map
 ## X-License: GPL-3.0-or-later (Shortest Path Forever's licence; OpenMap's code is MIT; Books on map's is its author's); map art is Blizzard's
@@ -263,6 +311,9 @@ def build(textures, make_zip, out_root):
 ## X-Forever-Icon: {spf["X-Forever-Icon"]}
 ## SavedVariables: {", ".join(saved)}
 ## SavedVariablesPerCharacter: {", ".join(saved_char)}
+"""
+    # (QuestieDB's database after BookFinder's own fields, before any file)
+    header += "\n".join(data_lines) + """
 
 # Generated by tools/build.py from src/: edit those and rebuild.
 Merge\\Namespaces.lua

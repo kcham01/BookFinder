@@ -101,6 +101,10 @@ end
 
 -- Open the configuration window
 function QuestieOptions:ToggleConfigWindow()
+    -- BookFinder: Questie's options are its settings window's Quests pages
+    if BookFinder and BookFinder.OpenSettings and BookFinder.OpenSettings("quests") then
+        return
+    end
     if not QuestieConfigFrame:IsShown() then
         PlaySound(882)
         AceConfigDialog:Open("Questie", QuestieConfigFrame)

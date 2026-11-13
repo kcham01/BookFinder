@@ -89,6 +89,12 @@ end
 
 ---@return boolean statusUIReady Whether a status badge was installed and its initial state rendered.
 function MinimapIcon:Init()
+    -- BookFinder: one minimap button and launcher for the whole addon; Questie's My Journey and menu are in its menu.
+    -- A plain table stands in for the broker object, so the text Questie keeps on it still has somewhere to go.
+    if BookFinder and BookFinder.SettingsCategory then
+        _MinimapIcon.LDBDataObject = { text = Questie.db.profile.ldbDisplayText }
+        return false
+    end
     _LibDBIcon:Register("Questie", _MinimapIcon:CreateDataBrokerObject(), Questie.db.profile.minimap)
 
     minimapButton = _LibDBIcon:GetMinimapButton("Questie")

@@ -387,14 +387,30 @@ function QuestieOptionsEngine:Initialize()
     for _, tab in ipairs(tabs) do
         local canvas = _CreateCanvas(UIParent, tab, RenderMode.BLIZZARD)
         local category
-        if mainCategory then
+        -- BookFinder: Questie's tabs are pages of its one settings window: "Quests", then "Quests: <tab>"
+        local bookFinder = BookFinder and BookFinder.SettingsCategory and BookFinder.SettingsCategory()
+        if bookFinder then
+            local quests = QUESTS_LABEL or "Quests"
+            category = Settings.RegisterCanvasLayoutSubcategory(bookFinder, canvas,
+                mainCategory and (quests .. ": " .. tab.data.title) or quests)
+            if not mainCategory then
+                mainCategory = category
+                BookFinder.RegisterPage("quests", category)
+            end
+        elseif mainCategory then
             category = Settings.RegisterCanvasLayoutSubcategory(mainCategory, canvas, tab.data.title)
         else
             category = Settings.RegisterCanvasLayoutCategory(canvas, "Questie")
             mainCategory = category
         end
-        Settings.RegisterAddOnCategory(category)
+        if not bookFinder then
+            Settings.RegisterAddOnCategory(category)
+        end
         coYield()
+    end
+    -- (BookFinder lists its window once every page is in: Questie's are the last, made after login)
+    if BookFinder and BookFinder.PublishSettings then
+        BookFinder.PublishSettings()
     end
 
     visibleTabs = tabs
@@ -451,6 +467,10 @@ function QuestieOptionsEngine:IsShown()
 end
 
 function QuestieOptionsEngine:ToggleConfigWindow()
+    -- BookFinder: Questie's options are its settings window's Quests pages
+    if BookFinder and BookFinder.OpenSettings and BookFinder.OpenSettings("quests") then
+        return
+    end
     if QuestieOptionsEngine:IsShown() then
         QuestieOptionsEngine:HideFrame()
     else

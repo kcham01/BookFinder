@@ -83,7 +83,7 @@ end
 -- without Questie)
 function mod.HasTownsfolk()
 	local loaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
-	return provider ~= nil or _G.QuestieLoader ~= nil or (loaded and loaded("Questie")) and true or false
+	return provider ~= nil or _G.QuestieLoader ~= nil or (loaded and BookFinder.Loaded("Questie")) and true or false
 end
 
 local function Questie()

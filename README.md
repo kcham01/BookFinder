@@ -1,11 +1,13 @@
 # BookFinder
 
-One WoW: Forever addon made of three:
+One WoW: Forever addon made of four:
 
 - **[OpenMap](https://github.com/openmap-world/openmap)**: one seamless world map, every zone stitched together.
 - **[Shortest Path Forever](https://github.com/cjber/shortest-path-forever)**: journeys on foot, by air, by sea
   and through portals, with directions in the tracker, an arrow and a compass.
 - **Books on map (Forever)**: the library books on the map, with an optimised collection route.
+- **[Questie](https://github.com/Questie/Questie)** and its database: every quest giver, objective and turn-in on the
+  map, its tracker, and its search of every quest, NPC and item.
 
 Every feature of each is kept, nothing does the same job twice, and they work as one:
 
@@ -30,7 +32,8 @@ The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spf
 2. Copy the two folders inside its `AddOns/` folder, `BookFinder/` and `ForeverCore/`, into the client's
    `Interface/AddOns/` (`_forever_` live, `_classic_beta_` beta). ForeverCore is the shared library every Forever addon needs: keep it
    even if you have other Forever addons.
-3. Disable or delete the standalone `OpenMap`, `ShortestPathForever` and `Books_on_map_Forever` folders. If one is
+3. Disable or delete the standalone `OpenMap`, `ShortestPathForever`, `Books_on_map_Forever`, `Questie` and
+   `QuestieDB` folders. If one is
    still enabled, BookFinder's copy of it stands aside and says so in chat.
 4. To keep your old settings, close the game and run once:
    `python3 tools/migrate_savedvariables.py "<game>/_forever_/WTF"` (add `--dry-run` to see first).

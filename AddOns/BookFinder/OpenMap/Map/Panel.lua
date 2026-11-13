@@ -208,7 +208,7 @@ local function Rows()
 	local function optRow(label, key, icon) local get, set = opt(key) return row(label, key, icon, get, set) end
 	local faction = ns.Safe.Call(UnitFactionGroup, "player")
 	local loaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
-	local questie = loaded and loaded("Questie")
+	local questie = loaded and BookFinder.Loaded("Questie")
 	local rows = {
 		-- on the map
 		{ L["Places"], tab = "show" },

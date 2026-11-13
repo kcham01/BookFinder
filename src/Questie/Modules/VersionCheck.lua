@@ -4,7 +4,8 @@ QuestieLoader:StampLoadBoundary()
 local addonName, _ = ...
 
 -- Check addon is not renamed to avoid conflicts in global name space.
-if addonName ~= "Questie" then
+-- (BookFinder carries Questie inside it, under its own name, on purpose)
+if addonName ~= "Questie" and not (BookFinder and BookFinder.components and BookFinder.components.Questie) then
     local msg = {"You have renamed Questie addon.", "This is restricted to avoid issues.", "Please remove '" .. addonName .. "'",
         "and reinstall the original version."}
     StaticPopupDialogs["QUESTIE_ADDON_NAME_ERROR"] = {

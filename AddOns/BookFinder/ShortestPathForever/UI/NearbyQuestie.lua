@@ -10,7 +10,9 @@ end
 -- Questie's corrections change what the database says. What was read is kept in the saved variables under the inputs
 -- that produced it, so a later session adopts it whole and reads nothing.
 
-local ADDON = "QuestieDB"
+-- (BookFinder carries QuestieDB inside it: its fields are BookFinder's, its version as X-QuestieDB-Version)
+local BUILT_IN = BookFinder ~= nil and BookFinder.Active ~= nil and BookFinder.Active("QuestieDB")
+local ADDON = BUILT_IN and "BookFinder" or "QuestieDB"
 -- The contract this file was written against: QuestieDB checks a range, so a newer additive release keeps working.
 -- The entities and zone tables read here are type-checked by Fit, so a database that is not the one this was written
 -- for says so in the list rather than throwing.
@@ -138,9 +140,9 @@ end
 local function Key()
 	local locale = type(GetLocale) == "function" and GetLocale() or "?"
 	return table.concat({
-		"questiedb=" .. Metadata(ADDON, "Version"),
+		"questiedb=" .. Metadata(ADDON, BUILT_IN and "X-QuestieDB-Version" or "Version"),
 		"flavour=" .. Metadata(ADDON, "X-Flavor"),
-		"questie=" .. Metadata("Questie", "Version"),
+		"questie=" .. Metadata("BookFinder", "X-Questie-Version"),
 		"locale=" .. tostring(locale),
 		"faction=" .. Faction(),
 		"nearby=" .. Metadata(addonName, "Version"),
