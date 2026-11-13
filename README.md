@@ -15,8 +15,12 @@ Every feature of each is kept, nothing does the same job twice, and they work as
   your progress and the next reward, the nearest book by real travel time, the optimised route (start, next stop,
   stop), the rewards, your group's books, and every book by set with its travel time. Click a book to go there,
   Shift-click to mark it collected, right-click for its places. `/bom` and the minimap menu open it.
+- **One search for everything**: the quest log's Nearby services box finds services and goods, and also every quest,
+  NPC, object and item Questie knows, every zone and city, and the library books. Click a result for a journey there.
+- **One map menu**: the map's own Show menu holds every switch for what the map draws (Shortest Path's travel icons,
+  Questie's quest icons, OpenMap's dungeons, people and drawings, the library books), each in one place.
 - **One settings window**: Options › AddOns › BookFinder, the game's own settings panel. The world map, every
-  journey page and the library books are its pages. `/bookfinder`, `/path`, the minimap button's right-click and the
+  the library books and Questie's quest options are its pages. `/bookfinder`, `/path`, the minimap button's right-click and the
   gear in the books tab all open it.
 - **One minimap button** (and one launcher for Titan/ElvUI): your books collected, the nearest book and the journey
   under way in its tooltip; left-click the map, right-click a menu.
@@ -48,7 +52,7 @@ The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spf
 | Path | What |
 |---|---|
 | `src/` | The three addons and ForeverCore, upstream plus small integration patches (see `git log`) |
-| `merge/` | BookFinder's own files: `Namespaces.lua` (loads first), `BooksTab.lua` (the quest-log tab), `Bridge.lua` (loads last) |
+| `merge/` | BookFinder's own files: `Namespaces.lua` (loads first), `Retired.lua`, `BooksTab.lua` (the quest-log tab), `Search.lua`, `MapMenu.lua`, `Inspect.lua`, `Bridge.lua` (loads last) |
 | `tools/build.py` | Assembles `build/BookFinder` from `src/` and `merge/`; fetches OpenMap's textures |
 | `tools/offline-test/merged.py` | Loads standalone vs merged in a stubbed client and fails on anything only the merge breaks |
 | `tools/migrate_savedvariables.py` | Copies the old addons' saved settings into BookFinder's |
