@@ -207,6 +207,10 @@ default is upstream's), Questie's map button stays off, and Shortest Path's pane
   `BookFinder.JourneyStatus()` gives "searching" / "unreachable" / "planned", the title and Shortest Path's words.
   `BookFinderDB.attempts` keeps the last 60 requests: time, zone you were in, owner, title, first stop, result
   (`started`, `queued`, `refused`), why, outcome.
+- **A first plan, sooner** (1.8.1, `merge/Journeys.lua`): every 0.2 s, while `BookFinder.JourneyStatus()` is
+  "searching" (no plan to follow), `SPF.Path.budget` is 8 ms a frame; otherwise Shortest Path's own figure (2 ms).
+  Measured in the rig with the JIT off: the two walk batches of a cross-continent journey cost about 1 s of CPU, more
+  in the game's interpreter, which at 2 ms a frame was the 15 to 30 s the 1.8.0 self-test saw.
 - **The Quests tab's journey** (1.8.0) also shows while a search has no plan yet (grey "Finding the fastest way…") and
   when it found none (red, Shortest Path's reason), from `BookFinder.JourneyStatus`.
 - **Questie → journeys** (1.8.0, `src/Questie`): `TrackerUtils:SetTomTomTarget` asks `BookFinder.Journey` when no
