@@ -195,6 +195,29 @@ default is upstream's), Questie's map button stays off, and Shortest Path's pane
   way) and keeps each route's estimate, time and legs; builds the books route; takes the inspect snapshot; counts
   new Lua errors. Everything goes to `BookFinderDB.selftest` (checks with pass/fail, detail and ms; routes), the
   failures to chat.
+- **One door for journeys** (`merge/Journeys.lua`, 1.8.0). At login it wraps `ShortestPathForever.API.NavigateRoute`
+  (and `Navigate`, `Cancel`) in place, so the search, the books, Nearby services, the TomTom stand-in (Questie's
+  quests) and any guide pass through it. Shortest Path answers `false` without a word in combat, with journeys off,
+  with no position, and for a point on no map; the wrapper works out which (`whyNot`), says it with
+  `BookFinder.Notice` (the game's `UIErrorsFrame` line and chat; the same line at most once in 4 s) and records it.
+  A request in combat is copied, answered `true`, and asked again 0.2 s after `PLAYER_REGEN_ENABLED`; `Cancel` by
+  the same owner forgets it. After a start it reads Shortest Path's `JourneyInfo` once a second (45 s at most): two
+  "unreachable" readings running say "No way to X from here" with Shortest Path's reason.
+  `BookFinder.Journey(map, x, y, title)` (x, y in 0-100) is the call for BookFinder's own parts;
+  `BookFinder.JourneyStatus()` gives "searching" / "unreachable" / "planned", the title and Shortest Path's words.
+  `BookFinderDB.attempts` keeps the last 60 requests: time, zone you were in, owner, title, first stop, result
+  (`started`, `queued`, `refused`), why, outcome.
+- **The Quests tab's journey** (1.8.0) also shows while a search has no plan yet (grey "Finding the fastest way…") and
+  when it found none (red, Shortest Path's reason), from `BookFinder.JourneyStatus`.
+- **Questie → journeys** (1.8.0, `src/Questie`): `TrackerUtils:SetTomTomTarget` asks `BookFinder.Journey` when no
+  `TomTom` global exists; `SetQuestTomTomTarget` says so when the quest has no known place; the menu entries and
+  buttons read "Plan a journey" in BookFinder.
+- **Offline routing rig** (`tools/routing/rig.py`, `rig.lua`, `audit.lua`; needs `pip install lupa`): loads Shortest
+  Path's data, `Transport/Model.lua`, `Routing/Planner.lua`, `PathGrid.lua`, `Path.lua` and the Nav maps into LuaJIT,
+  measures the walks a journey would (`Path.FindManySync` from the start and back from the goal) and calls
+  `Planner.Plan`. `python3 tools/routing/rig.py` runs the audit: each capital to every flight point, book and test
+  place, both factions; it prints the suspect journeys and fails on any with no route or an error. Modes: `all`,
+  `fresh` (no flight point known). Any other script gets `rig` (`rig.World`, `rig.Plan`, `rig.Walk`, `rig.Describe`).
 - **Fixed in 1.7.0 from Shortest Path's own error journal** (`ShortestPathForeverDB.errors`): its waypoint
   tooltip hook compared a minimap mouseover title that can be a secret value (140 errors); it now checks
   `canaccessvalue` first (`Journey/JourneyGuide.lua`).
