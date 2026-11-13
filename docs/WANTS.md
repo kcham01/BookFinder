@@ -63,14 +63,28 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
 - **`/bookfinder inspect`**: run it, open the map's Show menu once, `/reload`, and send `SavedVariables/BookFinder.lua`.
 
 ## Done in 1.6.0 (for you to test)
-- **One tracker**: under Questie's list, the journey and departures block is as wide as the list and uses Questie's
-  fonts and grey section names, with no native header bar, so it reads as part of Questie's tracker.
+- ~~One tracker skin~~: replaced in 1.7.0 by the quest list in the map.
 - **The game reports back by itself**: every session it records the client snapshot, BookFinder's errors and your
   journeys, leg by leg. Send `SavedVariables/BookFinder.lua` now and then; no commands needed.
 - Your search screenshots (garre) worked: quests, NPCs, objects and items, with journeys from Undercity via Grom'gol.
 
+## Decided after 1.6.0
+- **Quest list in the map, nothing on screen**: Questie's list replaces the game's in the map's Quests tab. The tracker
+  on your screen is gone, and so is the journey block (you chose "gone from screen too"). The journey shows at the
+  top of the Quests tab instead; the arrow and compass still guide you.
+- **Routing must be professional grade**: you've said it again; it's the next job, using the journey log.
+
+## Done in 1.7.0 (for you to test)
+- The quest list is in the map, with nothing on screen, as above.
+- Fixed: the inspect snapshot raised errors at every login in 1.6.0, and Shortest Path's waypoint tooltip hit
+  140 errors on a hidden minimap value.
+
+- **`/bookfinder selftest`**: you asked for the addon to test itself in game. It runs every feature, plans
+  journeys to 15 places, and logs every check, error and route.
+
 ## Still to do (waiting on your data)
-- **Routing quality**: needs `/path report` after a bad route.
+- **Routing quality**: run `/bookfinder selftest` somewhere, `/reload`, and send `BookFinder.lua`. Its 15 routes, plus
+  the journey log from normal play, are what the routing work starts from.
 - **Native duplicates** in the Show menu (the game's own "Low-Level Quests" vs Questie's low-level quests): needs the
   inspect data to see which game setting each native entry uses.
 
