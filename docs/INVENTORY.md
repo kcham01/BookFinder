@@ -170,6 +170,25 @@ default is upstream's), Questie's map button stays off, and Shortest Path's pane
   exist, the Show menu's entries, quest/map/tracking CVars and the trackers' and quest log's frames into
   `BookFinderDB.inspect`.
 
+### 1.3d One tracker, and the recorder (1.6.0)
+
+- **One tracker** (`merge/TrackerSkin.lua`, and a width rule in ForeverCore's `UI/TrackerHost.lua`): with Questie's
+  list on screen, the Forever column under it (Shortest Path's journey and its lift, tram and boat departures,
+  `ForeverTrackerCompanion`) takes the list's width and Questie's look: no native header art, the section name in
+  Questie's zone font and grey (C0C0C0), block titles in its quest font, lines in its objective font, its sizes and
+  outline (LibSharedMedia). Each section is post-hooked (`EndLayout`, else `Update`); a pass that changed a font asks
+  for one more layout so heights are measured in the new font. Without Questie's list: the game's look.
+- **The recorder** (`merge/Inspect.lua`): the inspect snapshot runs by itself 10 s after every login; BookFinder's
+  and ForeverCore's Lua errors go to `BookFinderDB.errors` (40, deduplicated and counted, with a stack; the error
+  handler before keeps running: BugGrabber, the game's); every journey Shortest Path plans goes to
+  `BookFinderDB.journeys` once per goal (25: where you were, your level, the goal, every leg's mode, text and
+  seconds). The Show menu snapshot is read through Shortest Path's menu modifier.
+- **Client facts** from the first snapshot (1.60.1, build 70938, toc 16001): `Campaign-QuestLog-LoreBook`,
+  `QuestLog-icon-setting`, `common-icon-checkmark` and `common-icon-redx` exist; the Show menu's native entries are
+  Quest Objectives (`questPOI`), Show Quest Levels (`showQuestLevel`), Quest Difficulty Color
+  (`showQuestDifficultyColor`), Low-Level Quests, Tracked Items. Questie treats Quest Objectives (the game's quest
+  areas) and its own objective icons as two styles of one thing, so both stay.
+
 ### 1.4 One addon: what used to be done twice, and who does it now
 
 Every part keeps every feature it alone has. Where two did the same job, one does it now; the other's unique
