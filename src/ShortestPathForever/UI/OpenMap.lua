@@ -66,6 +66,13 @@ function OpenMap.Canvas(point)
 	if type(map) ~= "number" or type(x) ~= "number" or type(y) ~= "number" then
 		return nil
 	end
+	-- A journey's points are a continent's yards (ns.WorldPoint): OpenMap places those straight away, one Lua call and
+	-- no vector per point, at the same spot as its own art and icons. (Read as a uiMap, a continent's number named no
+	-- map, so every point fell through to the slower projection below, on every redraw of the route.)
+	local direct, directX, directY = pcall(api.CanvasFromWorldPos, map, x, y)
+	if direct and type(directX) == "number" and type(directY) == "number" then
+		return directX, directY
+	end
 	local continent, world = C_Map.GetWorldPosFromMapPos(map, CreateVector2D(x, y))
 	if not (continent and world) then
 		return nil

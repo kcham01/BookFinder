@@ -99,6 +99,49 @@ INTEGRATION = r"""function(root)
     count = 0 for k in pairs(zones) do count = count + 1 want(k == 1429, "unstitched: a book of another zone on Elwynn's map") end
     want(count == 1, "unstitched: Elwynn's books aren't shown")
     O.IsStitched, O.CanvasFromWorldPos, O.ArtTopLevel = isStitched, toCanvas, top
+
+    -- On the stitched map the books go into OpenMap's own icon layer (its world space), once: a map swap while the
+    -- map is dragged (the map underneath following the view) must not build them again
+    local Sx = root.OpenMap.MapStitch
+    local savedS = {}
+    for _, k in ipairs({ "IsBuilt", "PinSet", "AddPin", "AddLine", "ClearPinSet", "GetPinSet" }) do savedS[k] = Sx[k] end
+    local layer, adds, clears = nil, 0, 0
+    Sx.IsBuilt = function() return true end
+    Sx.PinSet = function(key) layer = layer or { key = key, pins = {} } return layer end
+    Sx.GetPinSet = function(key) return layer and layer.key == key and layer or nil end
+    Sx.AddPin = function(set, u, v, look)
+        adds = adds + 1
+        local pin = CreateFrame("Button")
+        pin.Icon = pin:CreateTexture()
+        set.pins[#set.pins + 1] = pin
+        return pin
+    end
+    Sx.AddLine = function() end
+    Sx.ClearPinSet = function(set) clears = clears + 1 wipe(set.pins) end
+    local worldFrom = O.WorldFromMap
+    O.IsStitched = function() return true end
+    O.WorldFromMap = function(map, x, y) return (map - 1400) / 60 + x / 60, y end
+    wm:Show()
+    B.RefreshMap()
+    local built, addsBefore, clearsBefore = #layer.pins, adds, clears
+    want(built > 1, "stitched: books weren't put in OpenMap's icon layer")
+    local onCanvas = 0
+    for _, f in ipairs(FRAMES) do if f.book and f:IsShown() and f:GetParent() == canvas then onCanvas = onCanvas + 1 end end
+    want(onCanvas == 0, "stitched: books drawn on the canvas as well as in OpenMap's layer")
+    wm.GetMapID = function() return 1436 end   -- (Westfall: the view crossed into it)
+    B.OnMapEvent()
+    B.OnMapEvent()
+    want(adds == addsBefore and clears == clearsBefore,
+        ("stitched: a map swap while dragging built the books again (%d pins added, %d clears)"):format(adds - addsBefore, clears - clearsBefore))
+    B.db.hidden = true
+    B.RefreshMap()
+    want(#layer.pins == 0, "stitched: hiding the books left them in OpenMap's layer")
+    B.db.hidden = nil
+    B.RefreshMap()
+    want(#layer.pins == built, ("stitched: the books didn't come back (%d of %d)"):format(#layer.pins, built))
+    for k, f in pairs(savedS) do Sx[k] = f end
+    O.IsStitched, O.WorldFromMap = isStitched, worldFrom
+    wm.GetMapID = function() return 1429 end
     wm:Hide()   -- (the stand-in map is only enough for Books' pins: Shortest Path's redraw needs the real one)
 
     -- OpenMap's menu: Books' and Shortest Path's switches, and they work

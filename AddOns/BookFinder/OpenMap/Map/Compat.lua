@@ -212,7 +212,7 @@ function mod:SetupCompat(worldMap)
 	C_Timer.After(3, Warn)
 	-- (Books on Map Forever redraws its icons from these: lifted once it has)
 	local loaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
-	if BookFinder and BookFinder.Loaded("Books_on_map_Forever") or loaded and loaded("Books_on_map_Forever") then
+	if not (BookFinder and BookFinder.Active("Books")) and loaded and loaded("Books_on_map_Forever") then
 		booksLoaded = true
 		hooksecurefunc(map, "OnMapChanged", function() QueueBooks(true) end)
 		map:HookScript("OnShow", function() QueueBooks(true) end)

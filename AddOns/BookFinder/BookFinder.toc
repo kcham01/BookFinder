@@ -2,7 +2,7 @@
 ## Title: |cff33ff99Book|rFinder
 ## Notes: OpenMap's seamless world map, Shortest Path Forever's journeys and Books on map's library books, in one addon. /bookfinder
 ## Author: OpenMap contributors; cjber; Daeler; merged as BookFinder
-## Version: 1.1.1
+## Version: 1.1.2
 ## X-OpenMap-Version: v0.8.7
 ## X-SPF-Version: v1.34.3
 ## X-Books-Version: 2.2.6
