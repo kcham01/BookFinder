@@ -203,11 +203,15 @@ local function steps()
 			local okNav, started = pcall(spf.Navigate, ADDON, m, x, y, title)
 			route.started = okNav and started or false
 			local j
-			for _ = 1, 10 do
+			-- (until the search has an answer: a plan, or no way there)
+			local state, _, stateText
+			for _ = 1, 60 do
 				j = journeyNow()
-				if j then break end
+				if public.JourneyStatus then state, _, stateText = public.JourneyStatus() end
+				if (j and state ~= "searching") or state == "unreachable" then break end
 				wait(0.3)
 			end
+			route.state, route.stateText = state, stateText
 			route.secondsLeft = j and j.secondsLeft
 			route.legs = legsOf(j)
 			run.routes[#run.routes + 1] = route
@@ -219,6 +223,18 @@ local function steps()
 			if SPF and SPF.ClearJourney and journeyNow() then pcall(SPF.ClearJourney) end
 			wait(0.5)
 		end
+	end
+
+	-- No journey fails in silence: one to nowhere is refused with its reason, and written down
+	local J = public.Journeys
+	if J and spf and spf.Navigate then
+		check("a journey to nowhere says why", function()
+			local before = #(public.db.attempts or {})
+			local started = spf.Navigate(ADDON, 1454, 7, 7, "nowhere")   -- (7 is off the map: 0 to 1)
+			local last = (public.db.attempts or {})[1]
+			return not started and #(public.db.attempts or {}) == before + 1 and last and last.result == "refused" and last.why == "place",
+				last and (tostring(last.result) .. ", " .. tostring(last.why)) or "nothing recorded"
+		end)
 	end
 
 	-- Books' route: builds from here and Shortest Path takes it

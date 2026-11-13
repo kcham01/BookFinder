@@ -328,6 +328,56 @@ INTEGRATION = r"""function(root)
         "the self-test didn't finish its run: " .. tostring(st and (st.crashed or (#st.checks .. " checks, " .. tostring(st.routes and #st.routes) .. " routes"))))
     BookFinderDB.selftest = nil
 
+    -- No journey fails in silence: refusals say why and are written down; one asked in combat starts when it ends
+    local J = BookFinder.Journeys
+    want(J, "the journeys module isn't there")
+    if J then
+        local NAV = ShortestPathForever.API
+        local said = {}
+        -- (the stub can't run a real journey: Shortest Path's answer is stood in for, refusing as it does)
+        local realNavigate = J.Original(function(_, stops)
+            local stop = stops[1]
+            return not IN_COMBAT and stop.x >= 0 and stop.x <= 1 and stop.y >= 0 and stop.y <= 1
+        end)
+        local frameWas = rawget(_G, "UIErrorsFrame")
+        UIErrorsFrame = { AddMessage = function(_, text) said[#said + 1] = text end }
+        BookFinderDB.attempts = nil
+        want(NAV.Navigate("test", 1454, 7, 7, "the moon") == false, "a journey to a point off the map wasn't refused")
+        local last = BookFinderDB.attempts and BookFinderDB.attempts[1]
+        want(last and last.result == "refused" and last.why == "place" and #said == 1,
+            "the refusal wasn't said and recorded: " .. tostring(last and last.why) .. ", " .. #said .. " said")
+        IN_COMBAT = true
+        want(NAV.Navigate("test", 1454, 0.5, 0.5, "Orgrimmar") == true and J.Queued(), "a journey asked in combat wasn't kept")
+        want(BookFinderDB.attempts[1].result == "queued" and #said == 2, "the wait for combat wasn't said and recorded")
+        NAV.Cancel("test")
+        want(not J.Queued(), "cancelling didn't forget the journey kept for after combat")
+        NAV.Navigate("test", 1454, 0.5, 0.5, "Orgrimmar")
+        IN_COMBAT = false
+        J.Flush()
+        want(not J.Queued() and BookFinderDB.attempts[1].result ~= "queued", "the kept journey wasn't asked again after combat")
+        want(BookFinder.Journey(nil, nil, nil, "Garrett Family Crest") == false and said[#said]:find("no place is known"),
+            "a result with no place didn't say so")
+        NAV.Cancel("test")
+        UIErrorsFrame = frameWas
+        J.Original(realNavigate)
+        -- the Quests tab: still searching, and no way there, in Shortest Path's words
+        local QL2, statusWas = BookFinder.QuestLog, BookFinder.JourneyStatus
+        if QL2 and QL2.Holder() then
+            local journeyWas2 = NAV.Journey
+            NAV.Journey = function() return nil end
+            BookFinder.JourneyStatus = function() return "searching", "Booty Bay", "Finding the fastest way…" end
+            QL2.Refresh()
+            want(QL2.JourneyShown() and QL2.Legs() == 1, "a journey still searching isn't shown in the Quests tab")
+            BookFinder.JourneyStatus = function() return "unreachable", "Booty Bay", "No way there from here." end
+            QL2.Refresh()
+            want(QL2.JourneyShown() and QL2.Legs() == 1, "a journey with no way there isn't shown in the Quests tab")
+            BookFinder.JourneyStatus = function() return nil end
+            QL2.Refresh()
+            want(not QL2.JourneyShown(), "the journey's status stayed after it ended")
+            BookFinder.JourneyStatus, NAV.Journey = statusWas, journeyWas2
+        end
+    end
+
     -- The recorder: journeys as Shortest Path plans them, once per goal, and BookFinder's errors, deduplicated
     local API2 = ShortestPathForever.API
     local journeyWas = API2.Journey

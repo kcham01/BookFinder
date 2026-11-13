@@ -128,6 +128,13 @@ local function refreshJourney()
 	local ok, j = false, nil
 	if spf and spf.Journey then ok, j = pcall(spf.Journey) end
 	local active = ok and type(j) == "table" and type(j.goal) == "table"
+	-- (still searching, or no way there: Shortest Path's own words, which only its tracker used to show)
+	local state, stateTitle, stateText
+	if public.JourneyStatus then state, stateTitle, stateText = public.JourneyStatus() end
+	if state == "planned" then state = nil end
+	if state and not active then
+		active, j = true, { goal = { title = stateTitle }, legs = {} }
+	end
 	if not active then
 		for _, l in ipairs(lines) do l:Hide() end
 		journey:Hide()
@@ -136,9 +143,12 @@ local function refreshJourney()
 		journey.title:SetFont(f.title[1], f.title[2], f.title[3])
 		journey.title:SetText(j.goal.title or "?")
 		journey.left:SetFont(f.title[1], f.title[2], f.title[3])
-		journey.left:SetText(Countdown(j.secondsLeft))
-		local y = -(f.title[2] + 8)
 		local legs = type(j.legs) == "table" and j.legs or {}
+		if state then
+			legs = { { text = stateText or "", status = true } }
+		end
+		journey.left:SetText(state and "" or Countdown(j.secondsLeft))
+		local y = -(f.title[2] + 8)
 		for i, leg in ipairs(legs) do
 			local l = line(i)
 			l.text:SetFont(f.line[1], f.line[2], f.line[3])
@@ -147,7 +157,7 @@ local function refreshJourney()
 			l.text:SetText(modeMarkup(leg.mode) .. (leg.text or ""))
 			l.time:SetText(leg.seconds and leg.seconds > 0 and Countdown(leg.seconds) or "")
 			local current = i == 1
-			local c = current and (NORMAL_FONT_COLOR or { r = 1, g = 0.82, b = 0 }) or (HIGHLIGHT_FONT_COLOR or { r = 1, g = 1, b = 1 })
+			local c = leg.status and (state == "unreachable" and (RED_FONT_COLOR or { r = 1, g = 0.1, b = 0.1 }) or (GRAY_FONT_COLOR or { r = 0.5, g = 0.5, b = 0.5 })) or current and (NORMAL_FONT_COLOR or { r = 1, g = 0.82, b = 0 }) or (HIGHLIGHT_FONT_COLOR or { r = 1, g = 1, b = 1 })
 			l.text:SetTextColor(c.r, c.g, c.b)
 			l.time:SetTextColor(c.r, c.g, c.b)
 			l:ClearAllPoints()

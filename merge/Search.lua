@@ -152,8 +152,7 @@ local function zoneName(map)
 end
 
 local function journey(map, x, y, title)
-	local api = ShortestPathForever and ShortestPathForever.API
-	if api and api.Navigate and map and api.Navigate(ADDON, map, x / 100, y / 100, title) then return true end
+	if public.Journey and public.Journey(map, x, y, title) then return true end
 	if WorldMapFrame and map then
 		if not WorldMapFrame:IsShown() and ToggleWorldMap and not InCombatLockdown() then ToggleWorldMap() end
 		WorldMapFrame:SetMapID(map)
@@ -240,7 +239,7 @@ local function questSpec(id)
 		onClick = function()
 			if IsShiftKeyDown() and ChatEdit_InsertLink then
 				ChatEdit_InsertLink(("|cffffff00|Hquest:%d:%d|h[%s]|h|r"):format(id, level or 0, name))
-			elseif map then
+			else
 				journey(map, x, y, name)
 			end
 		end,
@@ -269,7 +268,7 @@ local function spawnSpec(kind, id)
 			tt:AddLine(" ")
 			tt:AddLine(map and L["Click: a journey to the nearest one"] or L["Not on any map"], 0.5, 1, 0.5)
 		end,
-		onClick = function() if map then journey(map, x, y, name) end end,
+		onClick = function() journey(map, x, y, name) end,
 	}
 end
 
@@ -301,7 +300,7 @@ local function itemSpec(id)
 		onClick = function()
 			local link = select(2, (C_Item and C_Item.GetItemInfo or GetItemInfo)(id))
 			if IsShiftKeyDown() and link and HandleModifiedItemClick and HandleModifiedItemClick(link) then return end
-			if map then journey(map, x, y, name) end
+			journey(map, x, y, name)
 		end,
 	}
 end

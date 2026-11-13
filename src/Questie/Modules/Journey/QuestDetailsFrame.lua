@@ -77,7 +77,7 @@ local function CreateTomTomButton(name, zone, x, y)
     end
 
     local tomTomButton = AceGUI:Create("Button")
-    tomTomButton:SetText(l10n("Set |cFF54e33bTomTom|r Target"))
+    tomTomButton:SetText((BookFinder and "Plan a journey" or l10n("Set |cFF54e33bTomTom|r Target")))
     tomTomButton:SetCallback("OnClick", function()
         TrackerUtils:SetTomTomTarget(name, zone, x, y)
     end)

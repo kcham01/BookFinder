@@ -152,6 +152,9 @@ function TrackerUtils:SetTomTomTarget(title, zone, x, y)
         end
         local uiMapId = ZoneDB:GetUiMapIdByAreaId(zone)
         Questie.db.char._tom_waypoint = TomTom:AddWaypoint(uiMapId, x / 100, y / 100, {title = title, crazy = true, from = "Questie"})
+    elseif BookFinder and BookFinder.Journey then
+        -- BookFinder: with the TomTom stand-in off, the journey is asked for directly (and says why if it can't start)
+        BookFinder.Journey(ZoneDB:GetUiMapIdByAreaId(zone), x, y, title)
     end
 end
 
@@ -161,11 +164,15 @@ end
 ---@return boolean
 function TrackerUtils.SetQuestTomTomTarget(questId, expectedQuest)
     local quest, capabilities = TrackerMapEligibility.RefreshAndGetCapabilities(questId, expectedQuest)
-    if not (capabilities and capabilities.canNavigateQuest) then
-        return false
+    local spawn, zone, name
+    if capabilities and capabilities.canNavigateQuest then
+        spawn, zone, name = DistanceUtils.GetNearestSpawnForQuest(quest)
     end
-    local spawn, zone, name = DistanceUtils.GetNearestSpawnForQuest(quest)
     if not spawn then
+        -- BookFinder: never in silence
+        if BookFinder and BookFinder.Notice then
+            BookFinder.Notice("No journey for this quest: no place is known for what it asks next.")
+        end
         return false
     end
     TrackerUtils:SetTomTomTarget(name, zone, spawn[1], spawn[2])
