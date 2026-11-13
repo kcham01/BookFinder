@@ -9,6 +9,7 @@ local NEAR_YARDS = 300          -- closer than this, the tracker shows yards rat
 local route = {}                -- { {book = b, loc = loc, cont = id, x = wx, y = wy}, ... }
 local skipped = {}              -- book keys skipped for this session
 local tracker
+local lastGuided                -- whether Shortest Path guided the route when the map was last told
 
 local worldPos, playerPos = ns.WorldPos, ns.PlayerWorldPos
 
@@ -289,7 +290,14 @@ end
 
 -- Shortest Path's guidance changed (Navigation.lua): Books' own tracker shows whenever it isn't guiding the route
 function ns.OnGuidanceChanged()
-  if tracker and ns.db.routeOn then tracker:SetShown(not ns.RouteGuided()) end
+  if not ns.db.routeOn then return end
+  local guided = ns.RouteGuided()
+  if tracker then tracker:SetShown(not guided) end
+  -- (the map's trail is Books' own only while Shortest Path isn't drawing the route)
+  if guided ~= lastGuided then
+    lastGuided = guided
+    ns.RefreshMap()
+  end
 end
 
 function ns.ToggleRoute(on, nearestFirst)

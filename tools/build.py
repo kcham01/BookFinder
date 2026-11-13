@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 MERGE = os.path.join(ROOT, "merge")
 NAME = "BookFinder"
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 OPENMAP_REPO = "https://github.com/openmap-world/openmap.git"
 OPENMAP_COMMIT = "91c84b3bf633f3ae4840309e4620d63b249f626e"
@@ -124,9 +124,11 @@ PATCHES = [
     ("OpenMap/Core.lua",
      '(ADDON, "Version")',
      '(ADDON, "X-OpenMap-Version")'),
+    # (Books built in draws its pins above the art itself: OpenMap's scan of the whole canvas for them, on every map
+    # change and zoom step, is work for nothing while dragging. A standalone Books still gets it)
     ("OpenMap/Map/Compat.lua",
      'if loaded and loaded("Books_on_map_Forever") then',
-     'if BookFinder and BookFinder.Loaded("Books_on_map_Forever") or loaded and loaded("Books_on_map_Forever") then'),
+     'if not (BookFinder and BookFinder.Active("Books")) and loaded and loaded("Books_on_map_Forever") then'),
     ("ShortestPathForever/UI/CompanionMaps.lua",
      'C_AddOns.IsAddOnLoaded("OpenMap")',
      'BookFinder.Loaded("OpenMap")'),

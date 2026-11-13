@@ -237,7 +237,128 @@ end
 
 local drawnMap, drawnStitched -- what the last draw was laid out on (OpenMap's view callbacks compare)
 
+-- BookFinder: on OpenMap's stitched map the books live in OpenMap's own icon layer, in its world, as its dungeons
+-- and docks do: placed once, culled to the view, sized with its Icon size, and left alone while the map is dragged
+-- and zoomed. (On the canvas they were all built again each time the map underneath changed, which it does with
+-- every zone the view crosses.) Off the stitched map (dungeons, Blizzard's own) they are canvas pins as before.
+local WORLD_SET, WORLD_LEVEL = "bookfinder_books", 40
+local worldDirty = true            -- the books, their route steps or the settings changed since the layer was made
+local worldUV = {}                 -- [loc] = { u, v } on OpenMap's world, or false (they never change)
+
+local function openMapLayer()
+  if not (BookFinder and BookFinder.Active and BookFinder.Active("OpenMap")) then return end
+  local S = _G.OpenMap and _G.OpenMap.MapStitch
+  if S and S.PinSet and S.AddPin and S.ClearPinSet and S.IsBuilt and S.IsBuilt() and stitched() then return S end
+end
+
+local function worldOf(loc)
+  local uv = worldUV[loc]
+  if uv == nil then
+    local api = OpenMapAPI
+    local ok, u, v = pcall(api.WorldFromMap, loc[1], loc[2] / 100, loc[3] / 100)
+    uv = ok and type(u) == "number" and type(v) == "number" and { u, v } or false
+    worldUV[loc] = uv
+  end
+  return uv
+end
+
+local function worldTooltip(self)
+  GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+  GameTooltip:AddLine(self.book.name, 1, 0.82, 0)
+  GameTooltip:AddLine(("%s  (%.1f, %.1f)"):format(self.loc[4], self.loc[2], self.loc[3]), 1, 1, 1)
+  if self.step then GameTooltip:AddLine(L["Route step %d"]:format(self.step), 0.4, 0.8, 1) end
+  GameTooltip:AddLine(L["Books: %d/%d"]:format(ns.CountDone(), #BOOKS), 0.7, 0.7, 0.7)
+  ns.AddGroupTooltip(self.book)
+  local provider = ns.WaypointProvider()
+  if provider then GameTooltip:AddLine(L["Click: %s waypoint"]:format(provider), 0.5, 1, 0.5) end
+  GameTooltip:AddLine(L["Shift-click: mark as collected"], 0.5, 1, 0.5)
+  GameTooltip:Show()
+end
+
+local function worldClick(self)
+  GameTooltip:Hide()
+  if IsShiftKeyDown() then ns.SetDone(self.book, true) else ns.Waypoint(self.loc, self.book.name) end
+end
+
+local function buildWorld(S)
+  local set = S.PinSet(WORLD_SET, 1, WORLD_LEVEL)
+  S.ClearPinSet(set)
+  worldDirty = false
+  if ns.db.hidden then return end
+  local size = ns.db.pinSize or ns.DEFAULT_PIN_SIZE
+  -- the route's next steps, unless Shortest Path is guiding it: then its own line is the route on the map
+  local route = ns.db.routeOn and ns.GetRoute and not (ns.RouteGuided and ns.RouteGuided()) and ns.GetRoute() or nil
+  if route then
+    local C = ns.Skin.C
+    local prev
+    for i = 1, math.min(#route, TRAIL_STEPS + 1) do
+      local uv = worldOf(route[i].loc)
+      if uv and prev then
+        local alpha = 0.85 * math.max(0.5, 1 - (i - 2) * 0.12)
+        S.AddLine(set, prev[1], prev[2], uv[1], uv[2], 3, C.trim[1], C.trim[2], C.trim[3], alpha)
+      end
+      prev = uv or prev
+    end
+  end
+  for _, b in ipairs(BOOKS) do
+    local mine = not ns.IsDone(b)
+    if mine or ns.GroupNeeds(b) then
+      for _, loc in ipairs(b.locs) do
+        local uv = worldOf(loc)
+        if uv then
+          local pin = S.AddPin(set, uv[1], uv[2], { texture = b.icon and ("Interface\\Icons\\" .. b.icon) or ns.ICON, size = size })
+          pin.book, pin.loc = b, loc
+          pin.step = ns.RouteStep and ns.RouteStep(b, loc)
+          if not pin.bfNum then
+            pin.bfNum = pin:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+            pin.bfNum:SetPoint("BOTTOMRIGHT", 4, -2)
+          end
+          pin.bfNum:SetText(route and pin.step and pin.step <= TRAIL_STEPS + 1 and pin.step or "")
+          pin.Icon:SetDesaturated(not mine)
+          pin:SetAlpha(mine and 1 or 0.8)
+          pin:SetScript("OnEnter", worldTooltip)
+          pin:SetScript("OnLeave", GameTooltip_Hide)
+          pin.OnClick = worldClick
+        end
+      end
+    end
+  end
+end
+
+-- what the map shows now: OpenMap's layer on the stitched map (made again only when the books changed), else the
+-- canvas pins. The map's own events (it changed, opened, zoomed; OpenMap's view moved) come here
+local function draw()
+  if not WorldMapFrame or not WorldMapFrame:IsShown() then return end
+  local S = openMapLayer()
+  if S then
+    if worldDirty or not S.GetPinSet(WORLD_SET) then buildWorld(S) end
+    -- (no canvas pins or trail under it)
+    if #pins > 0 or #segs > 0 then
+      releasePins()
+      wipe(segs)
+      layoutTrail()
+    end
+    drawnMap, drawnStitched = WorldMapFrame:GetMapID(), true
+    return
+  end
+  ns.DrawCanvas()
+end
+
+ns.OnMapEvent = draw   -- (the map changed, opened or moved: nothing about the books did)
+
+-- the books, a setting or the route changed: draw them again
 function ns.RefreshMap()
+  worldDirty = true
+  local S = openMapLayer()
+  if not S and _G.OpenMap and _G.OpenMap.MapStitch and _G.OpenMap.MapStitch.GetPinSet then
+    -- (not stitched now: OpenMap hides its layer itself; it is made again when it shows)
+    local set = _G.OpenMap.MapStitch.GetPinSet(WORLD_SET)
+    if set then _G.OpenMap.MapStitch.ClearPinSet(set) end
+  end
+  draw()
+end
+
+function ns.DrawCanvas()
   if not WorldMapFrame or not WorldMapFrame:IsShown() then return end
   releasePins()
   wipe(segs)
@@ -288,8 +409,8 @@ function ns.RefreshMap()
     end
   end
 
-  -- the next steps of the route visible on this map
-  if ns.db.routeOn and ns.GetRoute then
+  -- the next steps of the route visible on this map (Shortest Path's line is the route while it guides it)
+  if ns.db.routeOn and ns.GetRoute and not (ns.RouteGuided and ns.RouteGuided()) then
     if not trail then
       trail = CreateFrame("Frame", nil, canvas)
       trail:SetAllPoints(canvas)
@@ -310,6 +431,7 @@ end
 -- Rebuilding them on every zoom step made them flicker under map addons such as OpenMap
 function ns.RescaleMap()
   if not WorldMapFrame or not WorldMapFrame:IsShown() or not pinScale then return end
+  if openMapLayer() then return end   -- (OpenMap sizes its own layer)
   local canvas = WorldMapFrame:GetCanvas()
   local scale = canvasScale()
   local size = (ns.db.pinSize or ns.DEFAULT_PIN_SIZE) / scale * pinScale
@@ -335,10 +457,10 @@ local function hookOpenMap()
   if type(api) ~= "table" or api.major ~= 1 then return end
   local owner = {}
   if type(api.RegisterCallback) == "function" then
-    api.RegisterCallback(owner, "OpenMap_StitchedChanged", function() ns.RefreshMap() end)
+    api.RegisterCallback(owner, "OpenMap_StitchedChanged", function() draw() end)
     api.RegisterCallback(owner, "OpenMap_ViewChanged", function()
       if not WorldMapFrame:IsShown() then return end
-      if WorldMapFrame:GetMapID() ~= drawnMap or (stitched() ~= nil) ~= drawnStitched then ns.RefreshMap() end
+      if (stitched() ~= nil) ~= drawnStitched or (not drawnStitched and WorldMapFrame:GetMapID() ~= drawnMap) then draw() end
     end)
   end
   if type(api.RegisterMenuToggle) == "function" then
@@ -358,8 +480,8 @@ end
 
 function ns.InitMap()
   -- (the map only: map addons such as OpenMap change the map underneath on every pan)
-  hooksecurefunc(WorldMapFrame, "OnMapChanged", ns.RefreshMap)
-  WorldMapFrame:HookScript("OnShow", ns.RefreshMap)
+  hooksecurefunc(WorldMapFrame, "OnMapChanged", function() draw() end)
+  WorldMapFrame:HookScript("OnShow", function() draw() end)
   if WorldMapFrame.OnCanvasScaleChanged then
     hooksecurefunc(WorldMapFrame, "OnCanvasScaleChanged", ns.RescaleMap)
   end
