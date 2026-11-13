@@ -105,6 +105,11 @@ end
 local COMMANDS = {
 	settings = function() return public.OpenSettings() end,
 	quests = function() return public.OpenQuestLog and public.OpenQuestLog() end,
+	inspect = function()
+		if not (public.Inspect and public.Inspect()) then return false end
+		say("Recorded. Now open the world map's Show menu once, then /reload: the details are in WTF/Account/<account>/SavedVariables/BookFinder.lua.")
+		return true
+	end,
 	map = function() return public.OpenSettings("map") end,
 	books = bookList,
 	near = nearby,
@@ -120,7 +125,7 @@ SlashCmdList.BOOKFINDER = function(msg)
 		if not COMMANDS[cmd](rest) then say(cmd .. ": not available.") end
 		return
 	end
-	say("/bookfinder [settings | map | books | quests | near <service> | status]")
+	say("/bookfinder [settings | map | books | quests | near <service> | status | inspect]")
 	say("Also: /openmap (the map's menu), /path, /way, /spfnear, /bom.")
 end
 
@@ -203,32 +208,23 @@ local function slider(page, key, name, default, min, max, step, get, set, tip)
 	end
 	Settings.RegisterInitializer(page, Settings.CreateSliderInitializer(setting, options, tip))
 end
-local function button(page, name, text, onClick, tip)
-	if CreateSettingsButtonInitializer then
-		Settings.RegisterInitializer(page, CreateSettingsButtonInitializer(name, text, onClick, tip, true))
-	end
-end
 -- a Books label with its ": %d" left off ("Map icon size: %d" -> "Map icon size")
 local function label(text) return (BL(text):gsub("%s*[:：]%s*%%d", "")) end
 
+-- the front page: what is BookFinder's own (the pages are in the tree beside it)
 local function frontPage(category)
 	checkbox(category, "minimapButton", BL("Show the minimap button"), true,
 		function() return not minimapDB().hide end, function(on) public.SetMinimapButtonShown(on) end)
-	local open = SPF.L and SPF.L["Open"] or OKAY
-	if public.Active("OpenMap") then
-		button(category, OM.L and OM.L["World map"] or "World map", open, function() public.OpenSettings("map") end)
-	end
 end
 
 local function booksPage(category)
 	if not (public.Active("Books") and BOOKS.db) then return end
-	local page = Settings.RegisterVerticalLayoutSubcategory(category, BL("Books"))
+	local page = Settings.RegisterVerticalLayoutSubcategory(category, BL("Library books"))
 	public.RegisterPage("books", page)
 	local db = BOOKS.db
 	local function refresh() if BOOKS.Refresh then BOOKS.Refresh() end end
 	local function refreshMinimap() if BOOKS.RefreshMinimapPins then BOOKS.RefreshMinimapPins() end end
 
-	button(page, BL("Books"), SPF.L and SPF.L["Open"] or OKAY, bookList)
 	checkbox(page, "booksOnMap", BL("Show on the map"), true,
 		function() return not db.hidden end, function(on) db.hidden = not on; refresh() end)
 	slider(page, "booksPinSize", label("Map icon size: %d"), BOOKS.DEFAULT_PIN_SIZE or 20, 10, 40, 1,
@@ -264,53 +260,20 @@ local function booksPage(category)
 		for _, l in ipairs(BOOKS.LANGS or {}) do choices:Add(l[1], l[3]) end
 		Settings.RegisterInitializer(page, Settings.CreateDropdownInitializer(lang, function() return choices:GetData() end))
 	end
-
-	-- (and a button for it on the front page, as Shortest Path's pages have)
-	button(category, BL("Books"), SPF.L and SPF.L["Open"] or OKAY, function() public.OpenSettings("books") end)
 end
 
--- Shortest Path's map marks as switches in OpenMap's map menu --------------------------------------------------
--- Through the game's setting objects when Shortest Path's settings made them, so its page and its redraw follow;
--- then straight to its saved table if that didn't take
-local MARKS = {
-	{ id = "pins", label = "Show boats and zeppelins", icon = "Interface\\Icons\\INV_Misc_Spyglass_03" },
-	{ id = "transit", label = "Show lifts and the tram", icon = "Interface\\Icons\\INV_Gizmo_02" },
-	{ id = "portals", label = "Show portals", icon = "Interface\\Icons\\Spell_Arcane_PortalStormWind" },
-	{ id = "mapFlightMasters", label = "Show flight masters", icon = "Interface\\Icons\\Ability_Mount_Gryphon_01" },
-	{ id = "mapRoutes", label = "Show routes on the world map", icon = "Interface\\Icons\\INV_Misc_Map_01" },
-}
-
--- OpenMap redraws what follows Shortest Path's boats switch (the airships to Zephras Isle, the routes)
+-- OpenMap's airships to Zephras Isle and its route lines follow Shortest Path's boats switch, wherever it is
+-- flipped: the map's Show menu (Shortest Path's SetOption) or its settings page
 local function refreshOpenMap()
 	local m = OM.GetModule and OM:GetModule("worldmap")
 	if m and m.enabled and m.Refresh then pcall(m.Refresh, m) end
 end
 
-local function registerPathToggles()
-	local om = OpenMapAPI
-	if not (public.Active("SPF") and SPF.db and type(om) == "table" and om.major == 1
-		and type(om.RegisterMenuToggle) == "function") then return end
-	local L = SPF.L or {}
-	for _, m in ipairs(MARKS) do
-		pcall(om.RegisterMenuToggle, ADDON, {
-			id = "spf." .. m.id,
-			label = L[m.label] or m.label,
-			icon = m.icon,
-			section = "Shortest Path",
-			get = function() return SPF.db[m.id] and true or false end,
-			set = function(on)
-				on = on and true or false
-				local setting = Settings and Settings.GetSetting and Settings.GetSetting("ShortestPathForever_" .. m.id)
-				if setting and setting.SetValue then pcall(setting.SetValue, setting, on) end
-				if SPF.db[m.id] ~= on then
-					SPF.db[m.id] = on
-					if SPF.RefreshMap then SPF.RefreshMap() end
-				end
-				refreshOpenMap()
-			end,
-		})
+local function followBoats()
+	if not (public.Active("SPF") and public.Active("OpenMap")) then return end
+	if type(SPF.SetOption) == "function" then
+		hooksecurefunc(SPF, "SetOption", function(key) if key == "pins" then refreshOpenMap() end end)
 	end
-	-- (the boats switch on Shortest Path's own page too)
 	if Settings and Settings.SetOnValueChangedCallback then
 		pcall(Settings.SetOnValueChangedCallback, "ShortestPathForever_pins", refreshOpenMap)
 	end
@@ -380,7 +343,7 @@ boot:SetScript("OnEvent", function(self, event, name)
 		public.PublishSettings()
 	end
 	makeLauncher()
-	C_Timer.After(0, registerPathToggles)
+	followBoats()
 	-- (a few seconds in: the taxi lists are filled once the world has loaded)
 	C_Timer.After(4, function()
 		local learned = learnFlights()

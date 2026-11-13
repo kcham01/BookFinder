@@ -145,24 +145,30 @@ INTEGRATION = r"""function(root)
     wm.GetMapID = function() return 1429 end
     wm:Hide()   -- (the stand-in map is only enough for Books' pins: Shortest Path's redraw needs the real one)
 
-    -- OpenMap's menu: Books' and Shortest Path's switches, and they work
-    local rows = {}
+    -- One map menu: the map's own Show menu takes Questie's, OpenMap's and Books' switches, and they work; none of
+    -- them is still in OpenMap's own menu
+    local found = {}
+    for _, sec in ipairs(BookFinder.MapMenuSections and BookFinder.MapMenuSections() or {}) do
+        for _, r in ipairs(sec.rows) do found[r[1]] = r end
+    end
+    for _, label in ipairs({ "Dungeons and raids", "Party and raid members", "Show on the map", "Optimized route", "Your drawings" }) do
+        want(found[label], "the map's Show menu has no " .. label .. " switch")
+    end
+    local r = found["Show on the map"]
+    if r then r[3]() want(B.db.hidden and not r[2](), "the books switch didn't hide the books") r[3]() want(not B.db.hidden, "the books switch didn't bring them back") end
+    r = found["Dungeons and raids"]
     local wmod = root.OpenMap.modules and root.OpenMap.modules.worldmap
+    if r and wmod then
+        local was = wmod.db.icons
+        r[3]() want(wmod.db.icons == not was, "the dungeons switch didn't change OpenMap's setting") r[3]()
+    end
+    local ext = 0
     if wmod and wmod.ExtraMenuRows then
-        for _, r in ipairs(wmod.ExtraMenuRows(function(label, id, icon, get, set) return { id = id, get = get, set = set } end)) do
-            if r.id then rows[r.id] = r end
+        for _, row in ipairs(wmod.ExtraMenuRows(function(label, id) return { id = id } end)) do
+            if row.id and row.id:match("^ext%.BookFinder%.spf") then ext = ext + 1 end
         end
     end
-    for _, id in ipairs({ "pins", "route", "spf.pins", "spf.transit", "spf.portals", "spf.mapFlightMasters" }) do
-        want(rows["ext.BookFinder." .. id], "no OpenMap menu switch " .. id)
-    end
-    local r = rows["ext.BookFinder.pins"]
-    if r then r.set(false) want(B.db.hidden and not r.get(), "the books switch didn't hide the books") r.set(true) end
-    r = rows["ext.BookFinder.spf.portals"]
-    if r then
-        local was = root.SPF.db.portals
-        r.set(not was) want(root.SPF.db.portals == not was, "the portals switch didn't change Shortest Path's setting") r.set(was)
-    end
+    want(ext == 0, "Shortest Path's switches are still added to OpenMap's menu (they are in the Show menu)")
     -- One settings window: one category in the AddOns list, BookFinder, holding every part's pages
     local names = {}
     for _, c in ipairs(SETTINGS.listed) do names[#names + 1] = c.name end
@@ -173,8 +179,13 @@ INTEGRATION = r"""function(root)
     want(#SETTINGS.top == 1, "settings: top-level categories made: " .. table.concat(top, ", "))
     local pages = {}
     for _, c in ipairs(SETTINGS.listed[1] and SETTINGS.listed[1].subs or {}) do pages[c.name] = true end
-    for _, page in ipairs({ "World map", "Map marks", "Transport", "Travel journal", "Guidance", "Party mage portals",
-            "Alerts", "Interface", "Books" }) do
+    -- (Shortest Path's eight pages are three; no Forever addons page; no index of Open buttons)
+    local count = 0
+    for _ in pairs(pages) do count = count + 1 end
+    want(not pages["Map marks"] and not pages["Transport"] and not pages["Forever addons"],
+        "settings: Shortest Path's thin pages are still separate pages")
+    want(count <= 7, "settings: BookFinder's window has " .. count .. " pages (expected at most 7)")
+    for _, page in ipairs({ "World map", "Map icons", "Journeys", "Interface", "Library books" }) do
         want(pages[page], "settings: no " .. page .. " page in BookFinder's window")
     end
     want(BookFinder.OpenSettings("map") and BookFinder.OpenSettings("books") and BookFinder.OpenSettings(), "settings: a page can't be opened")
@@ -236,6 +247,45 @@ INTEGRATION = r"""function(root)
     C_TaxiMap = taxiMap
     B.ToggleRoute(false)
     api.NavigateRoute, api.CurrentStop = nav, cur
+    -- One search: Shortest Path's services box also finds books, places and Questie's quests, NPCs and items
+    local ST = BookFinder.SearchTest
+    want(ST and root.SPF.ExtraSearch, "the search isn't hooked into Shortest Path's services panel")
+    if ST then
+        local function has(sections, key, test)
+            for _, s in ipairs(sections) do
+                if s.key == key then
+                    for _, r in ipairs(s.rows) do if not test or test(r) then return true end end
+                end
+            end
+            return false
+        end
+        local children = C_Map.GetMapChildrenInfo
+        C_Map.GetMapChildrenInfo = function(id) if id == 1415 then return { { mapID = 1429, name = "Elwynn Forest" } } end return {} end
+        want(has(ST.Run("goaz"), "books"), "search: a library book isn't found")
+        want(has(ST.Run("elwynn"), "places"), "search: a zone isn't found")
+        C_Map.GetMapChildrenInfo = children
+        want(ST.ReadNow(), "search: Questie's database index never finished")
+        local QDB = QuestieLoader:ImportModule("QuestieDB")
+        local qname = QDB.QueryQuestSingle(9, "name")
+        local found = qname and ST.Run(qname:lower())
+        want(found and has(found, "quest", function(r) return r.key == "quest:9" end),
+            "search: quest 9 (" .. tostring(qname) .. ") isn't found by its name; " .. tostring(ST.Index.lastError))
+        local nname = QDB.QueryNPCSingle(6491, "name")
+        want(nname and has(ST.Run(nname:lower()), "npc", function(r) return r.label == nname end),
+            "search: NPC 6491 (" .. tostring(nname) .. ") isn't found by its name")
+        local holder = CreateFrame("Frame")
+        local okDraw, bottom, drawn = pcall(root.SPF.ExtraSearch, holder, 0, "goaz")
+        want(okDraw and type(bottom) == "number" and bottom > 0 and (drawn or 0) >= 1,
+            "search: drawing the results failed: " .. tostring(bottom))
+        local okClear, b2, n2 = pcall(root.SPF.ExtraSearch, holder, 0, "")
+        want(okClear and b2 == 0 and n2 == 0, "search: clearing it left rows behind")
+    end
+
+    -- /bookfinder inspect records what the client has, without errors
+    local okInspect, inspected = pcall(BookFinder.Inspect)
+    want(okInspect and inspected and BookFinderDB.inspect and BookFinderDB.inspect.atlases and BookFinderDB.inspect.frames,
+        "/bookfinder inspect failed: " .. tostring(inspected))
+
     -- The library books tab in the quest log: built, every book drawn, travel times from Shortest Path, the nearest
     -- book by time, a search, a click guides there, Shift-click marks it, the route's rows, and /bom opens it
     local tabAPI = BookFinder.BooksTab
@@ -288,6 +338,15 @@ INTEGRATION = r"""function(root)
         want(tabAPI.Spec("start") and not tabAPI.Spec("route"), "books tab: no row starts the route")
         API.NavigateRoute, API.CurrentStop = nav, cur
         tabAPI.Shown(false)
+        ForeverCore.QuestLogTabs.ShowQuests()
+        -- (the files left out of the build: Books still calls their entry points)
+        local okRetired, errRetired = pcall(function()
+            SlashCmdList.BOOKSONMAP("welcome")
+            B.Refresh()
+            B.RefreshGroupPanel()
+            B.InitMinimapButton()
+        end)
+        want(okRetired, "a left-out Books file is still needed: " .. tostring(errRetired))
         ForeverCore.QuestLogTabs.ShowQuests()
         SlashCmdList.BOOKSONMAP("")
         want(ForeverCore.QuestLogTabs.Selected() == "bookfinder.books" and not rawget(_G, "BooksOnMapForeverOptions"),

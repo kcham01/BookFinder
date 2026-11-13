@@ -563,13 +563,21 @@ function Refresh()
 	for at = dividerAt + 1, #dividers do
 		dividers[at]:Hide()
 	end
+	-- BookFinder: the same search finds quests, NPCs, objects, items, places and books, drawn under the services
+	local extra = 0
+	if ns.ExtraSearch then
+		local ok, below, count = pcall(ns.ExtraSearch, list, top, query, searchBox)
+		if ok and type(below) == "number" then
+			top, extra = below, count or 0
+		end
+	end
 	-- An empty list says why: still loading, QuestieDB missing or broken, or here is nothing to offer.
 	local status
 	if state ~= "ready" then
 		status = STATUS[state]
 	elseif not world then
 		status = L["Your position is unavailable"]
-	elseif #sections == 0 then
+	elseif #sections == 0 and extra == 0 then
 		status = L["No services nearby."]
 	end
 	emptyText:SetText(status or "")
@@ -604,6 +612,13 @@ local function StartTicker(shown)
 	elseif ticker then
 		ticker:Cancel()
 		ticker = nil
+	end
+end
+
+-- BookFinder: its search redraws the list when its answers are ready
+function ns.RefreshServicesPanel()
+	if visible then
+		Refresh()
 	end
 end
 

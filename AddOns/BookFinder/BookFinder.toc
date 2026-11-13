@@ -2,7 +2,7 @@
 ## Title: |cff33ff99Book|rFinder
 ## Notes: One addon for the world: a seamless map, journeys anywhere, every quest and the library books. /bookfinder
 ## Author: OpenMap contributors; cjber; Daeler; Questie: Aero/Logon/Muehe/TheCrux(BreakBB)/Drejjmit/Dyaxler/Cheeq/TechnoHunter/Yttrium/Everyone else; merged as BookFinder
-## Version: 1.4.0
+## Version: 1.5.0
 ## X-OpenMap-Version: v0.8.7
 ## X-SPF-Version: v1.34.3
 ## X-Books-Version: 2.2.6
@@ -131695,18 +131695,17 @@ Books_on_map_Forever\Core\Detection.lua
 Books_on_map_Forever\Core\Commands.lua
 Books_on_map_Forever\modules\Map.lua
 Books_on_map_Forever\modules\Options.lua
-Books_on_map_Forever\modules\SideTabs.lua
 Books_on_map_Forever\modules\Rewards.lua
 Books_on_map_Forever\modules\Group.lua
-Books_on_map_Forever\modules\GroupPanel.lua
 Books_on_map_Forever\modules\Route.lua
-Books_on_map_Forever\modules\Minimap.lua
 Books_on_map_Forever\modules\MinimapPins.lua
-Books_on_map_Forever\modules\Broker.lua
 Books_on_map_Forever\modules\Toast.lua
 Books_on_map_Forever\modules\Nearby.lua
-Books_on_map_Forever\modules\Welcome.lua
 
 # The library books tab in the quest log, and what ties the parts together
+Merge\Retired.lua
 Merge\BooksTab.lua
+Merge\Search.lua
+Merge\MapMenu.lua
+Merge\Inspect.lua
 Merge\Bridge.lua
