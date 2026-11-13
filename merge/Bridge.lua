@@ -47,6 +47,14 @@ local function menu(_, rootMenu)
 		rootMenu:CreateCheckbox(BL("Optimized route"), function() return BOOKS.db and BOOKS.db.routeOn and true or false end,
 			function() if BOOKS.ToggleRoute then BOOKS.ToggleRoute() end end)
 	end
+	if public.Active("Questie") and _G.QuestieLoader then
+		rootMenu:CreateDivider()
+		rootMenu:CreateButton(QUESTS_LABEL or "Quests", function() public.OpenSettings("quests") end)
+		rootMenu:CreateButton("My Journey", function()
+			local ok, journey = pcall(QuestieLoader.ImportModule, QuestieLoader, "QuestieJourney")
+			if ok and journey and journey.ToggleJourneyWindow then journey:ToggleJourneyWindow() end
+		end)
+	end
 	if SlashCmdList.SPFNEAR or journeyActive() then
 		rootMenu:CreateDivider()
 		if SlashCmdList.SPFNEAR then rootMenu:CreateButton(SPF.L and SPF.L["Nearby services"] or "Nearby services", function() nearby() end) end
@@ -360,8 +368,13 @@ boot:SetScript("OnEvent", function(self, event, name)
 		return
 	end
 	self:UnregisterEvent("PLAYER_LOGIN")
-	-- (after every part's own login setup, which this frame's registration order already follows)
-	public.PublishSettings()
+	-- (after every part's own login setup, which this frame's registration order already follows. Questie makes its
+	-- pages later, in its startup steps, and lists the window itself once they're in; this is the fallback)
+	if public.Active("Questie") then
+		C_Timer.After(15, public.PublishSettings)
+	else
+		public.PublishSettings()
+	end
 	makeLauncher()
 	C_Timer.After(0, registerPathToggles)
 	-- (a few seconds in: the taxi lists are filled once the world has loaded)

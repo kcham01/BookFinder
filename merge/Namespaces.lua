@@ -8,7 +8,9 @@
 local ADDON, root = ...
 
 local COMPONENTS = {
-	-- key in the private table, standalone folder name, display name
+	-- key in the private table, standalone folder name, display name; `with`: stands aside together with that part
+	{ key = "QuestieDB", folder = "QuestieDB", title = "QuestieDB", with = "Questie" },
+	{ key = "Questie", folder = "Questie", title = "Questie", with = "QuestieDB" },
 	{ key = "OpenMap", folder = "OpenMap", title = "OpenMap" },
 	{ key = "SPF", folder = "ShortestPathForever", title = "Shortest Path Forever" },
 	{ key = "Books", folder = "Books_on_map_Forever", title = "Books on map" },
@@ -36,14 +38,23 @@ local function standaloneLoads(folder)
 end
 
 local public = { name = ADDON, components = {}, shadowed = {} }
+local folderOf = {}
+for _, c in ipairs(COMPONENTS) do folderOf[c.key] = c.folder end
 for _, c in ipairs(COMPONENTS) do
 	local sub = {}
 	root[c.key] = sub
-	if standaloneLoads(c.folder) then
+	-- (Questie and its database are one: either standalone one running takes both)
+	if standaloneLoads(c.folder) or (c.with and standaloneLoads(folderOf[c.with])) then
 		sub.__skip = true
 		public.shadowed[#public.shadowed + 1] = c.title
 	end
 	public.components[c.key] = { folder = c.folder, title = c.title, active = not sub.__skip }
+end
+
+-- Whether a part's files stand aside (the guard on each Questie and QuestieDB file's first line asks)
+function public.Skip(key)
+	local c = public.components[key]
+	return c ~= nil and not c.active
 end
 root.public = public
 

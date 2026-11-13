@@ -28,6 +28,7 @@ OWN_GLOBALS = [
     "BooksOnMapForeverDB", "ShortestPathForever", "ShortestPathForeverPathData", "ForeverCore", "ForeverCoreDB",
     "ForeverCoreCharDB", "BookFinder", "BookFinderDB", "ForeverTrackerHost", "OpenMapAPI", "OpenMap", "TomTom", "Questie", "QuestieLoader", "RXPCData",
     "Guidelime", "RXP", "Zygor", "ZGV", "ForeverCoreAPI", "WorldMapFrame_OnShow",
+    "ChatThrottleLib", "LibQuestieDB", "QuestieConfig", "QuestieConfigCharacter", "QuestieProfilerEnabled", "QuestieCompat", "QuestieDB",
 ]
 
 
@@ -245,6 +246,17 @@ INTEGRATION = r"""function(root)
 end"""
 
 
+def toc_meta(toc_path):
+    meta = {}
+    with open(toc_path, encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("## "):
+                k, sep, v = line[3:].partition(":")
+                if sep:
+                    meta[k.strip()] = v.strip()
+    return meta
+
+
 def toc_entries(toc_path):
     out = []
     for line in open(toc_path, encoding="utf-8"):
@@ -381,15 +393,23 @@ def run(mode):
         -- LibDBIcon registrations, by name (the minimap buttons)
         MINIMAP_BUTTONS = {}
     """ % ", ".join('"%s"' % g for g in OWN_GLOBALS))
+    # the game's base64, zlib and CBOR, in Lua (QuestieDB's database, Shortest Path's terrain). zlib is LibDeflate's,
+    # loaded first as the game's own function is there before any addon
+    L.execute(open(os.path.join(HERE, "encoding.lua"), encoding="utf-8").read())
+    for lib in ("LibStub/LibStub.lua", "LibDeflate/LibDeflate.lua"):
+        L.execute(open(os.path.join(SRC, "Questie", "Libs", lib), encoding="utf-8").read())
+    # (more of the game's API Questie's libraries need)
+    L.execute("""
+        UnitNameUnmodified = UnitName
+        GetAppropriateTooltip = function() return GameTooltip end
+        local function pool()
+            return setmetatable({}, { __index = function(_, k) if type(k) ~= "number" then return function() return nil end end end })
+        end
+        CreateFramePool = function() return pool() end
+        CreateUnsecuredRegionPoolInstance = function() return pool() end
+    """)
     if mode == "walk":
-        # the game's own base64 and zlib, for Shortest Path's packed terrain (Routing/PathGrid.lua): the base64 text is
-        # kept as it is and decoded together with the inflate, so no binary string has to come back from Lua
-        import base64, zlib
         L.execute("debugprofilestop = function() return os.clock() * 1000 end")
-        L.execute("C_EncodingUtil = {}; Enum.CompressionMethod = { Zlib = 1 }")
-        enc = L.globals().C_EncodingUtil
-        enc.DecodeBase64 = lambda text: text
-        enc.DecompressString = lambda text, method=None: zlib.decompress(base64.b64decode(text))
     if mode == "shadow":
         L.execute("""
             C_AddOns.GetAddOnInfo = function(name)
@@ -407,12 +427,24 @@ def run(mode):
 
     if mode == "standalone":
         addons = [("ForeverCore", os.path.join(SRC, "ForeverCore", "ForeverCore.toc")),
+                  ("QuestieDB", os.path.join(SRC, "QuestieDB", "QuestieDB_Forever.toc")),
+                  ("Questie", os.path.join(SRC, "Questie", "Questie_Forever.toc")),
                   ("OpenMap", os.path.join(SRC, "OpenMap", "OpenMap.toc")),
                   ("ShortestPathForever", os.path.join(SRC, "ShortestPathForever", "ShortestPathForever.toc")),
                   ("Books_on_map_Forever", os.path.join(SRC, "Books_on_map_Forever", "Books_on_map_Forever.toc"))]
     else:
         addons = [("ForeverCore", os.path.join(BUILD, "ForeverCore", "ForeverCore.toc")),
                   ("BookFinder", os.path.join(BUILD, "BookFinder", "BookFinder.toc"))]
+
+    # each addon's toc fields (QuestieDB's database is its toc's), and what has loaded, as the game answers them
+    metadata = {name: toc_meta(toc) for name, toc in addons}
+    loaded = set()
+    get_meta = lambda name, key: metadata.get(name, {}).get(key)
+    is_loaded = lambda name: name in loaded
+    L.globals().C_AddOns.GetAddOnMetadata = get_meta
+    L.globals().GetAddOnMetadata = get_meta
+    L.globals().C_AddOns.IsAddOnLoaded = is_loaded
+    L.globals().IsAddOnLoaded = is_loaded
 
     load_errors, spaces = [], {}
     for name, toc in addons:
@@ -427,6 +459,7 @@ def run(mode):
             ok, err = load(open(path, encoding="utf-8-sig").read(), f"{name}/{rel}", name, ns)
             if not ok:
                 load_errors.append(f"LOAD {name}/{rel}: {err}")
+        loaded.add(name)
 
     names = L.table_from([n for n, _ in addons])
     L.eval("""function(names)
@@ -434,7 +467,7 @@ def run(mode):
         FireEvent("VARIABLES_LOADED")
         FireEvent("PLAYER_LOGIN")
         FireEvent("PLAYER_ENTERING_WORLD", true, false)
-        RunTimers(5)
+        RunTimers(20)   -- (past BookFinder's 15 s fallback for listing its settings window, as Questie can't start here)
         IN_COMBAT = true
         FireEvent("PLAYER_REGEN_DISABLED")
         RunTimers(2)
@@ -478,6 +511,21 @@ def run(mode):
             want(ShortestPathForever and ShortestPathForever.API, "Shortest Path's API isn't published")
             want(SlashCmdList.BOOKFINDER and SlashCmdList.BOOKSONMAP, "a slash command is missing")
             want(BookFinder_OnAddonCompartmentClick, "no compartment function")
+            -- Questie and its database, inside BookFinder: the database read from BookFinder's toc, Questie not refusing
+            -- to run under another folder's name
+            if not shadow then
+                want(type(LibQuestieDB) == "table" and LibQuestieDB.Quest and LibQuestieDB.Quest.Get, "QuestieDB isn't loaded")
+                local okQ, name = pcall(function() return LibQuestieDB.Quest.Get(9, "name") end)
+                want(okQ and type(name) == "string" and name ~= "", "QuestieDB can't read a quest from BookFinder's toc: " .. tostring(name))
+                local okN, npc = pcall(function() return LibQuestieDB.Npc.Get(6491, "name") end)
+                want(okN and type(npc) == "string" and npc ~= "", "QuestieDB can't read an NPC: " .. tostring(npc))
+                want(QuestieLoader ~= nil and Questie ~= nil, "Questie isn't loaded")
+                want(not (StaticPopupDialogs and StaticPopupDialogs.QUESTIE_ADDON_NAME_ERROR), "Questie refused to run inside BookFinder")
+                want(BookFinder.Loaded("Questie") and BookFinder.Loaded("QuestieDB"), "BookFinder doesn't report Questie as loaded")
+            else
+                -- (only OpenMap's standalone copy runs here: Questie stays BookFinder's)
+                want(not BookFinder.Skip("Questie") and type(LibQuestieDB) == "table", "Questie stood aside for OpenMap's standalone copy")
+            end
             if shadow then
                 want(root.OpenMap.__skip and not BookFinder.Active("OpenMap"), "OpenMap didn't stand aside for its standalone copy")
                 want(OpenMap == nil and OpenMapAPI == nil, "BookFinder's OpenMap still loaded while standing aside")
@@ -643,8 +691,8 @@ def first_line(e):
     # the message without the chunk name's component prefix, so standalone and merged compare
     line = e.split("\n")[0]
     line = re.sub(r"\.\.\.[^/\s]*/", "", line)  # (Lua shortens long chunk names from the left)
-    line = re.sub(r"@?(ForeverCore|OpenMap|ShortestPathForever|Books_on_map_Forever|BookFinder)/", "", line)
-    line = re.sub(r"^(LOAD )(?:OpenMap|ShortestPathForever|Books_on_map_Forever|BookFinder)/", r"\1", line)
+    line = re.sub(r"@?(ForeverCore|QuestieDB|Questie|OpenMap|ShortestPathForever|Books_on_map_Forever|BookFinder)/", "", line)
+    line = re.sub(r"^(LOAD )(?:QuestieDB|Questie|OpenMap|ShortestPathForever|Books_on_map_Forever|BookFinder)/", r"\1", line)
     line = re.sub(r":\d+:", ":N:", line)  # (line numbers move where the build rewrote a line)
     line = re.sub(r"0x[0-9a-f]+", "0x", line)
     return line

@@ -1,0 +1,1 @@
+if BookFinder and BookFinder.Skip and BookFinder.Skip("Questie") then return end 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Carry your OpenMap, Shortest Path Forever and Books on map settings over to BookFinder.
+"""Carry your OpenMap, Shortest Path Forever, Books on map and Questie settings over to BookFinder.
 
     python3 tools/migrate_savedvariables.py "<game folder>/_forever_/WTF" [--force] [--dry-run]
 
 Close the game first: it rewrites these files when it exits. The game keeps saved variables per addon folder,
 so BookFinder can't read the old files itself. For the account and for every character, this copies each of
-OpenMapDB, OpenMapCharDB, ShortestPathForeverDB, ShortestPathForeverCharDB, BooksOnMapForeverGlobal and
-BooksOnMapForeverDB from the old addon's file into BookFinder.lua beside it. A variable BookFinder.lua already has
+OpenMapDB, OpenMapCharDB, ShortestPathForeverDB, ShortestPathForeverCharDB, BooksOnMapForeverGlobal,
+BooksOnMapForeverDB, QuestieConfig, QuestieProfilerEnabled and QuestieConfigCharacter from the old addon's file into BookFinder.lua beside it. A variable BookFinder.lua already has
 is kept unless --force. BookFinder.lua is backed up to BookFinder.lua.bak before it changes; the old files are
 left as they are.
 """
@@ -20,6 +20,7 @@ OLD = {
     "OpenMap.lua": ["OpenMapDB", "OpenMapCharDB"],
     "ShortestPathForever.lua": ["ShortestPathForeverDB", "ShortestPathForeverCharDB"],
     "Books_on_map_Forever.lua": ["BooksOnMapForeverGlobal", "BooksOnMapForeverDB"],
+    "Questie.lua": ["QuestieConfig", "QuestieProfilerEnabled", "QuestieConfigCharacter"],
 }
 NEW = "BookFinder.lua"
 TOP = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=", re.M)
