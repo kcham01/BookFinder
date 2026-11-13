@@ -42,7 +42,7 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
 - **No bloat**: too many menus and too much dead code. The settings tree is long. The front page is a column of
   "Open" buttons, and some pages hold one or three options (Travel journal, Transport). Merge thin pages and drop
   the dead ones.
-- **Routing at "Google Maps" quality**: still not good enough. Journeys must be the fastest real way, with
+- ~~**Routing at "Google Maps" quality**~~ (dropped after 1.8.1: routing is being removed): still not good enough. Journeys must be the fastest real way, with
   flights, boats, zeppelins, portals and hearthstone. Needed from you: `/path report` straight after a bad route,
   plus a screenshot.
 - **Blizzard-level feel**: "like the game was built with it in". Asked you for the client's own UI export
@@ -72,7 +72,7 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
 - **Quest list in the map, nothing on screen**: Questie's list replaces the game's in the map's Quests tab. The tracker
   on your screen is gone, and so is the journey block (you chose "gone from screen too"). The journey shows at the
   top of the Quests tab instead; the arrow and compass still guide you.
-- **Routing must be professional grade**: you've said it again; it's the next job, using the journey log.
+- ~~**Routing must be professional grade**~~ (dropped after 1.8.1): you've said it again; it's the next job, using the journey log.
 
 ## Done in 1.7.0 (for you to test)
 - The quest list is in the map, with nothing on screen, as above.
@@ -118,6 +118,23 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
   there is a route to follow it goes back to 2 ms.
 - The self-test waits for each search's final answer (up to 45 s), keeps what it showed on the way with the second
   it appeared, and records whose journey it read. It takes two to three minutes now.
+
+## Decided after 1.8.1 (newest: these win over anything above)
+- **Remove the "Google Maps" routing.** "The routing will never get fixed and it's taking too much energy away from
+  the beauty. This just isn't pro grade." Journey planning goes; the effort goes into how the addon looks and feels.
+  (This replaces every routing item above: "Routing at Google Maps quality", "Routing must be professional grade",
+  the journey card, the journey log, the faster first plans.) What a click on a quest, book or search result does
+  instead is still to be agreed.
+- **Rebuild, to iron out bugs, remove dead code and make it "stunningly beautiful".** You asked whether it had been
+  rewritten from the ground up: it had not; 1.8.0 and 1.8.1 were fixes on the old build.
+- **One settings panel, in the style of OpenMap's own settings panel**, which you like. Every setting moves into it
+  and anything redundant is removed. (Replaces "One settings window: Options > AddOns > BookFinder".)
+- **Bug: the scrollbar at the side doesn't move when you scroll, though the list does.** (Most likely the Quests tab:
+  Questie's list scrolls itself while the game's own scrollbar is left showing beside it.)
+- **"I hope all of my wants and changes are documented."** They are kept here, newest decisions last; struck-out
+  lines were replaced.
+- The mock-up page (map panel, click rules, Show menu, settings) was shown; no markup on it yet. Its journey card
+  and journey states no longer apply.
 
 ## Still to do (waiting on your data)
 - **If a journey still doesn't start**, it now says why. Send `BookFinder.lua`: `attempts` has each one.
