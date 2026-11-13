@@ -142,6 +142,34 @@ services and stacked a second menu beside OpenMap's. OpenMap's map menu is the o
 default is upstream's), Questie's map button stays off, and Shortest Path's panel-only additions
 (`ns.NearbyRows`, `NearbyGo`, `JourneyToQuest`) were taken back out.
 
+### 1.3c One search, one map menu, fewer pages, fewer files (1.5.0)
+
+- **One search** (`merge/Search.lua`): Shortest Path's Nearby services box ("Search services, quests, NPCs, items
+  and places") also lists, under its own sections: Quests, Items, Places, Library books, NPCs, Objects (six each,
+  "6 of N"; the exact name first, then names starting with it, shorter first). Quest: [level], giver and zone, yards;
+  click: a journey to the nearest giver (in your log: to where you turn it in); Shift-click links it. NPC/object:
+  nearest spawn; item: nearest vendor, else nearest drop; place: click shows the map there, Shift-click a journey;
+  book: as in the books tab. Questie's database is read into a name index once (1500 names a frame, from its own
+  ID lists or `LibQuestieDB.<Type>.GetAllIds`), saying "Reading Questie's database… n%" meanwhile. Hook: Shortest
+  Path's `ServicesPanel.lua` calls `ns.ExtraSearch(list, top, query, searchBox)` and exposes
+  `ns.RefreshServicesPanel`.
+- **One map menu** (`merge/MapMenu.lua`): the world map's Show menu (through Shortest Path's `ns.ModifyMenu`) takes
+  Quests (Questie's quest givers and objective icons, OpenMap's quests from every zone), Places (dungeons and raids,
+  mailboxes, spirit healers, rare mobs), People (party and raid, friends, guild), Library books (on the map, route)
+  and Your drawings. OpenMap's own menu leaves those out when built in (`Map/Panel.lua`), and Shortest Path's switches
+  are no longer added to it (they were always in the Show menu): no switch is in two menus. OpenMap's airships still
+  follow Shortest Path's boats switch (`SetOption` hook).
+- **Settings**: Shortest Path's eight pages are three (Map icons = Map marks + Transport; Journeys = Guidance +
+  Party mage portals; Interface = Interface + Alerts + Travel journal), each old page a section heading; no index of
+  Open buttons anywhere; no Forever addons page and no suggestions of other Forever addons (`suggestFamily` off);
+  Questie's other tabs nest under Quests. Tree: BookFinder (minimap button), Map icons, Journeys, Interface, World
+  map, Library books, Quests (+ its tabs).
+- **Files left out** (`DROP` in tools/build.py, `merge/Retired.lua` stands in for their entry points): Books'
+  `Welcome.lua`, `Broker.lua`, `Minimap.lua`, `SideTabs.lua`, `GroupPanel.lua`.
+- **`/bookfinder inspect`** (`merge/Inspect.lua`): records the client's build, which atlases, fonts and templates
+  exist, the Show menu's entries, quest/map/tracking CVars and the trackers' and quest log's frames into
+  `BookFinderDB.inspect`.
+
 ### 1.4 One addon: what used to be done twice, and who does it now
 
 Every part keeps every feature it alone has. Where two did the same job, one does it now; the other's unique
