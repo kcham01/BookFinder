@@ -151,11 +151,13 @@ function public.Inspect()
 			store.fonts[name] = false
 		end
 	end
+	-- (asked of the client's template registry: making one to see would run its scripts on the wrong kind of frame)
 	store.templates = {}
-	local parent = CreateFrame("Frame")
-	parent:Hide()
+	local getTemplate = C_XMLUtil and C_XMLUtil.GetTemplateInfo
 	for _, name in ipairs(TEMPLATES) do
-		store.templates[name] = pcall(CreateFrame, "Frame", nil, parent, name) and true or false
+		local ok, info = false, nil
+		if getTemplate then ok, info = pcall(getTemplate, name) end
+		store.templates[name] = ok and info and (info.type or true) or false
 	end
 	store.frames = {}
 	for _, name in ipairs(FRAMES) do store.frames[name] = frameInfo(name) or false end

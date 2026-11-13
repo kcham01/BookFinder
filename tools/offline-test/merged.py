@@ -281,43 +281,52 @@ INTEGRATION = r"""function(root)
         want(okClear and b2 == 0 and n2 == 0, "search: clearing it left rows behind")
     end
 
-    -- One tracker: under Questie's list the Forever column wears Questie's fonts and no native header art
-    local TS = BookFinder.TrackerSkin
-    want(TS, "the tracker skin isn't there")
-    if TS then
-        local host = rawget(_G, "ForeverTrackerCompanion") or CreateFrame("Frame", "ForeverTrackerCompanion", UIParent)
-        local module = CreateFrame("Frame", nil, host)
-        module.Header = CreateFrame("Frame", nil, module)
-        module.Header.Background = module.Header:CreateTexture()
-        module.Header.Text = module.Header:CreateFontString()
-        module.Header.Text:SetFont("Fonts\\FRIZQT__.TTF", 14, "")
-        module.ContentsFrame = CreateFrame("Frame", nil, module)
-        local block = CreateFrame("Frame", nil, module.ContentsFrame)
-        block.HeaderText = block:CreateFontString()
-        block.HeaderText:SetFont("Fonts\\FRIZQT__.TTF", 14, "")
-        local dirty = 0
-        module.MarkDirty = function() dirty = dirty + 1 end
-        module.Update = function() end
-        local list = rawget(_G, "Questie_BaseFrame")
-        local made = not list
-        if made then list = CreateFrame("Frame", "Questie_BaseFrame", UIParent) end
-        list:Show()
-        local hadDB = Questie.db
-        if not (Questie.db and Questie.db.profile) then
-            Questie.db = { profile = { trackerFontSizeZone = 12, trackerFontSizeQuest = 10, trackerFontSizeObjective = 10, trackerFontOutline = "" } }
-        end
-        TS.Scan()
-        local _, size = module.Header.Text:GetFont()
-        local _, bsize = block.HeaderText:GetFont()
-        want(TS.Hooked[module], "the tracker skin didn't pick up the column's section")
-        want(size and math.abs(size - (Questie.db.profile.trackerFontSizeZone or 12)) < 0.1, "the section header isn't in Questie's zone font size (" .. tostring(size) .. ")")
-        want(bsize and math.abs(bsize - (Questie.db.profile.trackerFontSizeQuest or 10)) < 0.1, "a block title isn't in Questie's quest font size (" .. tostring(bsize) .. ")")
-        want(dirty == 1, "the skin didn't ask for one more layout after changing fonts (" .. dirty .. ")")
-        module.Update()
-        want(dirty == 1, "the skin keeps asking for layouts")
-        if made then list:Hide() end
-        Questie.db = hadDB
+    -- The quest list in the map: Questie's tracker moves into the Quests tab, the Forever column leaves the screen, and
+    -- the journey shows at the top of the tab with every leg
+    local QL = BookFinder.QuestLog
+    want(QL, "the quest log module isn't there")
+    if QL then
+        QuestMapFrame.QuestsFrame = QuestMapFrame.QuestsFrame or CreateFrame("Frame", nil, QuestMapFrame)
+        local list = rawget(_G, "Questie_BaseFrame") or CreateFrame("Frame", "Questie_BaseFrame", UIParent)
+        local column = rawget(_G, "ForeverTrackerCompanion") or CreateFrame("Frame", "ForeverTrackerCompanion", UIParent)
+        local holder = QL.Build()
+        want(holder, "the Quests tab holder wasn't built")
+        want(QL.Dock(), "Questie's tracker wasn't moved into the Quests tab")
+        want(list:GetParent() == holder, "Questie's tracker isn't in the Quests tab")
+        QL.Park()
+        want(column:GetParent() == QL.Hidden, "the Forever column is still on screen")
+        local p = Questie.db and Questie.db.profile
+        if p then want(p.trackerLocked and p.sizerHidden, "Questie's tracker can still be dragged or sized in the map") end
+        local API3 = ShortestPathForever.API
+        local was = API3.Journey
+        API3.Journey = function() return { goal = { title = "Booty Bay", map = 1434 }, secondsLeft = 600,
+            legs = { { mode = "zeppelin", text = "Zeppelin to Grom'gol", seconds = 240 }, { mode = "walk", text = "Walk to Booty Bay", seconds = 300 } } } end
+        QL.Refresh()
+        want(QL.JourneyShown() and QL.Legs() == 2, "the journey isn't at the top of the Quests tab with its 2 legs (" .. QL.Legs() .. ")")
+        API3.Journey = function() return nil end
+        QL.Refresh()
+        want(not QL.JourneyShown() and QL.Legs() == 0, "the journey stayed after it ended")
+        API3.Journey = was
     end
+
+    -- The in-game self-test runs from start to end and writes its record (the stub's map can't pass every check)
+    -- (its waits are driven here, one after another: running the stub's clock that far would fire every other
+    -- part's timers into pieces the stub lacks)
+    local queued, after = {}, C_Timer.After
+    C_Timer.After = function(_, fn) queued[#queued + 1] = fn end
+    local okSelf, errSelf = pcall(BookFinder.SelfTest)
+    want(okSelf, "the self-test didn't start: " .. tostring(errSelf))
+    for _ = 1, 5000 do
+        local fn = table.remove(queued, 1)
+        if not fn then break end
+        local okStep, errStep = pcall(fn)
+        if not okStep then ERRORS[#ERRORS + 1] = "self-test step: " .. tostring(errStep) end
+    end
+    C_Timer.After = after
+    local st = BookFinderDB.selftest
+    want(st and st.finished and not st.crashed and #st.checks >= 30 and st.routes and #st.routes == 15,
+        "the self-test didn't finish its run: " .. tostring(st and (st.crashed or (#st.checks .. " checks, " .. tostring(st.routes and #st.routes) .. " routes"))))
+    BookFinderDB.selftest = nil
 
     -- The recorder: journeys as Shortest Path plans them, once per goal, and BookFinder's errors, deduplicated
     local API2 = ShortestPathForever.API
