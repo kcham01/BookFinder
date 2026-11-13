@@ -1,0 +1,11 @@
+<!-- Key bindings: the game's Keybindings > OpenMap. Each runs an action of the map's menu
+     (Panel.lua's OpenMap_Binding), opening the map first if it's closed; their names are set there.
+     A section of its own (as Leatrix Plus has), each name starting OpenMap: so a search finds them -->
+<Bindings>
+	<Binding name="OPENMAP_FIND" category="OpenMap">OpenMap_Binding("find")</Binding>
+	<Binding name="OPENMAP_PIN" category="OpenMap">OpenMap_Binding("pin")</Binding>
+	<Binding name="OPENMAP_PINS" category="OpenMap">OpenMap_Binding("pins")</Binding>
+	<Binding name="OPENMAP_QUILL" category="OpenMap">OpenMap_Binding("quill")</Binding>
+	<Binding name="OPENMAP_QUESTLOG" category="OpenMap">OpenMap_Binding("questlog")</Binding>
+	<Binding name="OPENMAP_MENU" category="OpenMap">OpenMap_Binding("menu")</Binding>
+</Bindings>
