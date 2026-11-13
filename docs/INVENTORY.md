@@ -309,6 +309,36 @@ Reads answer `nil, "loading" | "none" | "combat" | "invalid" | "unreachable"`. R
 
 ---
 
+## 4b. Questie and QuestieDB (built in at `Questie/` and `QuestieDB/`, since 1.2.0)
+
+Questie 12.8.0 (WoW Forever toc) and its database QuestieDB 1.1.0, folded into the same addon. Every Questie feature
+stays: quest givers, objectives and turn-ins on the world map and minimap, its quest tracker, tooltips, My Journey
+(quest history and its search of every quest, NPC, object and item), party objectives, DBM HUD integration,
+nameplate icons, quest links in chat, and its options.
+
+How it's folded in:
+- **Load order:** QuestieDB, then Questie, then OpenMap, Shortest Path and Books, as their standalone tocs' `OptionalDeps` had it.
+- **The database:** QuestieDB is "baked": its data is its toc's metadata (131,191 `## X-` lines, 18 MB), read with
+  `GetAddOnMetadata(<its addon name>, key)`. The name is the file's `...`, so inside BookFinder it reads
+  BookFinder's toc, which the build fills with those lines (all `X-` fields but the build stamps). `LoadSavedVariablesFirst: 1` is Questie's,
+  now BookFinder's (harmless to the other parts).
+- **Private tables:** the build rewrites any `local a, b = ...` (QuestieDB's is `LibQuestieDB`), and puts a guard on
+  every Questie and QuestieDB file's first line (`BookFinder.Skip("Questie")`): with a standalone Questie or
+  QuestieDB enabled, both of BookFinder's stand aside together.
+- **Names:** `IsAddOnLoaded("Questie" | "QuestieDB")` and `loaded(...)` become `BookFinder.Loaded(...)`;
+  `("Questie", "Version")`, `("Questie", "X-QuestieDB-Contract")` and `("QuestieDB", "Version")` read BookFinder's
+  `X-Questie-Version`, `X-QuestieDB-Contract`, `X-QuestieDB-Version`. Shortest Path's Nearby services reads QuestieDB's
+  fields from BookFinder. Questie's "renamed addon" refusal (`VersionCheck.lua`) lets BookFinder through.
+- **One of each:** Questie's settings are BookFinder's pages ("Quests", "Quests: <tab>"), and both of its windows
+  (`/questie`, Shift-click) open them; BookFinder lists its window once Questie's pages are in (15 s fallback). No
+  Questie minimap button or broker launcher (a stand-in table keeps its text); its My Journey and quest settings are
+  in BookFinder's minimap menu.
+- **Saved variables:** `QuestieConfig`, `QuestieProfilerEnabled` (account), `QuestieConfigCharacter` (character);
+  `tools/migrate_savedvariables.py` copies them.
+
+Quirks: addons outside BookFinder that look for Questie by folder name won't see it (ForeverCore uses the
+`Questie` global and still does). QuestieTrace (Questie's data-collection tool for its developers) isn't included.
+
 ## 5. How the parts work together (after the merge)
 
 | From → to | How | Works without the other? |
