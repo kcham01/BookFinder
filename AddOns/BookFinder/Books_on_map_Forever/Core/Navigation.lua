@@ -105,10 +105,21 @@ local function routeStops(route)
   return stops
 end
 
+-- Shortest Path tells its subscribers when guidance changes (API version 2): Books' tracker follows
+local unsubscribe
+local function watchGuidance(api)
+  if unsubscribe or not has(api, "Subscribe") then return end
+  local ok, stop = pcall(api.Subscribe, function()
+    if ns.OnGuidanceChanged then ns.OnGuidanceChanged() end
+  end)
+  if ok and type(stop) == "function" then unsubscribe = stop end
+end
+
 -- true when Shortest Path took the route
 local function startRoute(api, route)
   if api and api.NavigateRoute(ADDON, routeStops(route)) then
     guidingRoute = true
+    watchGuidance(api)
     return true
   end
   return false

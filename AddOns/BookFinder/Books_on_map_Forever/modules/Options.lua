@@ -1,6 +1,7 @@
 -- Books on map (Forever): options window (book list grouped by set)
 local ADDON, ns = ...; ns = ns.Books; if ns.__skip then return end
 local L = ns.L
+local BUILT_IN = BookFinder ~= nil and BookFinder.SettingsCategory ~= nil
 local BOOKS = ns.BOOKS
 local S = ns.Skin
 
@@ -301,7 +302,22 @@ local function create()
   local getMeta = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
   version:SetText("v" .. (getMeta(ADDON, "X-Books-Version") or "?"))
 
-  f.lang = ns.LanguageSelector(f.titleBar)
+  if BUILT_IN then
+    -- BookFinder: the settings (language included) are in its settings window; this opens it at this page
+    f.lang = CreateFrame("Button", nil, f.titleBar)
+    f.lang:SetSize(18, 18)
+    f.lang:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+    f.lang:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+    f.lang:SetScript("OnClick", function() S.Close(f) BookFinder.OpenSettings("books") end)
+    f.lang:SetScript("OnEnter", function(self)
+      GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+      GameTooltip:AddLine(L["Settings"])
+      GameTooltip:Show()
+    end)
+    f.lang:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  else
+    f.lang = ns.LanguageSelector(f.titleBar)
+  end
   f.lang:SetPoint("RIGHT", f.close, "LEFT", -8, 0)
   local bug = ns.BugButton(f.titleBar)
   bug:SetPoint("RIGHT", f.lang, "LEFT", -6, 0)
@@ -386,7 +402,10 @@ local function create()
       function(open) ns.db.folded[key] = not open or nil end)
     return body
   end
+  -- (BookFinder: these settings are its settings window's Library books page; here the list takes the room)
+  if BUILT_IN then ns.db.folded.settings = true end
   local settingsBody = section("settings", settings, 148)
+  if BUILT_IN then settings:Hide() settingsBody:Hide() end
 
   local function settingCheck(label, y, onClick, maxWidth)
     local c = S.Check(settingsBody, label)
@@ -429,8 +448,13 @@ local function create()
 
   -- Filters
   local filters = S.Section(f, L["Filters"])
-  filters:SetPoint("TOPLEFT", settingsBody, "BOTTOMLEFT", 0, -8)
-  filters:SetPoint("TOPRIGHT", settingsBody, "BOTTOMRIGHT", 0, -8)
+  if BUILT_IN then
+    filters:SetPoint("TOPLEFT", settings, "TOPLEFT")
+    filters:SetPoint("TOPRIGHT", settings, "TOPRIGHT")
+  else
+    filters:SetPoint("TOPLEFT", settingsBody, "BOTTOMLEFT", 0, -8)
+    filters:SetPoint("TOPRIGHT", settingsBody, "BOTTOMRIGHT", 0, -8)
+  end
   local filtersBody = section("filters", filters, 58)
 
   local function filterCheck(label, key, x, y, maxWidth)

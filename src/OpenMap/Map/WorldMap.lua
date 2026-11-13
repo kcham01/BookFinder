@@ -47,8 +47,28 @@ local mod = ns:NewModule("worldmap", {
 	},
 })
 
+-- BookFinder: Shortest Path draws the docks and flight masters (live departures, flight times, a journey a click
+-- away), so OpenMap's own stay off and leave its menus: nothing on the map twice. A standalone OpenMap keeps them.
+mod.SUPERSEDED = {}
+if BookFinder and BookFinder.Active and BookFinder.Active("SPF") then
+	mod.SUPERSEDED.boats, mod.SUPERSEDED.zeppelins, mod.SUPERSEDED.flight = true, true, true
+	-- (a fresh save gets these defaults; an old one is set by Migrate, below)
+	for key in pairs(mod.SUPERSEDED) do mod.defaults[key] = false end
+end
+
+-- whether boats and zeppelins show: Shortest Path's switch while it draws the docks, else OpenMap's (the routes
+-- and the airships to Zephras Isle, which only OpenMap draws, follow it)
+function mod.TravelShown(opt)
+	if mod.SUPERSEDED[opt or "boats"] then
+		local spf = _G.ShortestPathForeverDB
+		return not (type(spf) == "table" and spf.pins == false)
+	end
+	return mod.db and mod.db[opt or "boats"] ~= false
+end
+
 -- (dungeons, boats and zeppelins were one switch, `icons`: an old save's choice carried to each)
 function mod.Migrate(db)
+	for key in pairs(mod.SUPERSEDED) do db[key] = false end
 	if db.boats == nil and db.icons ~= nil then db.boats, db.zeppelins = db.icons, db.icons end
 	-- (friends and guild were one switch too, `friends`, and its menu row's id: the friends row keeps
 	-- that id, and a save's single choice carries to the guild's switch too)
@@ -1457,6 +1477,8 @@ function mod:Refresh()
 		local set = S.GetPinSet(key)
 		if set then S.SetPinSetOn(set, self.db[opt]) end
 	end
+	local airships = S.GetPinSet("airships")
+	if airships then S.SetPinSetOn(airships, mod.TravelShown("boats")) end
 	if S.RefreshRoutes then S.RefreshRoutes() end
 	S.SetPlayerHidden(self.db.playerArrow == false)
 	if active and map:IsShown() then RaisePlayer() end
@@ -1636,11 +1658,13 @@ function mod:Options()
 		icons = { type = "toggle", name = ns.L["Dungeons and raids"], order = 31, get = get, set = set, disabled = off,
 			desc = ns.L["Dungeon and raid entrances, with their levels (click one: its map)."] },
 		boats = { type = "toggle", name = ns.L["Boats"], order = 31.4, get = get, set = set, disabled = off,
+			hidden = function() return mod.SUPERSEDED.boats end,
 			desc = ns.L["Boat docks (click one: the other end), and boats' routes when routes are shown."] },
 		zeppelins = { type = "toggle", name = ns.L["Zeppelins"], order = 31.6, get = get, set = set, disabled = off,
+			hidden = function() return mod.SUPERSEDED.zeppelins end,
 			desc = ns.L["Zeppelin towers (click one: the other end), and zeppelins' routes when routes are shown."] },
 		flight = { type = "toggle", name = ns.L["Flight masters"], order = 32, get = get, set = set,
-			disabled = off },
+			disabled = off, hidden = function() return mod.SUPERSEDED.flight end },
 		foundOnly = { type = "toggle", name = ns.L["Only places you've found"], order = 32.5, get = get, set = set, disabled = off,
 			desc = ns.L["Dungeons, boats and zeppelins only once you've explored where they are, and flight masters only once you've learned them."] },
 		iconsFrom = { type = "range", name = ns.L["Icons from zoom"], order = 33.5, min = ICONS_FROM[1], max = ICONS_FROM[2], step = ICONS_FROM[3],

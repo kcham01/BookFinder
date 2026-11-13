@@ -37,6 +37,15 @@ local KINDS = {
 	{ key = "rare", name = ns.L["Rare mobs"], rare = true, zoom = 3, hostile = true,
 		look = { atlas = "VignetteKillElite", texture = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8", size = 18 } },
 }
+-- BookFinder: Shortest Path's town services show these NPCs, by what they sell, each a journey a click away, so
+-- OpenMap keeps only the kinds it alone has (mailboxes, spirit healers, rare mobs). A standalone OpenMap keeps all.
+if BookFinder and BookFinder.Active and BookFinder.Active("SPF") then
+	local BY_SPF = { vendor = true, repair = true, innkeeper = true, banker = true, auctioneer = true, stable = true,
+		classTrainer = true, profTrainer = true }
+	for i = #KINDS, 1, -1 do
+		if BY_SPF[KINDS[i].key] then table.remove(KINDS, i) end
+	end
+end
 mod.TOWNSFOLK = KINDS
 
 local d = mod.defaults

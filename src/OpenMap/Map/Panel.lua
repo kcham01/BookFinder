@@ -225,6 +225,10 @@ local function Rows()
 		optRow(L["Guild members on the map"], "guild", Icon("INV_Shirt_GuildTabard_01")),
 		optRow(L["Your drawings"], "sketchShown", Icon("INV_Feather_04")),
 	}
+	-- (BookFinder: the switches for what Shortest Path draws instead are in its section of this menu)
+	for i = #rows, 1, -1 do
+		if rows[i].id and mod.SUPERSEDED and mod.SUPERSEDED[rows[i].id] then table.remove(rows, i) end
+	end
 	if mod.defaults.allQuests ~= nil then        -- (Quests.lua: WoW Forever's toc loads it, retail's doesn't)
 		rows[#rows + 1] = optRow(L["Quests from every zone"], "allQuests", { atlas = "UI-QuestPoi-QuestNumber", texture = "Interface\\GossipFrame\\ActiveQuestIcon" })
 	end
@@ -306,12 +310,14 @@ local function Rows()
 			mod:Refresh()
 			if ns.NotifyOptions then ns.NotifyOptions() end
 		end)
-	rows[#rows + 1] = row(L["Minimap button"], "minimapButton", OPENMAP_ICON, function() return db.minimapButton end,
-		function(v)
-			db.minimapButton = v
-			if mod.RefreshLauncher then mod.RefreshLauncher() end
-			if ns.NotifyOptions then ns.NotifyOptions() end
-		end)
+	if not ns.BUILT_IN then   -- (BookFinder: one minimap button for every part, in its settings window)
+		rows[#rows + 1] = row(L["Minimap button"], "minimapButton", OPENMAP_ICON, function() return db.minimapButton end,
+			function(v)
+				db.minimapButton = v
+				if mod.RefreshLauncher then mod.RefreshLauncher() end
+				if ns.NotifyOptions then ns.NotifyOptions() end
+			end)
+	end
 	-- (Options' own setters, where they do more than set it: the full-screen map is laid out again)
 	local options = mod.Options and mod:Options() or {}
 	local function fromOptions(label, key, icon)

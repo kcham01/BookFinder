@@ -59,13 +59,26 @@ before publishing BookFinder anywhere public.
   at once and the standalone copy runs alone. It publishes the global `BookFinder`:
   `BookFinder.Active(key)`, `BookFinder.Loaded(folder)` (IsAddOnLoaded that also knows built-in parts),
   `BookFinder.components`, `BookFinder.shadowed`.
+- `Namespaces.lua` also makes **the one settings window**: `BookFinder.SettingsCategory()` (a vertical-layout
+  category "BookFinder", made on first use), `BookFinder.RegisterPage(key, page)`, `BookFinder.OpenSettings([key])`
+  (through `ForeverCore.OpenSettingsPanel`, the secure opener), `BookFinder.PublishSettings()` (adds the category
+  to the AddOns list once, at login, after every page is in). `BookFinderDB` (account) holds BookFinder's own
+  settings: `minimap` (LibDBIcon's position and `hide`).
 - `Bridge.lua` (last file):
-  - `/bookfinder` and `/bfind` with `map`, `path`, `books`, `near [service]`, `status` and `help`
-    (`status` says for each part whether it's built in, standalone or off, and prints both API versions).
-  - The compartment entry: left-click runs OpenMap's own compartment click (the map), right-click opens a menu
-    of each part's settings. The tooltip says so.
+  - At ADDON_LOADED (after every part's own): the front page's minimap-button switch and its World map / Books
+    buttons, and the **Books** page: book list button, show on the map, map icon size, show on the minimap,
+    minimap icon size, optimized route, group's missing books, collected notice, nearby alert, books language
+    (reload). All proxy settings over `BooksOnMapForeverDB` (Books' inverted keys stay as they are).
+  - At PLAYER_LOGIN: publishes the settings category; makes **the one launcher** (LDB data source "BookFinder",
+    text = books collected) and **the one minimap button** (LibDBIcon "BookFinder"; first run takes Books' old
+    button's place and hidden state); registers SP's map marks in OpenMap's menu.
+  - Button, broker and compartment: left-click the world map; right-click a menu (settings, world map, books,
+    nearest book, optimized route, nearby services, cancel the journey). Tooltip: books collected, nearest book,
+    group progress, the journey under way with its time left.
+  - `/bookfinder` and `/bfind`: no argument opens the settings window; `settings`, `map`, `books`,
+    `near [service]`, `status` (each part built in, standalone or off, and both API versions).
   - SP's world-map marks as OpenMap menu switches (section "Shortest Path"): boats and zeppelins, lifts and
-    tram, portals, flight masters. They write through the game's setting object
+    tram, portals, flight masters, routes on hover. They write through the game's setting object
     (`Settings.GetSetting("ShortestPathForever_<key>")`) so SP's page and its redraw callback follow, then check the
     saved value took, and write it directly and redraw if it didn't.
   - A login line when a standalone copy took a part's place.
@@ -85,6 +98,32 @@ before publishing BookFinder anywhere public.
 | ⚙ | Books toc | `OptionalDeps` gains `OpenMap` (standalone load order). |
 | ⚙ | SP `UI/OpenMap.lua` | `OpenMap.CursorMapPoint()`: the zone under the cursor on the stitched map (API v3 `CursorPosition` + `MapAt` + `MapFromWorld`). |
 | ⚙ | SP `Journey/JourneyInput.lua` | Shift-click and Alt-click plan to the zone under the cursor when stitched, not to the centred zone's coordinates run off its edge. The underground flag (`UNDERGROUND[uiMap]`, the stop's floor) now comes from the zone clicked. |
+
+### 1.4 One addon: what used to be done twice, and who does it now
+
+Every part keeps every feature it alone has. Where two did the same job, one does it now; the other's unique
+bits moved over or stayed. These hold while all three run inside BookFinder; a part replaced by its standalone
+addon (quirk 2) behaves as upstream.
+
+| Job | Before | Now | What the other side kept |
+|---|---|---|---|
+| Settings | OpenMap's own window (AceConfig) + its Settings stub page; SP's Settings category; Books' own window section | **One window: Options › AddOns › BookFinder.** Pages: Shortest Path's (Map marks, Transport, Travel journal, Guidance, Party mage portals, Alerts, Interface, Forever addons), **World map** (OpenMap's whole options table, embedded with `AceConfigDialog:AddToBlizOptions`), **Books**. Every way into settings opens it at its page: `/path`, `/bookfinder`, right-click on the button, the gear in Books' window, OpenMap's options page. | OpenMap's in-map menu stays: it is the map's own quick panel (what shows, search, find me, pins, draw), like Blizzard's map filter. Books' window stays as the book journal (progress, rewards, group, the list and its filters); its settings block is gone, a gear opens the page. |
+| Minimap button / LDB launcher | Books' LibDBIcon button + launcher; OpenMap's optional button + launcher; SP's "Journey" button under the minimap | **One: BookFinder** (`BookFinderDB.minimap`) | Books' broker text (books collected) is the button's text. Their switches are hidden. |
+| Docks (boats, zeppelins) on the world map | OpenMap's + SP's | **Shortest Path's** (live departures, clusters, click opens the other end and pings it, Shift-click a journey) | OpenMap's **airships to Zephras Isle** (own pin set `airships`, follow SP's boats switch) and OpenMap's always-on **route lines** (follow SP's boats switch). OpenMap's Boats and Zeppelins switches leave its menu and options. |
+| Flight masters | OpenMap's (learned/grey, click two for a route and time) + SP's (stock look, flights and times in the tooltip, super-track, Shift-click a journey) | **Shortest Path's** | A real journey covers the two-click route. OpenMap's Flight masters switch leaves its menus. |
+| Townsfolk / town services | OpenMap's (vendors, repair, inns, bankers, auctioneers, stables, class and profession trainers, mailboxes, spirit healers, rares) + SP's town services | **Shortest Path's** for vendors, repair, inns, banks, auction, stables and trainers (by what they sell, a journey a click away) | OpenMap keeps **mailboxes, spirit healers and rare mobs**. |
+| Guidance UI | Books' route tracker frame + arrow, and SP's tracker, arrow and compass | **Shortest Path's.** Turning the books route on sends it to SP; Books' tracker hides while SP guides it and comes back when SP doesn't (combat, journeys off, another journey took over), through SP's `Subscribe`. | Books' Skip / Recalc stay on `/bom` and in its window. |
+| First-run windows | OpenMap's welcome (a real choice: OpenMap look or classic), Books' welcome page | **OpenMap's** | SP's one-line What's new after an update is unchanged. |
+| Addon compartment | OpenMap's, SP's | **BookFinder's** | |
+
+Code: OpenMap `mod.SUPERSEDED` and `mod.TravelShown` (`Map/WorldMap.lua`), the trimmed `TOWNSFOLK` kinds
+(`Map/Townsfolk.lua`), `airships` pin set (`Map/Stitch.lua`), menu rows dropped (`Map/Panel.lua`), routes
+(`Map/Routes.lua`), pad view (`Map/PadView.lua`), `ns.BUILT_IN` / `ns.OpenOptionsPage` (`Init.lua`), launcher
+(`Map/Launcher.lua`); SP `UI/Settings.lua` (`BUILT_IN`); Books `modules/Options.lua`, `Broker.lua`, `Welcome.lua`,
+`Route.lua` (`ns.OnGuidanceChanged`), `Core/Navigation.lua` (`watchGuidance`).
+
+Still more than one of (different jobs, kept on purpose): bug reports (`/openmap` Report a problem, `/path report`,
+`/bom bug`: each goes to its own project's tracker); search (OpenMap: places; SP Nearby: NPCs and items).
 
 ---
 
@@ -294,8 +333,9 @@ its standalone copy.
 5. **Versions.** `## Version` is BookFinder's (1.0.0). Each part reads its own: `X-OpenMap-Version`,
    `X-SPF-Version`, `X-Books-Version`. ForeverCore's bug report shows BookFinder's version as the addon's.
 6. **One addon in the game's CPU/memory profiler.** `/path perf` measures the whole BookFinder now.
-7. **Overlapping marks.** OpenMap and SP both draw boats/zeppelins and flight masters on the world map. Both are
-   kept (nothing removed); turn one side off in OpenMap's menu (its own switches, or the "Shortest Path" section).
+7. **No doubled marks.** OpenMap's docks, flight masters and the townsfolk Shortest Path lists are off while SP runs
+   inside BookFinder (1.4); their saved switches are set off (fresh saves default off). A standalone OpenMap
+   keeps them, and turns them back on from its own menu.
 8. **Shared libraries.** OpenMap ships LibStub, CallbackHandler, AceGUI, AceConfig; Books ships LibStub,
    CallbackHandler, LibDataBroker, LibDBIcon. Both copies load; LibStub keeps the newest.
 9. **Map art not in git.** Build with textures before installing; a `--no-textures` build has no map art.
@@ -318,6 +358,12 @@ its standalone copy.
   several zones above OpenMap's art, and only the zone's own off it; OpenMap's menu has all six switches and
   they change Books' and SP's settings.** A mutation test (restoring Books' old `version == 1` check) fails 4
   of them, so the checks bite.
+- Unification checks (merged run): one category in the AddOns list (BookFinder) and no other top-level one;
+  World map, Map marks, Transport, Guidance and Books pages in it; each page opens; one LibDBIcon button and one
+  LDB launcher (BookFinder); no OpenMap or SP minimap button; OpenMap's docks and flight masters handed to SP and
+  off; OpenMap's townsfolk without vendors, inns and trainers but with mailboxes, spirit healers and rares; the
+  airships follow SP's boats switch; Books' tracker hidden while SP guides the route and back when it stops.
+  Mutation tests (Books' launcher and button re-enabled) fail them.
 - The stub has gaps both runs hit the same way (8 errors: Blizzard's settings layout, a canvas, a skinned frame):
   SP's settings page, Books' skinned frames and the real stitched map are not exercised offline.
 
@@ -327,5 +373,9 @@ its standalone copy.
 - Shift-click a neighbouring zone on the stitched map: SP plans to that spot (and the right floor underground).
 - Books' route tracker: travel time appears, sensible.
 - OpenMap menu: Books and Shortest Path sections; switches work and survive a reload.
-- Compartment entry: left-click map, right-click menu.
+- Compartment entry and minimap button: left-click map, right-click menu; the button's tooltip.
+- Options › AddOns: one BookFinder entry; its pages all there (World map, Shortest Path's, Books) and each works
+  (the offline stub stops SP's settings before Alerts and Interface, so those are checked only in game).
+- World map: no OpenMap boats, zeppelins or flight masters beside SP's; Zephras Isle airships still there.
+- Books route on: SP's tracker guides it and Books' tracker stays hidden; cancel SP's journey and it comes back.
 - With the old standalone folders still enabled: the chat note, and nothing breaks.

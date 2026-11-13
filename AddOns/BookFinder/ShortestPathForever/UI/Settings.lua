@@ -31,8 +31,14 @@ function ns.OpenSettings()
 	ForeverCore.OpenSettingsPanel(category:GetID())
 end
 
+-- BookFinder: these pages are part of its one settings window, and its minimap button replaces the Journey button
+local BUILT_IN = BookFinder ~= nil and BookFinder.SettingsCategory ~= nil
+
 local optionsButton
 function ns.RefreshOptionsButton()
+	if BUILT_IN then
+		return
+	end
 	if ns.db.minimapButton and not optionsButton then
 		-- Named: a template button under an unnamed frame gives its `$parent` label a bare global name
 		-- (`MinimapText` here), which another addon or a Blizzard layout could read as its own (#457).
@@ -91,7 +97,7 @@ end
 -- Settings.CreateCheckbox inserts from our code instead, and the settings search reads every layout, so that
 -- tainted it: a restricted button in the results (Social's Discord Sign In) was then blocked and blamed on us.
 ns.Init(function()
-	category = Settings.RegisterVerticalLayoutCategory("Shortest Path Forever")
+	category = BUILT_IN and BookFinder.SettingsCategory() or Settings.RegisterVerticalLayoutCategory("Shortest Path Forever")
 
 	-- Topic → AddOns → Shortest Path Forever: a short index page of buttons, then a stock subpage per group so no
 	-- page grows tall. The index buttons stay out of the settings search (the last argument) so it finds the
@@ -100,6 +106,9 @@ ns.Init(function()
 	local function Page(name)
 		local subcategory = Settings.RegisterVerticalLayoutSubcategory(category, name)
 		page = subcategory
+		if BUILT_IN then
+			BookFinder.RegisterPage(name, subcategory)
+		end
 		Settings.RegisterInitializer(
 			category,
 			CreateSettingsButtonInitializer(name, L["Open"], function()
@@ -644,12 +653,14 @@ ns.Init(function()
 			ns.WakeTravel()
 		end
 	)
-	Checkbox(
-		"minimapButton",
-		L["Show options button on minimap"],
-		L["Open these settings from the minimap."],
-		ns.RefreshOptionsButton
-	)
+	if not BUILT_IN then
+		Checkbox(
+			"minimapButton",
+			L["Show options button on minimap"],
+			L["Open these settings from the minimap."],
+			ns.RefreshOptionsButton
+		)
+	end
 	Checkbox(
 		"compass",
 		L["Show the compass"],
@@ -776,7 +787,10 @@ ns.Init(function()
 		end, nil, false)
 	)
 
-	Settings.RegisterAddOnCategory(category)
+	-- (BookFinder adds its category to the list once every part's pages are in: Bridge.lua)
+	if not BUILT_IN then
+		Settings.RegisterAddOnCategory(category)
+	end
 	ns.RefreshOptionsButton()
 	SLASH_SHORTESTPATHFOREVER1 = "/path"
 	SLASH_SHORTESTPATHFOREVER2 = "/shortestpath"

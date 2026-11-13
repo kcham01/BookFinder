@@ -145,6 +145,8 @@ end
 
 -- first time on this account: after the loading screen
 function ns.InitWelcome()
+  -- (BookFinder: one welcome for the whole addon, OpenMap's; the book list is a click away on its minimap button)
+  if BookFinder and BookFinder.SettingsCategory then ns.global.welcomeSeen = true end
   if ns.global.welcomeSeen then return end
   C_Timer.After(3, ns.ShowWelcome)
 end

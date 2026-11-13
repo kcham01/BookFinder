@@ -1136,7 +1136,8 @@ local function BuildPins()
 	local P = ns.MapPlaces or {}
 	local dungeons = S.PinSet("dungeons", 1.5)
 	local travel = { boat = S.PinSet("boats", 2.5), zeppelin = S.PinSet("zeppelins", 2.5) }   -- (each its own switch)
-	travel.airship = travel.boat
+	-- (the airships to Zephras Isle: their own set, so they stay when Shortest Path draws the other docks)
+	travel.airship = S.PinSet("airships", 2.5)
 	if S.BuildDungeonPins then
 		for _, pin in ipairs(S.BuildDungeonPins(dungeons)) do pins[#pins + 1] = pin end   -- (Dungeons.lua)
 	end

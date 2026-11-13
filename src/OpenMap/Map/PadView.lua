@@ -603,6 +603,8 @@ local function Look()
 		local set = S.GetPinSet(key)
 		if set then S.SetPinSetOn(set, db[opt]) end
 	end
+	local airships = S.GetPinSet("airships")
+	if airships then S.SetPinSetOn(airships, mod.TravelShown("boats")) end
 	if mod.RefreshFlightsFound then pcall(mod.RefreshFlightsFound) end
 	-- Questie's townsfolk and rares (Townsfolk.lua's: the kinds Options have on, built the first time)
 	if mod.RefreshTownsfolk then pcall(mod.RefreshTownsfolk, mod) end

@@ -26,7 +26,7 @@ BUILD = os.path.join(ROOT, "build")
 OWN_GLOBALS = [
     "OpenMapDB", "OpenMapCharDB", "ShortestPathForeverDB", "ShortestPathForeverCharDB", "BooksOnMapForeverGlobal",
     "BooksOnMapForeverDB", "ShortestPathForever", "ShortestPathForeverPathData", "ForeverCore", "ForeverCoreDB",
-    "ForeverCoreCharDB", "BookFinder", "OpenMapAPI", "OpenMap", "TomTom", "Questie", "QuestieLoader", "RXPCData",
+    "ForeverCoreCharDB", "BookFinder", "BookFinderDB", "OpenMapAPI", "OpenMap", "TomTom", "Questie", "QuestieLoader", "RXPCData",
     "Guidelime", "RXP", "Zygor", "ZGV", "ForeverCoreAPI", "WorldMapFrame_OnShow",
 ]
 
@@ -119,6 +119,61 @@ INTEGRATION = r"""function(root)
         local was = root.SPF.db.portals
         r.set(not was) want(root.SPF.db.portals == not was, "the portals switch didn't change Shortest Path's setting") r.set(was)
     end
+    -- One settings window: one category in the AddOns list, BookFinder, holding every part's pages
+    local names = {}
+    for _, c in ipairs(SETTINGS.listed) do names[#names + 1] = c.name end
+    want(#SETTINGS.listed == 1 and SETTINGS.listed[1].name == "BookFinder",
+        "settings: the AddOns list has " .. table.concat(names, ", ") .. " (expected BookFinder alone)")
+    local top = {}
+    for _, c in ipairs(SETTINGS.top) do top[#top + 1] = c.name end
+    want(#SETTINGS.top == 1, "settings: top-level categories made: " .. table.concat(top, ", "))
+    local pages = {}
+    for _, c in ipairs(SETTINGS.listed[1] and SETTINGS.listed[1].subs or {}) do pages[c.name] = true end
+    -- (the stub stops Shortest Path's settings at its tracker-host row, before Alerts and Interface: those need the game)
+    for _, page in ipairs({ "World map", "Map marks", "Transport", "Guidance", "Books" }) do
+        want(pages[page], "settings: no " .. page .. " page in BookFinder's window")
+    end
+    want(BookFinder.OpenSettings("map") and BookFinder.OpenSettings("books") and BookFinder.OpenSettings(), "settings: a page can't be opened")
+
+    -- One minimap button and one launcher
+    local LDBI = LibStub("LibDBIcon-1.0", true)
+    local buttons = {}
+    for name in pairs(LDBI and LDBI.objects or {}) do buttons[#buttons + 1] = name end
+    want(#buttons == 1 and buttons[1] == "BookFinder", "minimap buttons: " .. table.concat(buttons, ", "))
+    want(not rawget(_G, "OpenMapMinimapButton") and not rawget(_G, "ShortestPathForeverOptionsButton"), "another part made its own minimap button")
+    local LDB = LibStub("LibDataBroker-1.1", true)
+    local launchers = {}
+    for name in LDB:DataObjectIterator() do launchers[#launchers + 1] = name end
+    want(#launchers == 1 and launchers[1] == "BookFinder", "broker launchers: " .. table.concat(launchers, ", "))
+
+    -- Nothing on the map twice: OpenMap leaves the docks, flight masters and Shortest Path's townsfolk to it
+    local wm = root.OpenMap.modules and root.OpenMap.modules.worldmap
+    want(wm and wm.SUPERSEDED and wm.SUPERSEDED.boats and wm.SUPERSEDED.flight, "OpenMap still owns docks or flight masters")
+    want(wm and wm.db and wm.db.boats == false and wm.db.zeppelins == false and wm.db.flight == false,
+        "OpenMap's docks or flight masters are still on")
+    local kinds = {}
+    for _, k in ipairs(wm and wm.TOWNSFOLK or {}) do kinds[k.key] = true end
+    want(not kinds.vendor and not kinds.innkeeper and not kinds.classTrainer, "OpenMap still draws vendors, inns or trainers")
+    want(kinds.mailbox and kinds.spirit and kinds.rare, "OpenMap lost mailboxes, spirit healers or rares")
+    local panelIDs = {}
+    if wm and wm.ExtraMenuRows then end
+    want(wm and wm.TravelShown and wm.TravelShown("boats") == (root.SPF.db.pins ~= false), "the airships don't follow Shortest Path's boats switch")
+
+    -- One guidance: Books' tracker steps aside while Shortest Path guides the route
+    WorldMapFrame.EnumeratePinsByTemplate = false   -- (the stub's map answers every method; Shortest Path's quest pins look for this one)
+    local api = ShortestPathForever.API
+    local nav, cur = api.NavigateRoute, api.CurrentStop
+    api.NavigateRoute = function() return true end
+    api.CurrentStop = function() return 1 end
+    B.ToggleRoute(true)
+    local tracker = _G.BooksOnMapForeverRoute
+    want(tracker and not tracker:IsShown(), "Books' route tracker shows while Shortest Path guides the route")
+    api.CurrentStop = function() return nil end
+    B.OnGuidanceChanged()
+    want(tracker and tracker:IsShown(), "Books' tracker didn't come back when Shortest Path stopped guiding")
+    want(B.GetRoute and #B.GetRoute() > 0, "no route was built to guide")
+    B.ToggleRoute(false)
+    api.NavigateRoute, api.CurrentStop = nav, cur
     for k, f in pairs(saved) do C_Map[k] = f end
     CreateVector2D = savedVector
     return out
@@ -155,18 +210,56 @@ def run(mode):
         for _, k in ipairs({ %s }) do NIL_GLOBALS[k] = true end
         -- the retail-engine client's secret-value helpers: plain values here, so code past them runs
         NIL_GLOBALS.canaccessvalue, NIL_GLOBALS.issecretvalue = nil, nil
+        -- WoW's xpcall passes its extra arguments on, as Lua 5.2's does (AceGUI relies on it); 5.1's doesn't
+        local xpcall51 = xpcall
+        xpcall = function(f, handler, ...)
+            local n, args = select("#", ...), { ... }
+            return xpcall51(function() return f(unpack(args, 1, n)) end, handler)
+        end
+        -- font objects (Books' skin makes its own)
+        CreateFont = function(name)
+            local f = CreateFrame("Frame", name)
+            f.GetFont = function() return "Fonts\\FRIZQT__.TTF", 12, "" end
+            return f
+        end
         canaccessvalue = function() return true end
         canaccessallvalues = function() return true end
         issecretvalue = function() return false end
-        -- Blizzard's settings pages: any call answers an object whose every method is a no-op
+        -- Blizzard's settings panel, recording what is made: SETTINGS.top = categories made at the top level,
+        -- SETTINGS.listed = those added to the AddOns list; each category keeps its subcategories (names)
         local function object()
-            return setmetatable({}, { __index = function() return function() return object() end end })
+            return setmetatable({}, { __index = function(_, k)
+                if type(k) == "number" then return nil end
+                return function() return object() end
+            end })
         end
-        Settings = setmetatable({ VarType = { Boolean = "boolean", Number = "number", String = "string" } },
-            { __index = function() return function() return object() end end })
+        SETTINGS = { top = {}, listed = {}, nextID = 0 }
+        local function Category(name, parent)
+            SETTINGS.nextID = SETTINGS.nextID + 1
+            local c = { name = name, ID = SETTINGS.nextID, subs = {}, parent = parent }
+            function c:GetID() return self.ID end
+            function c:GetName() return self.name end
+            function c:GetSubcategories() return self.subs end
+            if parent then parent.subs[#parent.subs + 1] = c else SETTINGS.top[#SETTINGS.top + 1] = c end
+            SETTINGS.byID = SETTINGS.byID or {}
+            SETTINGS.byID[c.ID] = c
+            return c
+        end
+        local known = {
+            VarType = { Boolean = "boolean", Number = "number", String = "string" },
+            RegisterVerticalLayoutCategory = function(name) return Category(name) end,
+            RegisterCanvasLayoutCategory = function(_, name) return Category(name) end,
+            RegisterVerticalLayoutSubcategory = function(parent, name) return Category(name, parent) end,
+            RegisterCanvasLayoutSubcategory = function(parent, _, name) return Category(name, parent) end,
+            RegisterAddOnCategory = function(c) SETTINGS.listed[#SETTINGS.listed + 1] = c end,
+            GetCategory = function(id) return SETTINGS.byID and SETTINGS.byID[id] end,
+        }
+        Settings = setmetatable(known, { __index = function() return function() return object() end end })
         CreateSettingsButtonInitializer = function() return object() end
         CreateSettingsListSectionHeaderInitializer = function() return object() end
         MinimalSliderWithSteppersMixin = { Label = { Right = 1 } }
+        -- LibDBIcon registrations, by name (the minimap buttons)
+        MINIMAP_BUTTONS = {}
     """ % ", ".join('"%s"' % g for g in OWN_GLOBALS))
     if mode == "shadow":
         L.execute("""

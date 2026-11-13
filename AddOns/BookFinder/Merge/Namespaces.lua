@@ -63,4 +63,53 @@ function public.Loaded(folder)
 	return loaded and loaded(folder) and true or false
 end
 
+-- One settings window --------------------------------------------------------------------------------------------
+-- Options > AddOns > BookFinder, the game's own settings panel: every part's settings are pages of it (Shortest
+-- Path's pages, OpenMap's World map, the Library books), and every way into any part's settings opens it there.
+local category
+local pages = {}                -- key -> the page's category, for OpenSettings(key)
+
+-- BookFinder's category, made on first use (Shortest Path's settings build it at load, the others after)
+function public.SettingsCategory()
+	if not category and Settings and Settings.RegisterVerticalLayoutCategory then
+		category = Settings.RegisterVerticalLayoutCategory("BookFinder")
+	end
+	return category
+end
+
+-- a part's page, by a key of its own ("map", "books", or a Shortest Path page's title)
+function public.RegisterPage(key, page)
+	if key and page then pages[key] = page end
+end
+
+-- the settings window, at a page when one is named and known
+function public.OpenSettings(key)
+	local target = (key and pages[key]) or public.SettingsCategory()
+	if not target then return false end
+	local id = target.GetID and target:GetID() or target.ID
+	if ForeverCore and ForeverCore.OpenSettingsPanel then
+		ForeverCore.OpenSettingsPanel(id)
+	elseif Settings and Settings.OpenToCategory then
+		Settings.OpenToCategory(id)
+	end
+	return true
+end
+
+-- The category goes into the AddOns list once every page is in (Bridge.lua, at login)
+function public.PublishSettings()
+	if public.published or not category or not Settings.RegisterAddOnCategory then return end
+	public.published = true
+	Settings.RegisterAddOnCategory(category)
+end
+
+-- BookFinder's own saved settings (the minimap button), ready before any part's
+local boot = CreateFrame("Frame")
+boot:RegisterEvent("ADDON_LOADED")
+boot:SetScript("OnEvent", function(self, _, name)
+	if name ~= ADDON then return end
+	self:UnregisterEvent("ADDON_LOADED")
+	BookFinderDB = type(BookFinderDB) == "table" and BookFinderDB or {}
+	public.db = BookFinderDB
+end)
+
 _G.BookFinder = public
