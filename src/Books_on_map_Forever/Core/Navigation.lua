@@ -2,15 +2,36 @@
 local ADDON, ns = ...
 local L = ns.L
 
--- Shortest Path Forever's public API (docs/api.md in its repository), or nil
--- when it isn't loaded or speaks another major version
+-- Shortest Path Forever's public API (docs/api.md in its repository), or nil when it isn't loaded or
+-- speaks a version we don't know. Version 2 (Shortest Path 1.34) keeps every call used here with the
+-- same arguments; its reads answer `nil, reason` where version 1 answered nil, which reads the same here.
+local SPF_VERSIONS = { [1] = true, [2] = true }
 local function spf()
   local addon = ShortestPathForever
   local api = type(addon) == "table" and addon.API
-  if type(api) == "table" and api.version == 1 then return api end
+  if type(api) == "table" and SPF_VERSIONS[api.version] then return api end
 end
 
 local function has(api, name) return api and type(api[name]) == "function" end
+
+-- Shortest Path's travel time from the player to a book location, in seconds, or nil (not installed,
+-- in combat, still loading, or no way there). Asked at most every ESTIMATE_GAP seconds per location:
+-- every step the player takes is a new origin to Shortest Path, so its own cache wouldn't help.
+local ESTIMATE_GAP = 2
+local lastLoc, lastAt, lastSeconds
+function ns.TravelSeconds(loc)
+  local api = spf()
+  if not (loc and has(api, "Estimate")) then return end
+  local now = GetTime()
+  if loc == lastLoc and now - lastAt < ESTIMATE_GAP then return lastSeconds end
+  lastLoc, lastAt, lastSeconds = loc, now, nil
+  local mapID = C_Map.GetBestMapForUnit("player")
+  local pos = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
+  if not pos then return end
+  local ok, seconds = pcall(api.Estimate, mapID, pos.x, pos.y, loc[1], loc[2] / 100, loc[3] / 100)
+  if ok and type(seconds) == "number" then lastSeconds = seconds end
+  return lastSeconds
+end
 
 -- Shortest Path's API when it can take a whole route, or nil
 local function routeApi()

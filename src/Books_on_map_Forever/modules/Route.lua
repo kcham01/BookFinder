@@ -5,6 +5,7 @@ local S = ns.Skin
 local BOOKS = ns.BOOKS
 
 local CONTINENT_PENALTY = 20000 -- yards added for every boat/zeppelin trip between continents
+local NEAR_YARDS = 300          -- closer than this, the tracker shows yards rather than a travel time
 local route = {}                -- { {book = b, loc = loc, cont = id, x = wx, y = wy}, ... }
 local skipped = {}              -- book keys skipped for this session
 local tracker
@@ -173,9 +174,14 @@ local function updateTracker()
   tracker.name:SetText(("|cff5cc8ff%d/%d|r  %s"):format(1, #route, s.book.name))
   tracker.where:SetText(("%s  |cff808080(%.1f, %.1f)|r"):format(s.loc[4], s.loc[2], s.loc[3]))
   local cont, px, py = playerPos()
+  -- past a short walk, Shortest Path's travel time (flights, boats, portals) says more than yards
+  local seconds = ns.TravelSeconds and ns.TravelSeconds(s.loc)
+  local yards = cont and cont == s.cont and math.sqrt((s.x - px) ^ 2 + (s.y - py) ^ 2)
+  local timeText = seconds and (not yards or yards > NEAR_YARDS)
+    and SecondsToTime and SecondsToTime(seconds, seconds >= 60, false, 1, true)
   if cont and cont == s.cont then
     local dx, dy = s.x - px, s.y - py
-    tracker.dist:SetText(L["%d yd"]:format(math.floor(math.sqrt(dx * dx + dy * dy))))
+    tracker.dist:SetText(timeText or L["%d yd"]:format(math.floor(yards)))
     local facing = GetPlayerFacing and GetPlayerFacing()
     if facing then
       tracker.arrow:SetRotation(math.atan2(dy, dx) - facing)
@@ -184,7 +190,7 @@ local function updateTracker()
       tracker.arrow:Hide()
     end
   else
-    tracker.dist:SetText(L["other continent"])
+    tracker.dist:SetText(timeText or L["other continent"])
     tracker.arrow:Hide()
   end
 end

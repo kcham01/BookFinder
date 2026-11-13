@@ -1,5 +1,5 @@
 -- Books on map (Forever): world map pins
-local _, ns = ...
+local ADDON, ns = ...
 local L = ns.L
 local BOOKS, CONTINENTS = ns.BOOKS, ns.CONTINENTS
 
@@ -8,14 +8,23 @@ local pins, pinPool = {}, {}
 local trail       -- frame holding the route trail, raised with the pins
 local pinScale    -- size factor of the last draw (continent maps draw smaller pins)
 
+-- OpenMap (seamless world map, docs/api.md in its repository): its API when the world map shows the
+-- stitched map now, else nil. Version 2 brought CanvasFromWorldPos and ArtTopLevel
+local function stitched()
+  local api = OpenMapAPI
+  if type(api) ~= "table" or api.major ~= 1 or (api.version or 0) < 2 then return end
+  local ok, on = pcall(api.IsStitched)
+  if ok and on then return api end
+end
+
 -- frame level for our pins: above OpenMap's stitched art when it's showing
 -- (otherwise they're drawn under it and OpenMap only lifts them a frame later)
 local function pinLevel(canvas)
   local level = canvas:GetFrameLevel() + 2000
-  local api = OpenMapAPI
-  if api and api.IsStitched and api.ArtTopLevel and api.IsStitched() then
-    local top = api.ArtTopLevel()
-    if top and top + 2 > level then level = top + 2 end
+  local api = stitched()
+  if api then
+    local ok, top = pcall(api.ArtTopLevel)
+    if ok and type(top) == "number" and top + 2 > level then level = top + 2 end
   end
   return level
 end
@@ -158,6 +167,29 @@ local function project(loc, mapID, onContinent)
   end
 end
 
+-- position of a book location on OpenMap's stitched canvas (fractions of the map underneath, which
+-- run past 0-1 into the zones either side of it), or nil when it can't be placed there
+local worldOf = {}  -- [loc] = { continent, x, y } or false (they never change)
+local function projectStitched(api, loc)
+  local w = worldOf[loc]
+  if w == nil then
+    local c, x, y = ns.WorldPos(loc[1], loc[2] / 100, loc[3] / 100)
+    w = c and { c, x, y } or false
+    worldOf[loc] = w
+  end
+  if not w then return end
+  local ok, x, y = pcall(api.CanvasFromWorldPos, w[1], w[2], w[3])
+  if ok and type(x) == "number" and type(y) == "number" then return x, y end
+end
+
+-- a zone map shows full-size pins; continents and the world (OpenMap zoomed out) smaller ones
+local function isZoomedOut(mapID)
+  if CONTINENTS[mapID] then return true end
+  local info = C_Map.GetMapInfo(mapID)
+  local zone = Enum and Enum.UIMapType and Enum.UIMapType.Zone
+  return info and type(info.mapType) == "number" and type(zone) == "number" and info.mapType < zone or false
+end
+
 local function acquirePin(canvas)
   local p = table.remove(pinPool)
   if not p then
@@ -203,10 +235,13 @@ local function releasePins()
   end
 end
 
+local drawnMap, drawnStitched -- what the last draw was laid out on (OpenMap's view callbacks compare)
+
 function ns.RefreshMap()
   if not WorldMapFrame or not WorldMapFrame:IsShown() then return end
   releasePins()
   wipe(segs)
+  drawnMap, drawnStitched = nil, nil
   if ns.db.hidden then layoutTrail() return end
   local mapID = WorldMapFrame:GetMapID()
   if not mapID then layoutTrail() return end
@@ -214,7 +249,18 @@ function ns.RefreshMap()
   local w, h = canvas:GetWidth(), canvas:GetHeight()
   local scale = canvasScale()
   local onContinent = CONTINENTS[mapID]
-  pinScale = onContinent and 0.7 or 1
+  -- On OpenMap's stitched map the map underneath is only the zone the view is on, while the view
+  -- shows its neighbours too: every book in view is placed through OpenMap, not just that zone's
+  local om = stitched()
+  drawnMap, drawnStitched = mapID, om ~= nil
+  local function place(loc)
+    if om then
+      local x, y = projectStitched(om, loc)
+      if x then return x, y end
+    end
+    return project(loc, mapID, onContinent)
+  end
+  pinScale = isZoomedOut(mapID) and 0.7 or 1
   local size = (ns.db.pinSize or ns.DEFAULT_PIN_SIZE) / scale * pinScale
   local level = pinLevel(canvas)
 
@@ -222,7 +268,7 @@ function ns.RefreshMap()
     local mine = not ns.IsDone(b)
     if mine or ns.GroupNeeds(b) then
       for _, loc in ipairs(b.locs) do
-        local x, y = project(loc, mapID, onContinent)
+        local x, y = place(loc)
         if x then
           local p = acquirePin(canvas)
           p.book, p.loc = b, loc
@@ -252,7 +298,7 @@ function ns.RefreshMap()
     trail:SetFrameLevel(level - 2) -- (its spark one above: still under the pins)
     local route, prevX, prevY = ns.GetRoute()
     for i = 1, math.min(#route, TRAIL_STEPS + 1) do
-      local x, y = project(route[i].loc, mapID, onContinent)
+      local x, y = place(route[i].loc)
       if x and prevX then segs[#segs + 1] = { prevX * w, prevY * h, x * w, y * h, i - 1 } end
       prevX, prevY = x, y
     end
@@ -282,6 +328,34 @@ function ns.RescaleMap()
   end
 end
 
+-- OpenMap: redraw when its stitched map comes and goes, or a pan moved the map underneath without the
+-- map telling us; and offer our switches in its menu (and its button tray, when starred)
+local function hookOpenMap()
+  local api = OpenMapAPI
+  if type(api) ~= "table" or api.major ~= 1 then return end
+  local owner = {}
+  if type(api.RegisterCallback) == "function" then
+    api.RegisterCallback(owner, "OpenMap_StitchedChanged", function() ns.RefreshMap() end)
+    api.RegisterCallback(owner, "OpenMap_ViewChanged", function()
+      if not WorldMapFrame:IsShown() then return end
+      if WorldMapFrame:GetMapID() ~= drawnMap or (stitched() ~= nil) ~= drawnStitched then ns.RefreshMap() end
+    end)
+  end
+  if type(api.RegisterMenuToggle) == "function" then
+    local section = "Books on map"
+    pcall(api.RegisterMenuToggle, ADDON, {
+      id = "pins", label = L["Show on the map"], icon = ns.ICON, section = section,
+      get = function() return not ns.db.hidden end,
+      set = function(on) ns.db.hidden = not on; ns.Refresh() end,
+    })
+    pcall(api.RegisterMenuToggle, ADDON, {
+      id = "route", label = L["Optimized route"], icon = "Interface\\Icons\\Ability_Tracking", section = section,
+      get = function() return ns.db.routeOn and true or false end,
+      set = function(on) ns.ToggleRoute(on and true or false) end,
+    })
+  end
+end
+
 function ns.InitMap()
   -- (the map only: map addons such as OpenMap change the map underneath on every pan)
   hooksecurefunc(WorldMapFrame, "OnMapChanged", ns.RefreshMap)
@@ -289,4 +363,5 @@ function ns.InitMap()
   if WorldMapFrame.OnCanvasScaleChanged then
     hooksecurefunc(WorldMapFrame, "OnCanvasScaleChanged", ns.RescaleMap)
   end
+  hookOpenMap()
 end

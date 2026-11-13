@@ -279,7 +279,13 @@ local function OnCanvasClick(map, button)
 	if not ns.db.journey or button ~= "LeftButton" or not IsShiftKeyDown() or ChatBoxOpen() then
 		return false
 	end
-	ns.JourneyToMapPoint(map:GetMapID(), map:GetNormalizedCursorPosition())
+	-- On OpenMap's stitched map the zone under the cursor, not the one the view is centred on.
+	local stitchedMap, stitchedX, stitchedY = ns.OpenMapAddon.CursorMapPoint()
+	if stitchedMap then
+		ns.JourneyToMapPoint(stitchedMap, stitchedX, stitchedY)
+	else
+		ns.JourneyToMapPoint(map:GetMapID(), map:GetNormalizedCursorPosition())
+	end
 	return true
 end
 
@@ -540,8 +546,15 @@ ns.Init(function()
 				point.z = ns.SpawnHeight(point.map, point.x, point.y, QUESTIE_ICON_REACH)
 			end
 		else
-			point =
-				ns.WorldPoint(WorldMapFrame:GetMapID() --[[@as number]], WorldMapFrame:GetNormalizedCursorPosition())
+			local stitchedMap, stitchedX, stitchedY = ns.OpenMapAddon.CursorMapPoint()
+			if stitchedMap then
+				point = ns.WorldPoint(stitchedMap, stitchedX, stitchedY)
+			else
+				point = ns.WorldPoint(
+					WorldMapFrame:GetMapID() --[[@as number]],
+					WorldMapFrame:GetNormalizedCursorPosition()
+				)
+			end
 		end
 		if point and OnZone(ns.InstanceEntrance(point)) then
 			ns.StartJourney(point)

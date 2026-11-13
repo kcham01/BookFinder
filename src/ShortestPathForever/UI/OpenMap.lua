@@ -78,3 +78,30 @@ function OpenMap.Canvas(point)
 	end
 	return nil
 end
+
+-- The API version CursorPosition arrived in.
+local CURSOR_VERSION = 3
+
+-- The zone (or city) under the cursor on the stitched map, with the cursor's place on it (0..1): the map underneath
+-- is only the zone the view is on, so its own cursor position names the wrong zone, and that zone's underground
+-- flag, wherever the cursor is over a neighbour. nil when OpenMap is not stitching or cannot say.
+---@return number?, number?, number?
+function OpenMap.CursorMapPoint()
+	local api = OpenMap.API()
+	if not (api and (api.version or 0) >= CURSOR_VERSION and OpenMap.Stitched()) then
+		return nil
+	end
+	local ok, u, v = pcall(api.CursorPosition)
+	if not (ok and type(u) == "number" and type(v) == "number") then
+		return nil
+	end
+	local found, map = pcall(api.MapAt, u, v)
+	if not (found and type(map) == "number") then
+		return nil
+	end
+	local placed, x, y = pcall(api.MapFromWorld, map, u, v)
+	if placed and type(x) == "number" and type(y) == "number" and x >= 0 and x <= 1 and y >= 0 and y <= 1 then
+		return map, x, y
+	end
+	return nil
+end
