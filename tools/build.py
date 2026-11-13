@@ -4,6 +4,7 @@
     python3 tools/build.py                 # build/BookFinder + build/ForeverCore
     python3 tools/build.py --no-textures   # skip OpenMap's 335 MB of textures (checks only)
     python3 tools/build.py --zip           # also dist/BookFinder-<version>.zip
+    python3 tools/build.py --out AddOns    # refresh the ready-to-install copy kept in git
 
 What it does, in order (docs/INVENTORY.md explains why each is needed):
   1. copies each component into its own subfolder of BookFinder/
@@ -174,10 +175,11 @@ def openmap_textures():
 
 
 # --- build ---------------------------------------------------------------------------------------
-def build(textures, make_zip):
-    out_root = os.path.join(ROOT, "build")
+def build(textures, make_zip, out_root):
     out = os.path.join(out_root, NAME)
-    shutil.rmtree(out_root, ignore_errors=True)
+    # (only the two folders this writes: --out may be a folder with other things in it)
+    for top in (NAME, "ForeverCore"):
+        shutil.rmtree(os.path.join(out_root, top), ignore_errors=True)
     os.makedirs(out)
 
     metas, files, bindings = {}, [], []
@@ -307,5 +309,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-textures", action="store_true")
     ap.add_argument("--zip", action="store_true")
+    ap.add_argument("--out", default=os.path.join(ROOT, "build"),
+                    help="folder to write BookFinder/ and ForeverCore/ into (default build/; AddOns/ is the copy kept in git)")
     a = ap.parse_args()
-    build(not a.no_textures, a.zip)
+    build(not a.no_textures, a.zip, os.path.abspath(a.out))

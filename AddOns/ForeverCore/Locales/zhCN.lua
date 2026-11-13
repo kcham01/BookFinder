@@ -1,0 +1,96 @@
+-- Machine translated (2026-10-22); corrections welcome: https://github.com/cjber/forever-core/issues/new?template=translation.yml
+local _, ns = ...
+if GetLocale() ~= "zhCN" then
+	return
+end
+local L = ns.L
+
+L["%s (%s)"] = "%s（%s）"
+L["%s and %s"] = "%s和%s"
+L["%s, %s and %s"] = "%s、%s和%s"
+L["%s, %s, %s and %d more"] = "%s、%s、%s以及另外 %d 位"
+L["+%d more"] = "还有 %d 个"
+L[", "] = ", "
+L["%d yd"] = "%d码"
+L["%s (last %d):"] = "%s（最近 %d 条）："
+L["%s: no lines yet."] = "%s：还没有日志行。"
+L["Adds a macro window with every macro in one list, a mono editor with live checks, and history."] =
+	"Adds a macro window with every macro in one list, a mono editor with live checks, and history."
+L["All addons"] = "所有插件"
+L["Attach to quest tracker"] = "附着于任务追踪栏"
+L["Bug"] = "错误"
+L["Bug: "] = "错误："
+L["Close"] = "关闭"
+L["Copy issue link"] = "复制 Issue 链接"
+L["Copy link"] = "复制链接"
+L["Copy report"] = "复制报告"
+L["Copy the address, then open it in your browser."] = "复制该地址，然后在浏览器中打开。"
+L["Debug log is already on and pinned for this character."] = "该角色的调试日志已经开启并固定。"
+L["Debug log is off and unpinned."] = "调试日志已关闭并取消固定。"
+L["Debug log is off for this session; it is still pinned."] =
+	"本次会话已关闭调试日志，但仍保持固定。"
+L["Debug log is off."] = "调试日志已关闭。"
+L["Debug log is on and pinned for this character."] = "该角色的调试日志已开启并固定。"
+L["Debug log is on for this session."] = "本次会话已开启调试日志。"
+L["Don't suggest this again"] = "不再推荐"
+L["Drag to move"] = "拖动以移动"
+L["Feature request"] = "功能请求"
+L["Feature request: "] = "功能请求："
+L["ForeverCore"] = "ForeverCore"
+L["Forever addons"] = "Forever插件"
+L["Forever quest list"] = "Forever quest list"
+L["Forever tracker"] = "Forever追踪栏"
+L["Hide this section"] = "Hide this section"
+L["Inspired by"] = "灵感来自"
+L["Installed, turned off"] = "已安装，已禁用"
+L["Keeps a cosmetic journal of the creatures you kill, zone by zone."] =
+	"Keeps a cosmetic journal of the creatures you kill, zone by zone."
+L["Lists your commission turn-ins, the materials in your bags and the next NPC to visit."] =
+	"Lists your commission turn-ins, the materials in your bags and the next NPC to visit."
+L["Lists your tracked quests in the Forever column, ready to turn in first, then this zone, then the rest by zone, nearest first. The game's own quest list is collapsed while this is on."] =
+	"Lists your tracked quests in the Forever column, ready to turn in first, then this zone, then the rest by zone, nearest first. The game's own quest list is collapsed while this is on."
+L["Lock the tracker"] = "锁定追踪器"
+L["No addon has attached its log yet."] = "还没有插件附加日志。"
+L["No one is listed yet."] = "还没有列出任何人。"
+L["Not installed"] = "未安装"
+L["On"] = "开启"
+L["Open"] = "打开"
+L["Picks quests for your level and plans them into one journey."] =
+	"挑选适合你等级的任务，并规划成一段旅程。"
+L["Plans the cheapest route to your next profession rank."] = "规划升到下一专业等级最省钱的路线。"
+L["Plans the quickest way anywhere and guides you there, with live boat and zeppelin times."] =
+	"规划前往任何地点的最快路线并为你引路，附带船只和飞艇的实时时刻。"
+L["Players"] = "玩家"
+L["Quest automation, rare alerts and merchant handling for the default UI."] =
+	"为默认界面提供任务自动化、稀有怪提醒和商人处理。"
+L["Ready to turn in"] = "Ready to turn in"
+L["Report a bug or request a feature"] = "报告错误或请求功能"
+L["Show a quiet line where one of my other Forever addons would help. Only for addons you don't have."] =
+	"在我的其他Forever插件能帮上忙的地方显示一行不显眼的提示。仅限你尚未安装的插件。"
+L["Shows the Legacy challenges you can advance in each zone."] =
+	"显示每个地区中你可以推进的传承挑战。"
+L["Suggest my other Forever addons"] = "推荐我的其他Forever插件"
+L["Thanks"] = "感谢"
+L["Thanks to %s"] = "感谢 %s"
+L["The Forever addons are free, with nothing locked behind them. If they help, you can buy me a coffee."] =
+	"Forever 插件全部免费，没有任何付费才能使用的内容。如果它们对你有帮助，可以请我喝杯咖啡。"
+L["The link is selected. Press Ctrl+C (Cmd+C on a Mac), then paste into a browser; GitHub opens a filled-in issue."] =
+	"链接已选中。按 Ctrl+C（Mac 上为 Cmd+C）复制，然后粘贴到浏览器中；GitHub 会打开一个已填写的问题。"
+L["The players who helped each Forever addon."] = "帮助过每个 Forever 插件的玩家。"
+L["The text is selected. Press Ctrl+C (Cmd+C on a Mac) to copy it, then paste it into your bug report."] =
+	"文本已选中。按Ctrl+C（Mac上为Cmd+C）复制，然后粘贴到你的错误报告中。"
+L["The tracker is locked. Turn off Lock the tracker to move it."] =
+	"追踪器已锁定。关闭“锁定追踪器”即可移动它。"
+L["This addon"] = "本插件"
+L["Title"] = "标题"
+L["Tracker background"] = "追踪器背景"
+L["Tracker"] = "追踪器"
+L["Click to %s"] = "点击%s"
+L["Right-click for options"] = "右键查看选项"
+L["Unavailable in combat"] = "战斗中不可用"
+L["Usage: /forever debug, /forever debug pin, /forever debug off, /forever debug show"] =
+	"用法：/forever debug、/forever debug pin、/forever debug off、/forever debug show"
+L["Use the game's quest list"] = "Use the game's quest list"
+L["What happened, or what you would like"] = "发生了什么，或你想要的功能"
+L.MINIMAP_UNAVAILABLE = "小地图不可用，已跳过自定义按钮。"
+L["MENU_BACK"] = "返回"
