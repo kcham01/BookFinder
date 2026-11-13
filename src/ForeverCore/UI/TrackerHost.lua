@@ -735,6 +735,11 @@ local function LayoutBesideList(list, kind)
 	local scale = host:GetEffectiveScale() / UIParent:GetEffectiveScale()
 	local screenWidth, screenHeight = UIParent:GetWidth() / scale, UIParent:GetHeight() / scale
 	local width = math.min(ObjectiveTrackerFrame:GetWidth(), screenWidth)
+	-- BookFinder: under Questie's list the column is as wide as the list, so the two read as one tracker
+	if kind == "questie" and rawget(_G, "BookFinder") then
+		local toHost = list:GetEffectiveScale() / host:GetEffectiveScale()
+		width = math.min(list:GetWidth() * toHost, screenWidth)
+	end
 	host:SetWidth(width)
 	displacedRoom = module.Room(list, host)
 	if not LayoutModules(width, displacedRoom, 0) then
