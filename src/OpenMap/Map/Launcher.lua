@@ -21,6 +21,7 @@ local function OpenMenu()
 end
 
 local function OpenWindow()
+	if ns.OpenOptionsPage then ns.OpenOptionsPage() return end
 	local ACD = LibStub("AceConfigDialog-3.0", true)
 	if ACD then ACD:Open("OpenMap") end
 end
@@ -92,7 +93,8 @@ local function Make()
 end
 
 function mod.RefreshLauncher()
-	if mod.db.minimapButton and Minimap then
+	-- (BookFinder has one minimap button for every part: Bridge.lua)
+	if mod.db.minimapButton and Minimap and not ns.BUILT_IN then
 		if not button then Make() end
 		Place()
 		button:Show()
@@ -105,6 +107,7 @@ end
 -- OpenMap depending on either addon. Libraries from other addons are ready at
 -- PLAYER_LOGIN; if no broker is installed, the minimap launcher still works.
 local function RegisterBroker()
+	if ns.BUILT_IN then return end   -- (BookFinder's launcher stands for every part: Bridge.lua)
 	local ldb = LibStub and LibStub("LibDataBroker-1.1", true)
 	if not ldb then return end
 	ldb:NewDataObject("OpenMap", {
@@ -120,6 +123,7 @@ end
 function mod:LauncherOptions(opts, get, off)
 	local function set(info, v) mod.db[info[#info]] = v mod.RefreshLauncher() end
 	opts.minimapButton = { type = "toggle", name = L["Minimap button"], order = 28.5, get = get, set = set, disabled = off,
+		hidden = function() return ns.BUILT_IN end,
 		desc = L["A button on the minimap's edge that opens the map and its menu (right-click: this window). Drag it round the minimap. OpenMap is in the minimap's AddOns list too."] }
 	opts.mapButtons = { type = "toggle", name = L["OpenMap button on the map"], order = 28.6, get = get, disabled = off,
 		set = function(_, v) mod.db.mapButtons = v mod:Refresh() end,

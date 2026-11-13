@@ -7,23 +7,28 @@ One WoW: Forever addon made of three:
   and through portals, with directions in the tracker, an arrow and a compass.
 - **Books on map (Forever)**: the library books on the map, with an optimised collection route.
 
-Every feature of each is kept, and they work together:
+Every feature of each is kept, nothing does the same job twice, and they work as one:
 
-- Books of **every zone in view** show on OpenMap's stitched map, with the route trail, above its art.
-- Books' route goes to Shortest Path as one journey (this was broken in Books 2.2.6, which didn't accept Shortest
-  Path's current API), and the route tracker shows Shortest Path's real travel time.
-- Shift-clicking a neighbouring zone on the stitched map plans the journey to that zone (and its floor).
-- OpenMap's menu gets switches for the books, the books route, and Shortest Path's boats, lifts, portals and
-  flight masters.
-- One addon-compartment entry (left-click: the map; right-click: each part's settings) and `/bookfinder`.
+- **One settings window**: Options › AddOns › BookFinder, the game's own settings panel. The world map, every
+  journey page and the library books are its pages. `/bookfinder`, `/path`, the minimap button's right-click and the
+  gear in the book list all open it.
+- **One minimap button** (and one launcher for Titan/ElvUI): your books collected, the nearest book and the journey
+  under way in its tooltip; left-click the map, right-click a menu.
+- **One set of travel icons**: Shortest Path draws the docks, flight masters, shops and trainers (live departures,
+  flight times, a journey a click away); OpenMap keeps the seamless map, dungeons, mailboxes, spirit healers, rares
+  and the Zephras Isle airships.
+- **One guidance**: turn on the books route and Shortest Path guides it, with its tracker, arrow and compass.
+- Books of **every zone in view** show on the seamless map, with the route trail, above its art.
+- Shift-clicking a neighbouring zone on the seamless map plans the journey to that zone (and its floor).
+- OpenMap's map menu has switches for the books, the route and Shortest Path's icons.
 
-Every part keeps its own commands: `/openmap`, `/path`, `/way`, `/spfnear`, `/bom`.
+The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spfnear`, `/bom` (the book list).
 
 ## Install
 
-1. Build it (or use a zip someone built): `python3 tools/build.py --zip` → `dist/BookFinder-1.0.0.zip`.
-2. Extract the zip into the client's `Interface/AddOns/` (`_forever_` live, `_classic_beta_` beta). You get two
-   folders: `BookFinder/` and `ForeverCore/`. ForeverCore is the shared library every Forever addon needs: keep it
+1. Download this repository (Code › Download ZIP).
+2. Copy the two folders inside its `AddOns/` folder, `BookFinder/` and `ForeverCore/`, into the client's
+   `Interface/AddOns/` (`_forever_` live, `_classic_beta_` beta). ForeverCore is the shared library every Forever addon needs: keep it
    even if you have other Forever addons.
 3. Disable or delete the standalone `OpenMap`, `ShortestPathForever` and `Books_on_map_Forever` folders. If one is
    still enabled, BookFinder's copy of it stands aside and says so in chat.

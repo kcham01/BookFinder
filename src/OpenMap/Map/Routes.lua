@@ -35,7 +35,7 @@ local KIND_OPTION = { boat = "boats", zeppelin = "zeppelins" }   -- (a route sho
 
 local function KindOn(route)
 	local key = KIND_OPTION[route.kind]
-	return not key or mod.db[key] ~= false
+	return not key or mod.TravelShown(key)
 end
 
 local function Smooth(x, r)

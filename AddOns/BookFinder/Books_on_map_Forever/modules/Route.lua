@@ -281,9 +281,15 @@ function ns.RefreshRoute(rebuild, nearestFirst)
   local s = route[1]
   tracker.icon:SetTexture(s and s.book.icon and ("Interface\\Icons\\" .. s.book.icon) or ns.ICON)
   tracker.waypoints:SetText(waypointButtonText())
-  tracker:Show()
+  -- one guidance on screen: while Shortest Path guides this route, its tracker, arrow and compass do it
+  tracker:SetShown(not ns.RouteGuided())
   updateTracker()
   ns.RefreshMap()
+end
+
+-- Shortest Path's guidance changed (Navigation.lua): Books' own tracker shows whenever it isn't guiding the route
+function ns.OnGuidanceChanged()
+  if tracker and ns.db.routeOn then tracker:SetShown(not ns.RouteGuided()) end
 end
 
 function ns.ToggleRoute(on, nearestFirst)
@@ -292,6 +298,11 @@ function ns.ToggleRoute(on, nearestFirst)
   if on then
     ns.RefreshRoute(true, nearestFirst)
     print(ns.PREFIX .. L["route: %d books, lowest level first."]:format(#route))
+    -- BookFinder: Shortest Path guides the route from the start, so there is one guidance, not two
+    if BookFinder and BookFinder.SettingsCategory and ns.RouteWaypointProvider() == "Shortest Path" and #route > 0 then
+      ns.SendRouteWaypoints(route)
+      ns.OnGuidanceChanged()
+    end
   else
     wipe(route)
     ns.CancelRouteWaypoints()

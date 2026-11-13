@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 MERGE = os.path.join(ROOT, "merge")
 NAME = "BookFinder"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 OPENMAP_REPO = "https://github.com/openmap-world/openmap.git"
 OPENMAP_COMMIT = "91c84b3bf633f3ae4840309e4620d63b249f626e"
@@ -235,7 +235,7 @@ def build(textures, make_zip, out_root):
         for dep in re.split(r"[,\s]+", meta.get("OptionalDeps", "")):
             if dep and dep not in optional and dep not in ("OpenMap", "ShortestPathForever", "ForeverCore"):
                 optional.append(dep)
-    saved, saved_char = [], []
+    saved, saved_char = ["BookFinderDB"], []
     for meta in metas.values():
         saved += [v.strip() for v in meta.get("SavedVariables", "").split(",") if v.strip()]
         saved_char += [v.strip() for v in meta.get("SavedVariablesPerCharacter", "").split(",") if v.strip()]
@@ -251,7 +251,7 @@ def build(textures, make_zip, out_root):
 ## Category: Map
 ## X-Category: Map
 ## X-License: GPL-3.0-or-later (Shortest Path Forever's licence; OpenMap's code is MIT; Books on map's is its author's); map art is Blizzard's
-## IconTexture: Interface\\AddOns\\{NAME}\\Books_on_map_Forever\\adds\\icon
+## IconTexture: Interface\\AddOns\\{NAME}\\OpenMap\\Media\\Textures\\OpenMapIconRound
 ## AddonCompartmentFunc: BookFinder_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: BookFinder_OnAddonCompartmentEnter
 ## AddonCompartmentFuncOnLeave: BookFinder_OnAddonCompartmentLeave

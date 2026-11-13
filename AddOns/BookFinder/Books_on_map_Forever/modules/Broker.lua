@@ -9,6 +9,8 @@ function ns.RefreshBroker()
 end
 
 function ns.InitBroker()
+  -- (BookFinder: its one launcher shows the books with everything else, Bridge.lua)
+  if BookFinder and BookFinder.SettingsCategory then return end
   local ldb = LibStub and LibStub("LibDataBroker-1.1", true)
   if not ldb then return end
   obj = ldb:NewDataObject("Books on map (Forever)", {
