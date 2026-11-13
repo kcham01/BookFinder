@@ -1134,6 +1134,11 @@ public.BooksTab = {
 	Refresh = function() Refresh() end,
 	Search = function(text) if searchBox then searchBox:SetText(text or "") end query = text or "" Refresh() end,
 	Rows = function() return shownRows end,
+	State = function()
+		local shownHeaders, folded = 0, 0
+		for _, h in ipairs(headers) do if h:IsShown() then shownHeaders = shownHeaders + 1 if h.collapsed then folded = folded + 1 end end end
+		return ("visible %s, panel %s, books %d, %d sections (%d folded), %d rows"):format(tostring(visible), tostring(panel ~= nil), #allBooks(), shownHeaders, folded, shownRows)
+	end,
 	Step = function() if queue then StepQueue() end return queue ~= nil end,
 	Estimates = function() local n = 0 for _ in pairs(estimates) do n = n + 1 end return n end,
 	Spec = function(key) local row = rowsByKey[key] return row and row.spec end,

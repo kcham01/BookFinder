@@ -504,7 +504,8 @@ end
 
 -- for the offline test
 public.SearchTest = {
-	Run = function(q) cache.query = nil return search(q) end,
+	Run = function(q) cache.query = nil readIndex() return search(q) end,
+	Progress = function() return indexDone, indexTotal, index.reading end,
 	ReadNow = function()
 		readIndex()
 		local f = index.frame

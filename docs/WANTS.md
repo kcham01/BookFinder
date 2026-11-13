@@ -101,6 +101,24 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
   without the game. 500+ journeys from all six capitals to every flight point, book and test place: every one gets a
   route, with every flight point known and with none. So the planner is sound; what failed was the hand-off.
 
+## Your 1.8.0 self-test (The Barrens, level 30 Horde) and what it showed
+- **Why it "won't route": a first plan to a far place took 15 to 30 s**, with nothing on screen meanwhile. Light's Hope
+  Chapel had no plan after 18 s. Shortest Path gives its walking search 2 ms a frame.
+- A search shows **interim routes before it is sure** (Camp Mojache: walk to the Great Lift, fly back to Camp Taurajo,
+  then walk), which read as nonsense if you catch them.
+- Three journeys in the test were replaced by map clicks during it (they ended at unnamed places in The Barrens and
+  Wetlands). The test now says to leave the map alone and names the journey that took its place.
+- The search failures (quest, NPC, item, object) and "0 rows" in the books tab were the test's own faults: it never
+  started the database index, and it counted rows with every set folded.
+- You said: "prob just do all 3": mock-ups of every screen first, then the rebuild to match them, then fixes from the
+  self-test file and screenshots. "It's janky as is."
+
+## Done in 1.8.1 (for you to test)
+- **First plans about four times sooner**: while a journey has no plan at all, its search gets 8 ms a frame; once
+  there is a route to follow it goes back to 2 ms.
+- The self-test waits for each search's final answer (up to 45 s), keeps what it showed on the way with the second
+  it appeared, and records whose journey it read. It takes two to three minutes now.
+
 ## Still to do (waiting on your data)
 - **If a journey still doesn't start**, it now says why. Send `BookFinder.lua`: `attempts` has each one.
 - **Routing quality**: run `/bookfinder selftest` somewhere, `/reload`, and send `BookFinder.lua`. Its 15 routes, plus

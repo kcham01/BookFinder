@@ -114,6 +114,8 @@ local function watch(entry)
 		local state, title, text = status()
 		entry.outcome = state or entry.outcome
 		if state == "planned" or not state then
+			-- (the recorder keeps the plan: its own subscription missed them in 1.8.0)
+			if state and public.RecordJourney then pcall(public.RecordJourney) end
 			if state or ticks > 2 then watching = nil return end
 		elseif state == "unreachable" then
 			dead = dead + 1
@@ -132,6 +134,22 @@ local function watch(entry)
 	C_Timer.After(1, tick)
 end
 
+-- A first plan, sooner. Shortest Path gives its walking search 2 ms of each frame, so that a search behind a journey
+-- you are already following never shows. But a journey to another continent needs a second or more of searching
+-- before it has anything to follow: 15 to 30 s at 2 ms a frame (your 1.8.0 self-test: Light's Hope Chapel had no plan
+-- after 18 s). While there is no plan at all, the search gets FIRST_PLAN_MS of each frame; with a plan to follow it
+-- goes back to Shortest Path's own figure.
+local FIRST_PLAN_MS = 8
+local ownBudget
+local function pace()
+	local SPF = spf()
+	local Path = SPF and SPF.Path
+	if not (Path and type(Path.budget) == "number") then return end
+	ownBudget = ownBudget or Path.budget
+	local want = status() == "searching" and math.max(ownBudget, FIRST_PLAN_MS) or ownBudget
+	if Path.budget ~= want then Path.budget = want end
+end
+
 local queued   -- the journey asked for in combat
 local original
 
@@ -143,6 +161,7 @@ local function navigateRoute(owner, stops, ...)
 	if started then
 		queued = nil
 		entry.result = "started"
+		pace()
 		watch(record(entry))
 		return true
 	end
@@ -202,6 +221,7 @@ events:RegisterEvent("PLAYER_REGEN_ENABLED")
 events:SetScript("OnEvent", function(_, event)
 	if event == "PLAYER_LOGIN" then
 		install()
+		if C_Timer and C_Timer.NewTicker then C_Timer.NewTicker(0.2, pace) end
 	elseif queued then
 		local q = queued
 		queued = nil
@@ -215,6 +235,7 @@ public.Journeys = {
 	Install = install,
 	WhyNot = whyNot,
 	Queued = function() return queued end,
+	Pace = pace,
 	Original = function(fn) local was = original original = fn or original return was end,
 	Flush = function() if queued then local q = queued queued = nil return navigateRoute(q.owner, q.stops) end end,
 }

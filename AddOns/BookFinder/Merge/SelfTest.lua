@@ -103,8 +103,9 @@ local function steps()
 	wait(1)
 	check("the books tab draws its books", function()
 		local t = public.BooksTab
-		local n = t and t.Rows() or 0
-		return n >= 10, n .. " rows"
+		local state = t and t.State and t.State() or "no tab"
+		-- (every set folded is a list too: its section headers are drawn)
+		return (t and t.Rows() or 0) >= 1 or state:find("[1-9]%d* sections") ~= nil, state
 	end)
 	check("the books tab has travel times", function()
 		local t = public.BooksTab
@@ -152,7 +153,10 @@ local function steps()
 			wait(0.5)
 		end
 		check("Questie's database index reads", function()
-			return ST.Index.ready, ("%.1f s"):format((now() - started) / 1000)
+			local done, total, reading = 0, 0, false
+			if ST.Progress then done, total, reading = ST.Progress() end
+			return ST.Index.ready, ("%.1f s, %d of %d names read%s"):format((now() - started) / 1000, done or 0, total or 0,
+				(not ST.Index.ready and not reading) and ", never started (Questie's database isn't up)" or "")
 		end)
 		for _, q in ipairs({ { "the killing fields", "quest" }, { "spirit healer", "npc" }, { "linen cloth", "item" }, { "mailbox", "object" } }) do
 			check("search finds " .. q[2] .. " \"" .. q[1] .. "\"", function()
@@ -203,21 +207,40 @@ local function steps()
 			local okNav, started = pcall(spf.Navigate, ADDON, m, x, y, title)
 			route.started = okNav and started or false
 			local j
-			-- (until the search has an answer: a plan, or no way there)
+			-- (until the search has its final answer: a plan with nothing still being measured, or no way there. What it
+			-- shows on the way is kept too, with the second it appeared: a search offers a route to follow before it is sure)
 			local state, _, stateText
-			for _ = 1, 60 do
+			local began, seen = now(), nil
+			route.timeline = {}
+			for _ = 1, 150 do
 				j = journeyNow()
 				if public.JourneyStatus then state, _, stateText = public.JourneyStatus() end
-				if (j and state ~= "searching") or state == "unreachable" then break end
+				local pending = false
+				if SPF and SPF.JourneyStatus then
+					local okS, p = pcall(SPF.JourneyStatus)
+					pending = okS and p and true or false
+				end
+				local shape = (state or "none") .. (pending and "+" or "") .. ":" .. (j and #j.legs or 0) .. ":" .. tostring(j and j.secondsLeft)
+				if shape ~= seen and #route.timeline < 12 then
+					seen = shape
+					route.timeline[#route.timeline + 1] = { at = math.floor((now() - began) / 100 + 0.5) / 10, state = state, measuring = pending,
+						seconds = j and j.secondsLeft, legs = legsOf(j) }
+				end
+				if state == "unreachable" or (j and #j.legs > 0 and state == "planned" and not pending) then break end
 				wait(0.3)
 			end
 			route.state, route.stateText = state, stateText
+			route.took = math.floor((now() - began) / 100 + 0.5) / 10
+			route.goal = j and j.goal and { title = j.goal.title, map = j.goal.map, x = j.goal.x, y = j.goal.y } or nil
+			route.owner = j and j.owner
 			route.secondsLeft = j and j.secondsLeft
 			route.legs = legsOf(j)
 			run.routes[#run.routes + 1] = route
 			check("journey to " .. title, function()
-				return route.started and #route.legs > 0,
-					("%s, %d legs"):format(route.secondsLeft and ("%d s"):format(route.secondsLeft) or "no time", #route.legs)
+				local mine = route.goal and route.goal.title == title
+				return route.started and #route.legs > 0 and mine,
+					("%s, %d legs, planned in %.1f s%s"):format(route.secondsLeft and ("%d s"):format(route.secondsLeft) or "no time", #route.legs,
+						route.took or 0, (route.goal and not mine) and (", but another journey took its place: " .. tostring(route.goal.title)) or "")
 			end)
 			if spf.Cancel then pcall(spf.Cancel, ADDON) end
 			if SPF and SPF.ClearJourney and journeyNow() then pcall(SPF.ClearJourney) end
@@ -269,7 +292,7 @@ function public.SelfTest()
 		version = C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version"),
 		level = UnitLevel("player"), faction = UnitFactionGroup("player") }
 	public.db.selftest = run
-	print(PREFIX .. "self-test started: stand still for about a minute.")
+	print(PREFIX .. "self-test started: stand still and leave the map alone for two or three minutes (a click on it starts a journey of its own).")
 	co = coroutine.create(steps)
 	local ok, err = coroutine.resume(co)
 	if not ok then
