@@ -269,8 +269,8 @@ local function worldTooltip(self)
   if self.step then GameTooltip:AddLine(L["Route step %d"]:format(self.step), 0.4, 0.8, 1) end
   GameTooltip:AddLine(L["Books: %d/%d"]:format(ns.CountDone(), #BOOKS), 0.7, 0.7, 0.7)
   ns.AddGroupTooltip(self.book)
-  local provider = ns.WaypointProvider()
-  if provider then GameTooltip:AddLine(L["Click: %s waypoint"]:format(provider), 0.5, 1, 0.5) end
+  local hint = ns.WaypointHint()
+  if hint then GameTooltip:AddLine(hint, 0.5, 1, 0.5) end
   GameTooltip:AddLine(L["Shift-click: mark as collected"], 0.5, 1, 0.5)
   GameTooltip:Show()
 end
@@ -286,8 +286,8 @@ local function buildWorld(S)
   worldDirty = false
   if ns.db.hidden then return end
   local size = ns.db.pinSize or ns.DEFAULT_PIN_SIZE
-  -- the route's next steps, unless Shortest Path is guiding it: then its own line is the route on the map
-  local route = ns.db.routeOn and ns.GetRoute and not (ns.RouteGuided and ns.RouteGuided()) and ns.GetRoute() or nil
+  -- the route's next steps (BookFinder: drawn while the game's pin guides it too; its pin is only the next book)
+  local route = ns.db.routeOn and ns.GetRoute and ns.GetRoute() or nil
   if route then
     local C = ns.Skin.C
     local prev
@@ -464,7 +464,7 @@ local function hookOpenMap()
     end)
   end
   if type(api.RegisterMenuToggle) == "function" then
-    local section = "Books on map"
+    local section = L["Library books"]
     pcall(api.RegisterMenuToggle, ADDON, {
       id = "pins", label = L["Show on the map"], icon = ns.ICON, section = section,
       get = function() return not ns.db.hidden end,

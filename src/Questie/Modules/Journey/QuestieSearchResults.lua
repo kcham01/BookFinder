@@ -93,7 +93,7 @@ local function AddLinkedParagraph(frame, linkType, lookup, header, query, addTom
             group:AddChild(link);
         end
 
-        if addTomTomButton and TomTom and TomTom.AddWaypoint then
+        if addTomTomButton and ((TomTom and TomTom.AddWaypoint) or BookFinder) then
             for _, id in pairs(lookup) do
                 id = abs(id)
                 local spawns = query(id, "spawns")
@@ -103,7 +103,7 @@ local function AddLinkedParagraph(frame, linkType, lookup, header, query, addTom
                         local name = query(id, "name")
                         QuestieJourneyUtils:Spacer(group)
                         local button = AceGUI:Create("Button")
-                        button:SetText((BookFinder and "Plan a journey" or l10n("Set |cFF54e33bTomTom|r Target")))
+                        button:SetText((BookFinder and "Map pin" or l10n("Set |cFF54e33bTomTom|r Target")))
                         button:SetCallback("OnClick", function()
                             TrackerUtils:SetTomTomTarget(name, zone, x, y)
                         end)
@@ -345,12 +345,12 @@ function QuestieSearchResults:SpawnDetailsFrame(f, spawn, spawnType)
             end
         end
 
-        if TomTom and TomTom.AddWaypoint and spawns[startindex] and spawns[startindex][1] then
+        if ((TomTom and TomTom.AddWaypoint) or BookFinder) and spawns[startindex] and spawns[startindex][1] then
             local tx = spawns[startindex][1][1]
             local ty = spawns[startindex][1][2]
             if tx ~= -1 or ty ~= -1 then
                 local tomTomButton = AceGUI:Create("Button")
-                tomTomButton:SetText((BookFinder and "Plan a journey" or l10n("Set |cFF54e33bTomTom|r Target")))
+                tomTomButton:SetText((BookFinder and "Map pin" or l10n("Set |cFF54e33bTomTom|r Target")))
                 tomTomButton:SetCallback("OnClick", function()
                     TrackerUtils:SetTomTomTarget(spawnObject.name, startindex, tx, ty)
                 end)

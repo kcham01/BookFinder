@@ -1,5 +1,5 @@
--- BookFinder: loaded first. One addon folder holds three addons (OpenMap, Shortest Path Forever and
--- Books on map Forever), and the game gives every file of one addon the same private table. Each
+-- BookFinder: loaded first. One addon folder holds four addons (Questie with QuestieDB, OpenMap and Books on map
+-- Forever), and the game gives every file of one addon the same private table. Each
 -- component's files take their own table from it instead (tools/build.py rewrites the line that reads
 -- it), so their `ns.db`, `ns.L`, `ns.RefreshMap` and the rest never meet.
 --
@@ -12,7 +12,6 @@ local COMPONENTS = {
 	{ key = "QuestieDB", folder = "QuestieDB", title = "QuestieDB", with = "Questie" },
 	{ key = "Questie", folder = "Questie", title = "Questie", with = "QuestieDB" },
 	{ key = "OpenMap", folder = "OpenMap", title = "OpenMap" },
-	{ key = "SPF", folder = "ShortestPathForever", title = "Shortest Path Forever" },
 	{ key = "Books", folder = "Books_on_map_Forever", title = "Books on map" },
 }
 
@@ -75,12 +74,12 @@ function public.Loaded(folder)
 end
 
 -- One settings window --------------------------------------------------------------------------------------------
--- Options > AddOns > BookFinder, the game's own settings panel: every part's settings are pages of it (Shortest
--- Path's pages, OpenMap's World map, the Library books), and every way into any part's settings opens it there.
+-- Options > AddOns > BookFinder, the game's own settings panel: every part's settings are pages of it (OpenMap's
+-- World map, the Library books, Questie's), and every way into any part's settings opens it there.
 local category
 local pages = {}                -- key -> the page's category, for OpenSettings(key)
 
--- BookFinder's category, made on first use (Shortest Path's settings build it at load, the others after)
+-- BookFinder's category, made on first use
 function public.SettingsCategory()
 	if not category and Settings and Settings.RegisterVerticalLayoutCategory then
 		category = Settings.RegisterVerticalLayoutCategory("BookFinder")
@@ -88,7 +87,7 @@ function public.SettingsCategory()
 	return category
 end
 
--- a part's page, by a key of its own ("map", "books", or a Shortest Path page's title)
+-- a part's page, by a key of its own ("map", "books", "quests")
 function public.RegisterPage(key, page)
 	if key and page then pages[key] = page end
 end
@@ -98,11 +97,8 @@ function public.OpenSettings(key)
 	local target = (key and pages[key]) or public.SettingsCategory()
 	if not target then return false end
 	local id = target.GetID and target:GetID() or target.ID
-	if ForeverCore and ForeverCore.OpenSettingsPanel then
-		ForeverCore.OpenSettingsPanel(id)
-	elseif Settings and Settings.OpenToCategory then
-		Settings.OpenToCategory(id)
-	end
+	if InCombatLockdown() then return false end
+	if Settings and Settings.OpenToCategory then Settings.OpenToCategory(id) end
 	return true
 end
 

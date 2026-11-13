@@ -150,7 +150,7 @@ end
 
 -- route button: "Guide" when Shortest Path takes the route, "TomTom" otherwise
 local function waypointButtonText()
-  return ns.RouteWaypointProvider() == "Shortest Path" and L["Guide"] or "TomTom"
+  return L["Guide"]
 end
 
 -- drops the books collected since the route was built, keeping the order; true when any was dropped
@@ -306,8 +306,8 @@ function ns.ToggleRoute(on, nearestFirst)
   if on then
     ns.RefreshRoute(true, nearestFirst)
     print(ns.PREFIX .. L["route: %d books, lowest level first."]:format(#route))
-    -- BookFinder: Shortest Path guides the route from the start, so there is one guidance, not two
-    if BookFinder and BookFinder.SettingsCategory and ns.RouteWaypointProvider() == "Shortest Path" and #route > 0 then
+    -- BookFinder: the game's pin and arrow guide the route from the start, so there is one guidance, not two
+    if BookFinder and BookFinder.Waypoint and #route > 0 then
       ns.SendRouteWaypoints(route)
       ns.OnGuidanceChanged()
     end

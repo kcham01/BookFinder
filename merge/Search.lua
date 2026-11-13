@@ -1,20 +1,20 @@
--- BookFinder: one search for everything. Shortest Path's Nearby services box (in the quest log) finds services and
--- goods; typing there now also finds, below them:
---   Quests     every quest Questie knows: its level and giver; click: a journey to the giver nearest you
---   NPCs       every NPC: its title and zone; click: a journey to its nearest spawn
---   Objects    every object (chests, herbs, quest objects): click: a journey to the nearest one
---   Items      every item: where it drops or who sells it; click: a journey to the nearest source
---   Places     every zone and city: click: the map there; Shift-click: a journey there
---   Books      the library books: click: a journey to it
+-- BookFinder: one search for everything, in the BookFinder panel beside the quest log (BooksTab.lua's search box).
+-- Typing two letters or more lists, in place of the books:
+--   Quests     every quest Questie knows: its level and giver; click: a map pin on the giver nearest you
+--   NPCs       every NPC: its title and zone; click: a map pin on its nearest spawn
+--   Objects    every object (chests, herbs, quest objects): click: a map pin on the nearest one
+--   Items      every item: where it drops or who sells it; click: a map pin on the nearest source
+--   Places     every zone and city: click: the map there; Shift-click: a map pin in its middle
+--   Books      the library books: click: a map pin on it
 -- Questie's database is read once into a name index, a slice per frame, the first time the box is used; until then
 -- the list says it is reading. Drawn with the books tab's kit (BooksTab.lua), so it matches the panel around it.
 local ADDON, root = ...
 local public = root.public
-local SPF = root.SPF
 local Kit = public and public.Kit
-if not (public and Kit and SPF) or SPF.__skip then return end
+if not (public and Kit) then return end
+local function redraw() if public.RefreshSearch then public.RefreshSearch() end end
 
-local L = setmetatable({}, { __index = function(_, k) return (SPF.L and rawget(SPF.L, k)) or k end })
+local L = setmetatable({}, { __index = function(_, k) return k end })
 local SHOWN = 6          -- results per section before "type more to narrow it"
 local MIN_DB = 3          -- letters before the database is searched
 local SLICE = 1500        -- index entries read per frame
@@ -77,7 +77,7 @@ local function readIndex()
 			self:SetScript("OnUpdate", nil)
 			index.ready, index.reading = true, false
 			jobs = nil
-			if SPF.RefreshServicesPanel then SPF.RefreshServicesPanel() end
+			redraw()
 		end
 	end)
 end
@@ -152,12 +152,7 @@ local function zoneName(map)
 end
 
 local function journey(map, x, y, title)
-	if public.Journey and public.Journey(map, x, y, title) then return true end
-	if WorldMapFrame and map then
-		if not WorldMapFrame:IsShown() and ToggleWorldMap and not InCombatLockdown() then ToggleWorldMap() end
-		WorldMapFrame:SetMapID(map)
-	end
-	return false
+	return public.Waypoint and public.Waypoint(map, x, y, title) or false
 end
 
 local function yards(d)
@@ -233,7 +228,7 @@ local function questSpec(id)
 			local req = field("quest", id, "requiredLevel")
 			if req and req > 0 then tt:AddLine(("%s %d"):format(LEVEL or "Level", req), 0.7, 0.7, 0.7) end
 			tt:AddLine(" ")
-			if map then tt:AddLine(logged and L["Click: a journey to where you turn it in"] or L["Click: a journey to the quest giver"], 0.5, 1, 0.5) end
+			if map then tt:AddLine(logged and L["Click: a map pin where you turn it in"] or L["Click: a map pin on the quest giver"], 0.5, 1, 0.5) end
 			tt:AddLine(L["Shift-click: link it"], 0.5, 1, 0.5)
 		end,
 		onClick = function()
@@ -266,7 +261,7 @@ local function spawnSpec(kind, id)
 			tt:AddLine(name, 1, 0.82, 0)
 			if where then tt:AddLine(where, 1, 1, 1) end
 			tt:AddLine(" ")
-			tt:AddLine(map and L["Click: a journey to the nearest one"] or L["Not on any map"], 0.5, 1, 0.5)
+			tt:AddLine(map and L["Click: a map pin on the nearest one"] or L["Not on any map"], 0.5, 1, 0.5)
 		end,
 		onClick = function() journey(map, x, y, name) end,
 	}
@@ -295,7 +290,7 @@ local function itemSpec(id)
 		tooltip = function(tt)
 			tt:SetItemByID(id)
 			tt:AddLine(" ")
-			if map then tt:AddLine(L["Click: a journey to the nearest source"], 0.5, 1, 0.5) end
+			if map then tt:AddLine(L["Click: a map pin on the nearest source"], 0.5, 1, 0.5) end
 		end,
 		onClick = function()
 			local link = select(2, (C_Item and C_Item.GetItemInfo or GetItemInfo)(id))
@@ -312,7 +307,7 @@ local function placeSpec(p)
 		tooltip = function(tt)
 			tt:AddLine(p.name, 1, 0.82, 0)
 			tt:AddLine(L["Click: show it on the map"], 0.5, 1, 0.5)
-			tt:AddLine(L["Shift-click: a journey there"], 0.5, 1, 0.5)
+			tt:AddLine(L["Shift-click: a map pin in its middle"], 0.5, 1, 0.5)
 		end,
 		onClick = function()
 			if IsShiftKeyDown() then journey(p.mapID, 50, 50, p.name)
@@ -393,7 +388,7 @@ local function search(q)
 	return sections
 end
 
--- Drawing, under Shortest Path's own sections -----------------------------------------------------------------------
+-- Drawing -----------------------------------------------------------------------
 local Art = Kit.Art
 local headers, rows, smalls, notes = {}, {}, {}, {}
 
@@ -417,7 +412,7 @@ local function CreateHeader(parent)
 	for _, text in ipairs({ header.Name, header.Count }) do text:SetTextColor(Kit.GOLD.r, Kit.GOLD.g, Kit.GOLD.b) end
 	local function Toggle()
 		collapsed[header.key] = not collapsed[header.key]
-		if SPF.RefreshServicesPanel then SPF.RefreshServicesPanel() end
+		redraw()
 	end
 	header:SetScript("OnClick", Toggle)
 	header.CollapseButton:SetScript("OnClick", Toggle)
@@ -427,11 +422,11 @@ end
 local shownCount = 0
 local hinted = false
 
--- draws the results into Shortest Path's list from `top` down; returns the new bottom and how many rows it drew
-function SPF.ExtraSearch(list, top, query, searchBox)
+-- draws the results into the panel's list from `top` down; returns the new bottom and how many rows it drew
+function public.DrawSearch(list, top, query, searchBox)
 	if not hinted and searchBox and searchBox.Instructions then
 		hinted = true
-		searchBox.Instructions:SetText(L["Search services, quests, NPCs, items and places"])
+		searchBox.Instructions:SetText(L["Search quests, NPCs, items, places and books"])
 	end
 	local q = strtrim and strtrim((query or ""):lower()) or (query or ""):lower()
 	local sections = {}
@@ -497,7 +492,7 @@ function SPF.ExtraSearch(list, top, query, searchBox)
 	shownCount = rowAt + smallAt
 	-- while the index reads, the percentage moves
 	if index.reading and #q >= MIN_DB then
-		C_Timer.After(0.25, function() if SPF.RefreshServicesPanel then SPF.RefreshServicesPanel() end end)
+		C_Timer.After(0.25, redraw)
 	end
 	return top, shownCount + noteAt
 end

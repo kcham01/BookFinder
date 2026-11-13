@@ -152,9 +152,9 @@ function TrackerUtils:SetTomTomTarget(title, zone, x, y)
         end
         local uiMapId = ZoneDB:GetUiMapIdByAreaId(zone)
         Questie.db.char._tom_waypoint = TomTom:AddWaypoint(uiMapId, x / 100, y / 100, {title = title, crazy = true, from = "Questie"})
-    elseif BookFinder and BookFinder.Journey then
-        -- BookFinder: with the TomTom stand-in off, the journey is asked for directly (and says why if it can't start)
-        BookFinder.Journey(ZoneDB:GetUiMapIdByAreaId(zone), x, y, title)
+    elseif BookFinder and BookFinder.Waypoint then
+        -- BookFinder: without TomTom, the game's own map pin and arrow (and it says so when the spot can't take one)
+        BookFinder.Waypoint(ZoneDB:GetUiMapIdByAreaId(zone), x, y, title)
     end
 end
 
@@ -171,7 +171,7 @@ function TrackerUtils.SetQuestTomTomTarget(questId, expectedQuest)
     if not spawn then
         -- BookFinder: never in silence
         if BookFinder and BookFinder.Notice then
-            BookFinder.Notice("No journey for this quest: no place is known for what it asks next.")
+            BookFinder.Notice("No map pin for this quest: no place is known for what it asks next.")
         end
         return false
     end

@@ -1,10 +1,9 @@
 ## Interface: 16001
 ## Title: |cff33ff99Book|rFinder
-## Notes: One addon for the world: a seamless map, journeys anywhere, every quest and the library books. /bookfinder
-## Author: OpenMap contributors; cjber; Daeler; Questie: Aero/Logon/Muehe/TheCrux(BreakBB)/Drejjmit/Dyaxler/Cheeq/TechnoHunter/Yttrium/Everyone else; merged as BookFinder
-## Version: 1.8.1
+## Notes: One addon for the world: a seamless map, every quest and the library books. /bookfinder
+## Author: OpenMap contributors; Daeler; Questie: Aero/Logon/Muehe/TheCrux(BreakBB)/Drejjmit/Dyaxler/Cheeq/TechnoHunter/Yttrium/Everyone else; merged as BookFinder
+## Version: 2.0.0
 ## X-OpenMap-Version: v0.8.7
-## X-SPF-Version: v1.34.3
 ## X-Books-Version: 2.2.6
 ## X-Questie-Version: 12.8.0
 ## X-QuestieDB-Version: 1.1.0
@@ -12,17 +11,14 @@
 ## LoadSavedVariablesFirst: 1
 ## Category: Map
 ## X-Category: Map
-## X-License: GPL-3.0-or-later (Shortest Path Forever's licence; OpenMap's code is MIT; Books on map's is its author's); map art is Blizzard's
+## X-License: GPL-3.0-or-later (Questie's licence; OpenMap's code is MIT; Books on map's is its author's); map art is Blizzard's
 ## IconTexture: Interface\AddOns\BookFinder\OpenMap\Media\Textures\OpenMapIconRound
 ## AddonCompartmentFunc: BookFinder_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: BookFinder_OnAddonCompartmentEnter
 ## AddonCompartmentFuncOnLeave: BookFinder_OnAddonCompartmentLeave
-## Dependencies: ForeverCore
-## OptionalDeps: QuestieTrace, Ace3, CallbackHandler-1.0, HereBeDragons, Krowi_WorldMapButtons, LibDataBroker-1.1, LibDBIcon-1.0, LibSharedMedia-3.0, LibStub, LibUIDropDownMenu, Leatrix_Maps, BetterMaps, HighFidelityWorldMap, HiddenMaps, Mapster, Magnify, TweaksForever, RXPGuides, Guidelime, TomTom
-## X-Forever-Core: v1.9.0
-## X-Forever-Icon: Interface\Icons\INV_Misc_Spyglass_03
-## SavedVariables: BookFinderDB, QuestieConfig, QuestieProfilerEnabled, OpenMapDB, ShortestPathForeverDB, BooksOnMapForeverGlobal
-## SavedVariablesPerCharacter: QuestieConfigCharacter, OpenMapCharDB, ShortestPathForeverCharDB, BooksOnMapForeverDB
+## OptionalDeps: QuestieTrace, Ace3, CallbackHandler-1.0, HereBeDragons, Krowi_WorldMapButtons, LibDataBroker-1.1, LibDBIcon-1.0, LibSharedMedia-3.0, LibStub, LibUIDropDownMenu, Leatrix_Maps, BetterMaps, HighFidelityWorldMap, HiddenMaps, Mapster, Magnify, TomTom
+## SavedVariables: BookFinderDB, QuestieConfig, QuestieProfilerEnabled, OpenMapDB, BooksOnMapForeverGlobal
+## SavedVariablesPerCharacter: QuestieConfigCharacter, OpenMapCharDB, BooksOnMapForeverDB
 ## X-Contract-Version: 4
 ## X-Flavor: Forever
 ## X-Mode: baked
@@ -131574,104 +131570,6 @@ OpenMap\Map\Welcome.lua
 OpenMap\API.lua
 OpenMap\Init.lua
 
-# ShortestPathForever
-ShortestPathForever\Core\ForeverRequire.lua
-ShortestPathForever\Core\Require.lua
-ShortestPathForever\Locales\enUS.lua
-ShortestPathForever\Locales\deDE.lua
-ShortestPathForever\Locales\esES.lua
-ShortestPathForever\Locales\esMX.lua
-ShortestPathForever\Locales\frFR.lua
-ShortestPathForever\Locales\koKR.lua
-ShortestPathForever\Locales\ptBR.lua
-ShortestPathForever\Locales\ruRU.lua
-ShortestPathForever\Locales\zhCN.lua
-ShortestPathForever\Locales\zhTW.lua
-ShortestPathForever\Core\Objectives.lua
-ShortestPathForever\Data\Routes.lua
-ShortestPathForever\Data\Transports.lua
-ShortestPathForever\Data\Taxi.lua
-ShortestPathForever\Data\Portals.lua
-ShortestPathForever\Data\Teleports.lua
-ShortestPathForever\Data\Zones.lua
-ShortestPathForever\Data\Services.lua
-ShortestPathForever\Data\Walks.lua
-ShortestPathForever\Data\RoadCells.lua
-ShortestPathForever\Data\RoadEdges.lua
-ShortestPathForever\Data\Heights.lua
-ShortestPathForever\Data\Credits.lua
-ShortestPathForever\Transport\Model.lua
-ShortestPathForever\Routing\Planner.lua
-ShortestPathForever\Core\Core.lua
-ShortestPathForever\Core\Distance.lua
-ShortestPathForever\Transport\Timetable.lua
-ShortestPathForever\Transport\TaxiTimes.lua
-ShortestPathForever\Core\PlanContext.lua
-ShortestPathForever\UI\MenuModifier.lua
-ShortestPathForever\UI\NearbyGroups.lua
-ShortestPathForever\UI\NearbyQuestie.lua
-ShortestPathForever\UI\NearbyEntrances.lua
-ShortestPathForever\UI\Nearby.lua
-ShortestPathForever\Transport\Observer.lua
-ShortestPathForever\UI\Map.xml
-ShortestPathForever\Transport\Taxi.lua
-ShortestPathForever\Core\Progress.lua
-ShortestPathForever\Transport\Teleports.lua
-ShortestPathForever\Transport\PartyPortals.lua
-ShortestPathForever\UI\Art.lua
-ShortestPathForever\UI\ServicesPanel.lua
-ShortestPathForever\UI\FamilyHints.lua
-ShortestPathForever\UI\OpenMap.lua
-ShortestPathForever\UI\CompanionMaps.lua
-ShortestPathForever\UI\Canvas.lua
-ShortestPathForever\UI\Map.lua
-ShortestPathForever\UI\TownServices.lua
-ShortestPathForever\UI\FlightPins.lua
-ShortestPathForever\UI\Looks.lua
-ShortestPathForever\UI\MinimapPins.lua
-ShortestPathForever\UI\Tracker.xml
-ShortestPathForever\UI\Tracker.lua
-ShortestPathForever\UI\Mover.lua
-ShortestPathForever\UI\TurnAround.lua
-ShortestPathForever\UI\Arrow.lua
-ShortestPathForever\UI\Compass.lua
-ShortestPathForever\Nav\Nav.xml
-ShortestPathForever\Routing\PathGrid.lua
-ShortestPathForever\Routing\Path.lua
-ShortestPathForever\Routing\PathJobs.lua
-ShortestPathForever\Routing\Floor.lua
-ShortestPathForever\Journey\JourneySteps.lua
-ShortestPathForever\Journey\Hazards.lua
-ShortestPathForever\Journey\JourneySearch.lua
-ShortestPathForever\Journey\JourneyWalks.lua
-ShortestPathForever\Journey\JourneyGuide.lua
-ShortestPathForever\Journey\Journey.lua
-ShortestPathForever\Journey\JourneyInput.lua
-ShortestPathForever\Journey\Follow.lua
-ShortestPathForever\Journey\Corpse.lua
-ShortestPathForever\Journey\FactionHint.lua
-ShortestPathForever\UI\StopPin.lua
-ShortestPathForever\UI\FlightLines.lua
-ShortestPathForever\UI\Strokes.lua
-ShortestPathForever\UI\QuestPins.lua
-ShortestPathForever\UI\Route.lua
-ShortestPathForever\UI\RouteTransports.lua
-ShortestPathForever\UI\Alert.lua
-ShortestPathForever\UI\Settings.lua
-ShortestPathForever\UI\WhatsNew.lua
-ShortestPathForever\Core\API.lua
-ShortestPathForever\Journey\Resume.lua
-ShortestPathForever\Core\Report.lua
-ShortestPathForever\Journey\Itinerary.lua
-ShortestPathForever\Core\Zygor.lua
-ShortestPathForever\Core\TomTom.lua
-ShortestPathForever\Core\Way.lua
-ShortestPathForever\Core\RestedXP.lua
-ShortestPathForever\Core\Guidelime.lua
-ShortestPathForever\Core\KalielsTracker.lua
-ShortestPathForever\UI\DestinationPin.lua
-ShortestPathForever\UI\NpcArrows.lua
-
 # Books_on_map_Forever
 Books_on_map_Forever\Libs\LibStub\LibStub.lua
 Books_on_map_Forever\Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
@@ -131702,12 +131600,12 @@ Books_on_map_Forever\modules\MinimapPins.lua
 Books_on_map_Forever\modules\Toast.lua
 Books_on_map_Forever\modules\Nearby.lua
 
-# The library books tab in the quest log, and what ties the parts together
+# What ties the parts together
 Merge\Retired.lua
+Merge\Waypoint.lua
+Merge\Tabs.lua
 Merge\BooksTab.lua
 Merge\Search.lua
-Merge\MapMenu.lua
-Merge\Journeys.lua
 Merge\QuestLog.lua
 Merge\Inspect.lua
 Merge\SelfTest.lua

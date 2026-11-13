@@ -47,28 +47,19 @@ local mod = ns:NewModule("worldmap", {
 	},
 })
 
--- BookFinder: Shortest Path draws the docks and flight masters (live departures, flight times, a journey a click
--- away), so OpenMap's own stay off and leave its menus: nothing on the map twice. A standalone OpenMap keeps them.
+-- whether boats and zeppelins show (the routes and the airships to Zephras Isle follow it)
 mod.SUPERSEDED = {}
-if BookFinder and BookFinder.Active and BookFinder.Active("SPF") then
-	mod.SUPERSEDED.boats, mod.SUPERSEDED.zeppelins, mod.SUPERSEDED.flight = true, true, true
-	-- (a fresh save gets these defaults; an old one is set by Migrate, below)
-	for key in pairs(mod.SUPERSEDED) do mod.defaults[key] = false end
-end
-
--- whether boats and zeppelins show: Shortest Path's switch while it draws the docks, else OpenMap's (the routes
--- and the airships to Zephras Isle, which only OpenMap draws, follow it)
 function mod.TravelShown(opt)
-	if mod.SUPERSEDED[opt or "boats"] then
-		local spf = _G.ShortestPathForeverDB
-		return not (type(spf) == "table" and spf.pins == false)
-	end
 	return mod.db and mod.db[opt or "boats"] ~= false
 end
 
 -- (dungeons, boats and zeppelins were one switch, `icons`: an old save's choice carried to each)
 function mod.Migrate(db)
-	for key in pairs(mod.SUPERSEDED) do db[key] = false end
+	-- (BookFinder 1.2 to 1.8 turned OpenMap's docks and flight masters off while Shortest Path drew its own: on again)
+	if db.bfSupersededBack == nil then
+		db.bfSupersededBack = true
+		if BookFinder then db.boats, db.zeppelins, db.flight = true, true, true end
+	end
 	if db.boats == nil and db.icons ~= nil then db.boats, db.zeppelins = db.icons, db.icons end
 	-- (friends and guild were one switch too, `friends`, and its menu row's id: the friends row keeps
 	-- that id, and a save's single choice carries to the guild's switch too)

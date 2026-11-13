@@ -78,7 +78,7 @@ end
 TrackerMenu.addTomTomOptionForQuest = function(menu, quest)
     local expectedQuest = quest.enrichment
     tinsert(menu, {
-        text = (BookFinder and "Plan a journey" or l10n('Set |cFF54e33bTomTom|r Target')),
+        text = (BookFinder and "Map pin" or l10n('Set |cFF54e33bTomTom|r Target')),
         func = function()
             LibDropDown:CloseDropDownMenus()
 
@@ -92,7 +92,7 @@ end
 ---@param objective QuestObjective
 TrackerMenu.addTomTomOptionForObjective = function(menu, quest, objective)
     tinsert(menu, {
-        text = (BookFinder and "Plan a journey" or l10n('Set |cFF54e33bTomTom|r Target')),
+        text = (BookFinder and "Map pin" or l10n('Set |cFF54e33bTomTom|r Target')),
         func = function()
             LibDropDown:CloseDropDownMenus()
 

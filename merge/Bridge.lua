@@ -1,14 +1,12 @@
--- BookFinder: loaded last. What makes the three parts one addon, beyond the public APIs they already talk through
--- (OpenMapAPI, ShortestPathForever.API):
+-- BookFinder: loaded last. What makes the parts one addon, beyond OpenMapAPI, which they already talk through:
 --   * the one settings window (Namespaces.lua makes it): its Library books page, its front page, and adding it to
 --     the game's AddOns list once every page is in
 --   * one minimap button and broker launcher for everything (Books' and OpenMap's own stay off)
 --   * one addon-compartment entry, and /bookfinder
---   * Shortest Path's map marks as switches in OpenMap's map menu, beside the Books switches
 --   * a login note when a standalone copy took a part's place
 local ADDON, root = ...
 local public = root.public
-local OM, SPF, BOOKS = root.OpenMap, root.SPF, root.Books
+local OM, BOOKS = root.OpenMap, root.Books
 
 local PREFIX = "|cff33ff99BookFinder|r: "
 local ICON = "Interface\\AddOns\\" .. ADDON .. "\\OpenMap\\Media\\Textures\\OpenMapIconRound"
@@ -25,18 +23,6 @@ local function bookList()
 	if BOOKS.ToggleOptions then BOOKS.ToggleOptions() return true end
 	if SlashCmdList.BOOKSONMAP then SlashCmdList.BOOKSONMAP("") return true end
 end
-local function nearby(rest)
-	if SlashCmdList.SPFNEAR then SlashCmdList.SPFNEAR(rest or "") return true end
-end
-local function journeyActive()
-	local api = ShortestPathForever and ShortestPathForever.API
-	local ok, active = pcall(function() return api and api.Active and api.Active() end)
-	return ok and active
-end
-local function stopJourney()
-	if SPF.ClearJourney then SPF.ClearJourney() return true end
-end
-
 local function menu(_, rootMenu)
 	rootMenu:CreateTitle("BookFinder")
 	rootMenu:CreateButton(SETTINGS or "Settings", function() public.OpenSettings() end)
@@ -58,11 +44,6 @@ local function menu(_, rootMenu)
 			if ok and journey and journey.ToggleJourneyWindow then journey:ToggleJourneyWindow() end
 		end)
 	end
-	if SlashCmdList.SPFNEAR or journeyActive() then
-		rootMenu:CreateDivider()
-		if SlashCmdList.SPFNEAR then rootMenu:CreateButton(SPF.L and SPF.L["Nearby services"] or "Nearby services", function() nearby() end) end
-		if journeyActive() and SPF.ClearJourney then rootMenu:CreateButton(CANCEL .. ": " .. (SPF.L and SPF.L["Journey"] or "Journey"), stopJourney) end
-	end
 end
 
 local function openMenu(owner)
@@ -78,12 +59,6 @@ local function tooltip(tt)
 		if nearest then tt:AddDoubleLine(BL("Nearest:"), nearest, 0.36, 0.78, 1, 1, 1, 1) end
 		if BOOKS.AddGroupProgressTooltip then pcall(BOOKS.AddGroupProgressTooltip, tt) end
 	end
-	local api = ShortestPathForever and ShortestPathForever.API
-	local ok, journey = pcall(function() return api and api.Journey and api.Journey() end)
-	if ok and type(journey) == "table" and journey.goal then
-		local left = journey.secondsLeft and journey.secondsLeft > 0 and SecondsToTime and SecondsToTime(journey.secondsLeft, journey.secondsLeft >= 60, false, 1, true)
-		tt:AddDoubleLine(journey.goal.title or "?", left or "", 0.36, 0.78, 1, 1, 1, 1)
-	end
 	tt:AddLine(" ")
 	tt:AddLine((WORLD_MAP or "World Map") .. ": " .. (KEY_BUTTON1 or "Left Button"), 0.5, 1, 0.5)
 	tt:AddLine((SETTINGS or "Settings") .. ", " .. BL("Books") .. ": " .. (KEY_BUTTON2 or "Right Button"), 0.5, 1, 0.5)
@@ -91,15 +66,13 @@ end
 
 -- /bookfinder [settings|map|books|near ...|status] ---------------------------------------------------------------
 local function status()
-	for _, key in ipairs({ "OpenMap", "SPF", "Books" }) do
+	for _, key in ipairs({ "OpenMap", "Books", "Questie" }) do
 		local c = public.components[key]
 		local where = c.active and "built in" or (public.Loaded(c.folder) and "standalone addon" or "off")
 		say(("%s: %s"):format(c.title, where))
 	end
 	local om = OpenMapAPI
-	say(("OpenMap API %s, Shortest Path API %s"):format(
-		om and (om.major .. "." .. (om.version or 0)) or "-",
-		ShortestPathForever and ShortestPathForever.API and tostring(ShortestPathForever.API.version) or "-"))
+	say(("OpenMap API %s"):format(om and (om.major .. "." .. (om.version or 0)) or "-"))
 end
 
 local COMMANDS = {
@@ -113,7 +86,6 @@ local COMMANDS = {
 	end,
 	map = function() return public.OpenSettings("map") end,
 	books = bookList,
-	near = nearby,
 }
 
 SLASH_BOOKFINDER1, SLASH_BOOKFINDER2 = "/bookfinder", "/bfind"
@@ -126,8 +98,8 @@ SlashCmdList.BOOKFINDER = function(msg)
 		if not COMMANDS[cmd](rest) then say(cmd .. ": not available.") end
 		return
 	end
-	say("/bookfinder [settings | map | books | quests | near <service> | status | inspect | selftest]")
-	say("Also: /openmap (the map's menu), /path, /way, /spfnear, /bom.")
+	say("/bookfinder [settings | map | books | quests | status | inspect | selftest]")
+	say("Also: /openmap (the map's menu), /bom (the books).")
 end
 
 -- The addon-compartment entry ---------------------------------------------------------------------------------
@@ -263,62 +235,6 @@ local function booksPage(category)
 	end
 end
 
--- OpenMap's airships to Zephras Isle and its route lines follow Shortest Path's boats switch, wherever it is
--- flipped: the map's Show menu (Shortest Path's SetOption) or its settings page
-local function refreshOpenMap()
-	local m = OM.GetModule and OM:GetModule("worldmap")
-	if m and m.enabled and m.Refresh then pcall(m.Refresh, m) end
-end
-
-local function followBoats()
-	if not (public.Active("SPF") and public.Active("OpenMap")) then return end
-	if type(SPF.SetOption) == "function" then
-		hooksecurefunc(SPF, "SetOption", function(key) if key == "pins" then refreshOpenMap() end end)
-	end
-	if Settings and Settings.SetOnValueChangedCallback then
-		pcall(Settings.SetOnValueChangedCallback, "ShortestPathForever_pins", refreshOpenMap)
-	end
-end
-
--- Flight points: Shortest Path learns them only at a flight master's map, so a character new to it (or whose saved
--- data didn't come along into BookFinder) plans every journey on foot. The game lists the points this character has
--- found, wherever it stands (OpenMap greys the rest out from the same list): Shortest Path learns those at login.
--- The same guard as OpenMap's (Map/Flights.lua): WoW Forever can list every point as found, learned or not, and
--- then it isn't saying, so nothing is learned from it; and nothing is ever forgotten from it.
-local CONTINENT_MAPS = { 1414, 1415 }   -- Kalimdor, the Eastern Kingdoms
-
-local function learnFlights()
-	if not (public.Active("SPF") and SPF.charDB and SPF.charDB.taxi and SPF.SetTaxiKnown and SPF.TaxiNodes) then return 0 end
-	if not (C_TaxiMap and C_TaxiMap.GetTaxiNodesForMap) then return 0 end
-	local found, undiscovered = {}, 0
-	for _, mapID in ipairs(CONTINENT_MAPS) do
-		local ok, list = pcall(C_TaxiMap.GetTaxiNodesForMap, mapID)
-		if ok and type(list) == "table" then
-			for _, info in ipairs(list) do
-				if type(info) == "table" and info.nodeID then
-					if info.isUndiscovered == false then found[#found + 1] = info.nodeID
-					elseif info.isUndiscovered == true then undiscovered = undiscovered + 1 end
-				end
-			end
-		end
-	end
-	if undiscovered == 0 then return 0 end
-	local learned = 0
-	for _, nodeID in ipairs(found) do
-		if not SPF.charDB.taxi[nodeID] and SPF.TaxiNodes[nodeID] and SPF.SetTaxiKnown(nodeID, true) then learned = learned + 1 end
-	end
-	return learned
-end
-
-public.LearnFlights = learnFlights   -- (the offline test drives it)
-
--- With none known past the first levels, journeys are long walks: say why, and how to fix it, each login until it is
-local function flightHint()
-	if not (public.Active("SPF") and SPF.charDB and SPF.charDB.taxi) or next(SPF.charDB.taxi) then return end
-	if (UnitLevel("player") or 0) < 10 then return end
-	say("Shortest Path doesn't know your flight paths yet, so it plans journeys on foot. Open any flight master's map once and it learns every one you have. Moving from the separate addons? tools/migrate_savedvariables.py brings your old settings, flights and books over.")
-end
-
 -- Load and login ---------------------------------------------------------------------------------------------
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("ADDON_LOADED")
@@ -344,13 +260,6 @@ boot:SetScript("OnEvent", function(self, event, name)
 		public.PublishSettings()
 	end
 	makeLauncher()
-	followBoats()
-	-- (a few seconds in: the taxi lists are filled once the world has loaded)
-	C_Timer.After(4, function()
-		local learned = learnFlights()
-		if learned > 0 then say(("Shortest Path learned the %d flight points you have."):format(learned)) end
-		flightHint()
-	end)
 	if #public.shadowed > 0 then
 		say(("%s also installed on its own: that copy runs, and BookFinder's stands aside. Disable it in the AddOns list to use BookFinder's.")
 			:format(table.concat(public.shadowed, ", ")))

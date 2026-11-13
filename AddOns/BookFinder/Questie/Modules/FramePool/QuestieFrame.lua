@@ -236,6 +236,11 @@ function _QuestieFrame.OnClick(self, button)
         end
     end
 
+    -- BookFinder: without TomTom, Ctrl-click puts the game's own map pin on it
+    if uiMapId and IsControlKeyDown() and not (TomTom and TomTom.AddWaypoint) and BookFinder and BookFinder.Waypoint then
+        BookFinder.Waypoint(uiMapId, self.x, self.y, self.data and self.data.Name)
+    end
+
     -- TomTom integration
     if uiMapId and IsControlKeyDown() and TomTom and TomTom.AddWaypoint then
         local x = self.x / 100

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Assemble the BookFinder superaddon from the three addons in src/.
+"""Assemble the BookFinder addon from the addons in src/ (QuestieDB, Questie, OpenMap, Books on map Forever).
 
-    python3 tools/build.py                 # build/BookFinder + build/ForeverCore
+    python3 tools/build.py                 # build/BookFinder
     python3 tools/build.py --no-textures   # skip OpenMap's 335 MB of textures (checks only)
     python3 tools/build.py --zip           # also dist/BookFinder-<version>.zip
     python3 tools/build.py --out AddOns    # refresh the ready-to-install copy kept in git
@@ -11,9 +11,9 @@ What it does, in order (docs/INVENTORY.md explains why each is needed):
   2. rewrites each file's private-table line so the component gets its own table (merge/Namespaces.lua)
   3. points every texture/sound path at the component's new folder
   4. applies the few patches a merge needs (versions, "is X loaded" checks)
-  5. writes one .toc from the three, in load order OpenMap -> Shortest Path -> Books, and one Bindings.xml
+  5. writes one .toc, in load order QuestieDB -> Questie -> OpenMap -> Books -> merge/, and one Bindings.xml
   6. fetches OpenMap's Forever textures from the pinned upstream commit (cached in .cache/)
-ForeverCore is copied unchanged beside it: it's a shared library other Forever addons need by name.
+Shortest Path Forever and its ForeverCore library left in 2.0.0; their sources stay in src/ only as history.
 """
 import argparse
 import os
@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 MERGE = os.path.join(ROOT, "merge")
 NAME = "BookFinder"
-VERSION = "1.8.1"
+VERSION = "2.0.0"
 
 OPENMAP_REPO = "https://github.com/openmap-world/openmap.git"
 OPENMAP_COMMIT = "91c84b3bf633f3ae4840309e4620d63b249f626e"
@@ -35,15 +35,14 @@ OPENMAP_VERSION = "v0.8.7"  # Data/Forever/Changelog.lua's newest entry at that 
 
 # key in the private table, folder, its toc, the version its own code should report
 COMPONENTS = [
-    # (Questie's database first, then Questie: the map and journeys find both already loaded, as their standalone
-    # tocs' OptionalDeps had it)
+    # (Questie's database first, then Questie: the map finds both already loaded, as their standalone tocs'
+    # OptionalDeps had it)
     ("QuestieDB", "QuestieDB", "QuestieDB_Forever.toc", None),
     ("Questie", "Questie", "Questie_Forever.toc", None),
     ("OpenMap", "OpenMap", "OpenMap.toc", OPENMAP_VERSION),
-    ("SPF", "ShortestPathForever", "ShortestPathForever.toc", None),
     ("Books", "Books_on_map_Forever", "Books_on_map_Forever.toc", None),
 ]
-SKIP_FILES = {"OpenMap.toc", "OpenMap_Mainline.toc", "LICENSE.repo", "ShortestPathForever.toc",
+SKIP_FILES = {"OpenMap.toc", "OpenMap_Mainline.toc", "LICENSE.repo",
               "Books_on_map_Forever.toc", "Bindings.xml", "README.md"}
 LIB_DIRS = ("Libs",)
 # Parts whose files mostly never read their private table: each file gets a first-line guard instead, so the part
@@ -56,6 +55,9 @@ DROP = {
 }
 # QuestieDB's database is its toc's metadata (its "baked" mode), read by the addon's name: BookFinder's toc carries
 # it. Not these: they'd clash with or say nothing about BookFinder
+# BookFinder's own files, in load order (Namespaces.lua first, before every part; the rest after them)
+MERGE_FILES = ["Namespaces.lua", "Retired.lua", "Waypoint.lua", "Tabs.lua", "BooksTab.lua", "Search.lua", "QuestLog.lua",
+               "Inspect.lua", "SelfTest.lua", "Bridge.lua"]
 DATA_META_SKIP = re.compile(r"^X-(BUILD-|Curse|Wago)")
 
 errors = []
@@ -171,12 +173,6 @@ PATCHES = [
     ("OpenMap/Map/Compat.lua",
      'if loaded and loaded("Books_on_map_Forever") then',
      'if not (BookFinder and BookFinder.Active("Books")) and loaded and loaded("Books_on_map_Forever") then'),
-    ("ShortestPathForever/UI/CompanionMaps.lua",
-     'C_AddOns.IsAddOnLoaded("OpenMap")',
-     'BookFinder.Loaded("OpenMap")'),
-    ("ShortestPathForever/UI/WhatsNew.lua",
-     'C_AddOns.GetAddOnMetadata(addonName, "Version")',
-     'C_AddOns.GetAddOnMetadata(addonName, "X-SPF-Version")'),
     ("Books_on_map_Forever/Core/Skin.lua",
      'local MEDIA = "Interface\\\\AddOns\\\\" .. ADDON .. "\\\\adds\\\\UI\\\\"',
      'local MEDIA = "Interface\\\\AddOns\\\\" .. ADDON .. "\\\\Books_on_map_Forever\\\\adds\\\\UI\\\\"'),
@@ -219,7 +215,7 @@ def openmap_textures():
 # --- build ---------------------------------------------------------------------------------------
 def build(textures, make_zip, out_root):
     out = os.path.join(out_root, NAME)
-    # (only the two folders this writes: --out may be a folder with other things in it)
+    # (only BookFinder's folder, and the ForeverCore folder older builds wrote: --out may hold other things)
     for top in (NAME, "ForeverCore"):
         shutil.rmtree(os.path.join(out_root, top), ignore_errors=True)
     os.makedirs(out)
@@ -276,10 +272,10 @@ def build(textures, make_zip, out_root):
                     fail(f"{os.path.relpath(p, out)}: a path still points at a standalone addon folder")
 
     os.makedirs(os.path.join(out, "Merge"), exist_ok=True)
-    for fn in ("Namespaces.lua", "Retired.lua", "BooksTab.lua", "Search.lua", "MapMenu.lua", "Journeys.lua", "QuestLog.lua", "Inspect.lua", "SelfTest.lua", "Bridge.lua"):
+    for fn in MERGE_FILES:
         shutil.copy2(os.path.join(MERGE, fn), os.path.join(out, "Merge", fn))
 
-    om, spf, books = metas["OpenMap"], metas["SPF"], metas["Books"]
+    om, books = metas["OpenMap"], metas["Books"]
     questie, questiedb = metas["Questie"], metas["QuestieDB"]
     # QuestieDB's database: every X- field of its toc but the build stamps
     data_lines = [f"## {k}: {v}" for k, v in questiedb.items() if k.startswith("X-") and not DATA_META_SKIP.match(k)]
@@ -295,11 +291,10 @@ def build(textures, make_zip, out_root):
 
     header = f"""## Interface: 16001
 ## Title: |cff33ff99Book|rFinder
-## Notes: One addon for the world: a seamless map, journeys anywhere, every quest and the library books. /bookfinder
-## Author: {om.get("Author")}; {spf.get("Author")}; {books.get("Author")}; Questie: {questie.get("Author")}; merged as BookFinder
+## Notes: One addon for the world: a seamless map, every quest and the library books. /bookfinder
+## Author: {om.get("Author")}; {books.get("Author")}; Questie: {questie.get("Author")}; merged as BookFinder
 ## Version: {VERSION}
 ## X-OpenMap-Version: {om["Version"]}
-## X-SPF-Version: {spf["Version"]}
 ## X-Books-Version: {books["Version"]}
 ## X-Questie-Version: {questie["Version"]}
 ## X-QuestieDB-Version: {questiedb["Version"]}
@@ -307,15 +302,12 @@ def build(textures, make_zip, out_root):
 ## LoadSavedVariablesFirst: 1
 ## Category: Map
 ## X-Category: Map
-## X-License: GPL-3.0-or-later (Shortest Path Forever's licence; OpenMap's code is MIT; Books on map's is its author's); map art is Blizzard's
+## X-License: GPL-3.0-or-later (Questie's licence; OpenMap's code is MIT; Books on map's is its author's); map art is Blizzard's
 ## IconTexture: Interface\\AddOns\\{NAME}\\OpenMap\\Media\\Textures\\OpenMapIconRound
 ## AddonCompartmentFunc: BookFinder_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: BookFinder_OnAddonCompartmentEnter
 ## AddonCompartmentFuncOnLeave: BookFinder_OnAddonCompartmentLeave
-## Dependencies: ForeverCore
 ## OptionalDeps: {", ".join(optional)}
-## X-Forever-Core: {spf["X-Forever-Core"]}
-## X-Forever-Icon: {spf["X-Forever-Icon"]}
 ## SavedVariables: {", ".join(saved)}
 ## SavedVariablesPerCharacter: {", ".join(saved_char)}
 """
@@ -332,7 +324,7 @@ Merge\\Namespaces.lua
             body.append(f"\n# {folder}")
             last = folder
         body.append(line)
-    write(os.path.join(out, NAME + ".toc"), header + "\n".join(body) + "\n\n# The library books tab in the quest log, and what ties the parts together\nMerge\\Retired.lua\nMerge\\BooksTab.lua\nMerge\\Search.lua\nMerge\\MapMenu.lua\nMerge\\Journeys.lua\nMerge\\QuestLog.lua\nMerge\\Inspect.lua\nMerge\\SelfTest.lua\nMerge\\Bridge.lua\n")
+    write(os.path.join(out, NAME + ".toc"), header + "\n".join(body) + "\n\n# What ties the parts together\n" + "".join(f"Merge\\{fn}\n" for fn in MERGE_FILES[1:]))
 
     write(os.path.join(out, "Bindings.xml"),
           "<!-- Generated by tools/build.py: every part's key bindings -->\n<Bindings>\n"
@@ -344,7 +336,6 @@ Merge\\Namespaces.lua
     else:
         print("note: --no-textures: OpenMap's map art is missing from this build; don't install it")
 
-    shutil.copytree(os.path.join(SRC, "ForeverCore"), os.path.join(out_root, "ForeverCore"))
 
     if errors:
         for e in errors:
@@ -357,7 +348,7 @@ Merge\\Namespaces.lua
         os.makedirs(dist, exist_ok=True)
         zpath = os.path.join(dist, f"{NAME}-{VERSION}.zip")
         with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
-            for top in (NAME, "ForeverCore"):
+            for top in (NAME,):
                 for dirpath, _, names in os.walk(os.path.join(out_root, top)):
                     for fn in names:
                         p = os.path.join(dirpath, fn)
@@ -370,6 +361,6 @@ if __name__ == "__main__":
     ap.add_argument("--no-textures", action="store_true")
     ap.add_argument("--zip", action="store_true")
     ap.add_argument("--out", default=os.path.join(ROOT, "build"),
-                    help="folder to write BookFinder/ and ForeverCore/ into (default build/; AddOns/ is the copy kept in git)")
+                    help="folder to write BookFinder/ into (default build/; AddOns/ is the copy kept in git)")
     a = ap.parse_args()
     build(not a.no_textures, a.zip, os.path.abspath(a.out))

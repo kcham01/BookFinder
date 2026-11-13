@@ -18,7 +18,7 @@
 local ADDON, root = ...
 local public = root.public
 local BOOKS = root.Books
-if not (public and BOOKS) or BOOKS.__skip or not (ForeverCore and ForeverCore.QuestLogTabs) then
+if not (public and BOOKS) or BOOKS.__skip or not public.Tabs then
 	return
 end
 
@@ -146,31 +146,32 @@ function Art.Band(texture, atlas)
 	texture:SetAtlas(atlas)
 	texture:SetAllPoints()
 end
--- (Shortest Path's own, when it runs here: the same art, one copy of each helper in memory)
-local spfArt = root.SPF and not root.SPF.__skip and root.SPF.Art
-if type(spfArt) == "table" then
-	for _, name in ipairs({ "Info", "Fit", "Icon", "Cover", "CoverFrame", "RowArt", "Band" }) do
-		if type(spfArt[name]) == "function" then Art[name] = spfArt[name] end
-	end
-end
 
 -- Helpers ----------------------------------------------------------------------------------------------------------
+-- How far a book's place is from you, in yards, straight across the continent (nil on another continent). The
+-- "estimates" below are these distances: nearest first, as a straight line.
+local function world(map, x, y)
+	if not (C_Map.GetWorldPosFromMapPos and CreateVector2D) then return end
+	local ok, continent, pos = pcall(C_Map.GetWorldPosFromMapPos, map, CreateVector2D(x, y))
+	if not (ok and continent and pos) then return end
+	local wx, wy = pos.x, pos.y
+	if not wx and pos.GetXY then wx, wy = pos:GetXY() end
+	return continent, wx, wy
+end
 local function api()
-	local spf = ShortestPathForever and ShortestPathForever.API
-	if type(spf) == "table" and type(spf.Estimate) == "function" then return spf end
+	return { Estimate = function(fromMap, fromX, fromY, toMap, toX, toY)
+		local c1, x1, y1 = world(fromMap, fromX, fromY)
+		local c2, x2, y2 = world(toMap, toX, toY)
+		if not (c1 and c2 and c1 == c2) then return nil end
+		return math.sqrt((x1 - x2) ^ 2 + (y1 - y2) ^ 2)
+	end }
 end
 
--- "m:ss" or "h:mm:ss", as Shortest Path's rows show times
-local function Countdown(seconds)
-	local fmt = root.SPF and root.SPF.FormatCountdown
-	if type(fmt) == "function" then
-		local ok, text = pcall(fmt, seconds * 1000)
-		if ok and type(text) == "string" then return text end
-	end
-	seconds = math.max(0, math.floor(seconds + 0.5))
-	local h, m, s = math.floor(seconds / 3600), math.floor(seconds / 60) % 60, seconds % 60
-	if h > 0 then return ("%d:%02d:%02d"):format(h, m, s) end
-	return ("%d:%02d"):format(m, s)
+-- yards as the rows show them
+local function Countdown(yards)
+	yards = math.max(0, yards or 0)
+	if yards < 1000 then return ("%d yd"):format(math.floor(yards / 10 + 0.5) * 10) end
+	return ("%.1fk yd"):format(yards / 1000)
 end
 
 local function bookIcon(b) return "Interface\\Icons\\" .. (b.icon or "INV_Misc_Book_09") end
@@ -200,7 +201,7 @@ local function openMapAt(mapID)
 	if mapID then WorldMapFrame:SetMapID(mapID) end
 end
 
--- Shortest Path to one place of a book; the map there when nothing can guide
+-- a map pin on one place of a book; the map there when it can't take one
 local function goTo(b, loc)
 	loc = loc or b.locs[1]
 	if not loc then return end
@@ -506,7 +507,7 @@ local function bookSpec(b)
 	}
 end
 
--- nearest missing book: by Shortest Path's travel time once known, else Books' own straight line
+-- nearest missing book
 local function nearest()
 	local best, bestSeconds
 	for _, b in ipairs(allBooks()) do
@@ -732,10 +733,35 @@ end
 -- Layout -----------------------------------------------------------------------------------------------------------
 local shownRows = 0
 
+local searchShown = false
 function Refresh()
 	if not visible or not panel then return end
 	if not BOOKS.db then return end
 	rowsByKey = {}
+	-- two letters or more: the one search (Search.lua) takes the list's place
+	local q = strtrim and strtrim(query) or query
+	if #q >= 2 and public.DrawSearch then
+		for _, r in ipairs(rows) do r:Hide() end
+		for _, r in ipairs(smalls) do r:Hide() end
+		for _, h in ipairs(headers) do h:Hide() end
+		searchShown = true
+		local bottom, drawn = public.DrawSearch(list, 0, query, searchBox)
+		shownRows = drawn or 0
+		emptyText:SetShown(shownRows == 0)
+		if shownRows == 0 then
+			emptyText:SetText(L["Nothing matches."])
+			emptyText:ClearAllPoints()
+			emptyText:SetPoint("TOPLEFT", 10, -((bottom or 0) + 8))
+			emptyText:SetPoint("TOPRIGHT", -10, -((bottom or 0) + 8))
+		end
+		content:SetHeight(LIST_TOP + (bottom or 0) + PAD)
+		scrollContent:SetSize(panel:GetWidth(), LIST_TOP + (bottom or 0) + PAD)
+		return
+	end
+	if searchShown and public.DrawSearch then
+		searchShown = false
+		public.DrawSearch(list, 0, "", searchBox)   -- (takes its rows away)
+	end
 	local top = 0
 	local rowAt, smallAt, headerAt = 0, 0, 0
 	for _, section in ipairs(sections()) do
@@ -937,7 +963,7 @@ local function BuildTopBar(parent)
 	gear:SetScript("OnLeave", leave)
 
 	searchBox = CreateFrame("EditBox", nil, parent, "SearchBoxTemplate")
-	if searchBox.Instructions then searchBox.Instructions:SetText(L["Search books and places"]) end
+	if searchBox.Instructions then searchBox.Instructions:SetText(L["Search quests, NPCs, items, places and books"]) end
 	searchBox:SetHeight(20)
 	searchBox:SetPoint("TOPLEFT", 6, -2)
 	searchBox:SetPoint("RIGHT", gear, "LEFT", -4, 0)
@@ -1037,7 +1063,7 @@ local function Attach()
 		if not visible then return end
 		if event == "ZONE_CHANGED_NEW_AREA" then Requeue() else Soon() end
 	end)
-	-- no OnShow/OnHide under the world map (ForeverCore's tab module reports it through `shown`)
+	-- no OnShow/OnHide under the world map (Tabs.lua reports it through `shown`)
 	local function Shown(shown)
 		visible = shown
 		if shown then
@@ -1049,7 +1075,7 @@ local function Attach()
 			StartTicker(false)
 		end
 	end
-	tab = ForeverCore.QuestLogTabs.Register(TAB_KEY, {
+	tab = public.Tabs.Register(TAB_KEY, {
 		name = "BookFinderBooksTab",
 		tooltip = L["Library books"],
 		panel = panel,
@@ -1085,7 +1111,7 @@ local function showTab()
 	if WorldMapFrame.SetQuestLogPanelShown and not QuestMapFrame:IsShown() then
 		pcall(WorldMapFrame.SetQuestLogPanelShown, WorldMapFrame, true)
 	end
-	ForeverCore.QuestLogTabs.Select(TAB_KEY)
+	public.Tabs.Select(TAB_KEY)
 	return true
 end
 
@@ -1107,14 +1133,16 @@ function public.OpenQuestLog()
 	if WorldMapFrame.SetQuestLogPanelShown and not QuestMapFrame:IsShown() then
 		pcall(WorldMapFrame.SetQuestLogPanelShown, WorldMapFrame, true)
 	end
-	ForeverCore.QuestLogTabs.ShowQuests()
+	public.Tabs.ShowQuests()
 	return true
 end
 
 -- every way into Books' window (/bom, the toast, the minimap menu) opens the tab
 BOOKS.ToggleOptions = function() public.OpenBooks(true) end
 
--- the kit, for the search (Search.lua): the same rows, art and fonts as this tab and Shortest Path's
+-- the kit, for the search (Search.lua): the same rows, art and fonts as this tab
+public.RefreshSearch = function() Refresh() end
+
 public.Kit = {
 	Art = Art, CreateRow = CreateRow, CreateSmall = CreateSmall, Paint = Paint,
 	ROW_HEIGHT = ROW_HEIGHT, SMALL_HEIGHT = SMALL_HEIGHT, HEADER_HEIGHT = HEADER_HEIGHT, HEADER_GAP = HEADER_GAP,
@@ -1127,7 +1155,7 @@ public.BooksTab = {
 	Attach = Attach,
 	Shown = function(shown)
 		Attach()
-		if shown then ForeverCore.QuestLogTabs.Select(TAB_KEY) end
+		if shown then public.Tabs.Select(TAB_KEY) end
 		visible = shown
 		if shown then Requeue() end
 	end,

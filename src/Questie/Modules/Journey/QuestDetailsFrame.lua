@@ -72,12 +72,12 @@ end
 ---@param y number
 ---@return AceGUIWidget|nil
 local function CreateTomTomButton(name, zone, x, y)
-    if (not (TomTom and TomTom.AddWaypoint)) or (x == -1 and y == -1) then
+    if (not ((TomTom and TomTom.AddWaypoint) or BookFinder)) or (x == -1 and y == -1) then
         return nil
     end
 
     local tomTomButton = AceGUI:Create("Button")
-    tomTomButton:SetText((BookFinder and "Plan a journey" or l10n("Set |cFF54e33bTomTom|r Target")))
+    tomTomButton:SetText((BookFinder and "Map pin" or l10n("Set |cFF54e33bTomTom|r Target")))
     tomTomButton:SetCallback("OnClick", function()
         TrackerUtils:SetTomTomTarget(name, zone, x, y)
     end)

@@ -3,7 +3,7 @@
 Usage:  python3 tools/offline-test/merged.py [standalone|merged|shadow|diff]   (default: diff)
 Needs:  pip install lupa; python3 tools/build.py --no-textures first (it reads build/)
 
-Each mode loads ForeverCore and then the addons, fires ADDON_LOADED / PLAYER_LOGIN / PLAYER_ENTERING_WORLD,
+Each mode loads the addons, fires ADDON_LOADED / PLAYER_LOGIN / PLAYER_ENTERING_WORLD,
 runs timers, a combat cycle and every part's slash commands, and records errors. "diff" runs standalone and
 merged and fails on any error the merged build has that the standalone addons don't: the stub (stub.lua, from
 OpenMap's tools/offline-test, MIT) has gaps that both hit the same way, so only new errors are the merge's.
@@ -24,10 +24,9 @@ BUILD = os.path.join(ROOT, "build")
 
 # globals the addons create: nil until they do (the stub answers unknown names with proxies)
 OWN_GLOBALS = [
-    "OpenMapDB", "OpenMapCharDB", "ShortestPathForeverDB", "ShortestPathForeverCharDB", "BooksOnMapForeverGlobal",
-    "BooksOnMapForeverDB", "ShortestPathForever", "ShortestPathForeverPathData", "ForeverCore", "ForeverCoreDB",
-    "ForeverCoreCharDB", "BookFinder", "BookFinderDB", "ForeverTrackerHost", "OpenMapAPI", "OpenMap", "TomTom", "Questie", "QuestieLoader", "RXPCData",
-    "Guidelime", "RXP", "Zygor", "ZGV", "ForeverCoreAPI", "WorldMapFrame_OnShow",
+    "OpenMapDB", "OpenMapCharDB", "BooksOnMapForeverGlobal", "BooksOnMapForeverDB",
+    "BookFinder", "BookFinderDB", "OpenMapAPI", "OpenMap", "TomTom", "Questie", "QuestieLoader", "RXPCData",
+    "Guidelime", "RXP", "Zygor", "ZGV", "WorldMapFrame_OnShow", "TrackedQuestsScrollFrame",
     "ChatThrottleLib", "LibQuestieDB", "QuestieConfig", "QuestieConfigCharacter", "QuestieProfilerEnabled", "QuestieCompat", "QuestieDB",
 ]
 
@@ -42,23 +41,35 @@ INTEGRATION = r"""function(root)
     for _, k in ipairs({ "GetBestMapForUnit", "GetPlayerMapPosition", "GetMapRectOnMap", "GetMapInfo", "GetWorldPosFromMapPos" }) do saved[k] = C_Map[k] end
     local savedVector = CreateVector2D
 
-    -- Books -> Shortest Path: its API version 2 is taken, single book and whole route go to it
-    want(B.WaypointProvider() == "Shortest Path", "Books doesn't send waypoints to Shortest Path's API v" .. tostring(ShortestPathForever.API.version))
-    want(B.RouteWaypointProvider() == "Shortest Path", "Books doesn't send its route to Shortest Path")
-    local sent
-    local api = ShortestPathForever.API
-    local navigate, estimate = api.NavigateRoute, api.Estimate
-    api.NavigateRoute = function(owner, stops) sent = { owner = owner, n = #stops, first = stops[1] } return true end
-    B.SendRouteWaypoints({ { book = B.BOOKS[1], loc = B.BOOKS[1].locs[1] }, { book = B.BOOKS[2], loc = B.BOOKS[2].locs[1] } })
-    want(sent and sent.n == 2 and sent.first.kind == "pickup" and sent.first.map == B.BOOKS[1].locs[1][1], "the route didn't reach NavigateRoute as stops")
-    api.NavigateRoute = navigate
-
-    -- Books' tracker: Shortest Path's travel time
-    C_Map.GetBestMapForUnit = function() return 1429 end
-    C_Map.GetPlayerMapPosition = function() return { x = 0.5, y = 0.5, GetXY = function(self) return self.x, self.y end } end
-    api.Estimate = function() return 754 end
-    want(B.TravelSeconds(B.BOOKS[3].locs[1]) == 754, "no travel time from Shortest Path")
-    api.Estimate = estimate
+    -- "Take me there" is the game's own map pin: Books' single book and its route go to it, one stop at a time
+    local pins = {}
+    local canSet, setWP, track, clearWP, hasWP = C_Map.CanSetUserWaypointOnMap, C_Map.SetUserWaypoint, C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint, C_Map.ClearUserWaypoint, C_Map.HasUserWaypoint
+    local savedPoint = UiMapPoint
+    UiMapPoint = { CreateFromCoordinates = function(map, x, y) return { uiMapID = map, position = { x = x, y = y } } end }
+    C_Map.CanSetUserWaypointOnMap = function(map) return map ~= 9999 end
+    C_Map.SetUserWaypoint = function(p) pins[#pins + 1] = p end
+    C_Map.HasUserWaypoint = function() return #pins > 0 end
+    C_Map.ClearUserWaypoint = function() wipe(pins) end
+    C_SuperTrack = C_SuperTrack or {}
+    local tracked = false
+    C_SuperTrack.SetSuperTrackedUserWaypoint = function(on) tracked = on end
+    want(BookFinder.Waypoint(1454, 50, 40, "Orgrimmar") and pins[1] and pins[1].uiMapID == 1454 and pins[1].position.y == 0.4 and tracked,
+        "a map pin didn't go on the spot, tracked")
+    want(BookFinder.Waypoint(9999, 50, 50, "Inside") == false, "a map that can't take a pin wasn't refused")
+    want(BookFinder.Waypoint(nil, nil, nil, "Nowhere") == false, "a place with no spot wasn't refused")
+    wipe(pins)
+    local b1, b2 = B.BOOKS[1], B.BOOKS[2]
+    want(B.Waypoint(b1.locs[1], b1.name) and pins[1].uiMapID == b1.locs[1][1], "Books' waypoint didn't put the map pin on the book")
+    B.SendRouteWaypoints({ { book = b1, loc = b1.locs[1] }, { book = b2, loc = b2.locs[1] } })
+    want(B.RouteGuided() and pins[#pins].uiMapID == b1.locs[1][1], "the route's first book didn't get the pin")
+    B.SyncRouteWaypoints({ { book = b2, loc = b2.locs[1] } })
+    want(B.RouteGuided() and pins[#pins].uiMapID == b2.locs[1][1], "the pin didn't move on to the route's next book")
+    B.CancelRouteWaypoints()
+    want(not B.RouteGuided() and #pins == 0, "cancelling the route left its pin")
+    want(B.TravelSeconds(b1.locs[1]) == nil, "Books still asks for a travel time")
+    C_Map.CanSetUserWaypointOnMap, C_Map.SetUserWaypoint, C_Map.ClearUserWaypoint, C_Map.HasUserWaypoint = canSet, setWP, clearWP, hasWP
+    C_SuperTrack.SetSuperTrackedUserWaypoint = track
+    UiMapPoint = savedPoint
 
     -- Books on OpenMap's stitched map: a book of every zone in view, not only the zone underneath
     local canvas = CreateFrame("Frame", nil, UIParent)
@@ -143,32 +154,23 @@ INTEGRATION = r"""function(root)
     for k, f in pairs(savedS) do Sx[k] = f end
     O.IsStitched, O.WorldFromMap = isStitched, worldFrom
     wm.GetMapID = function() return 1429 end
-    wm:Hide()   -- (the stand-in map is only enough for Books' pins: Shortest Path's redraw needs the real one)
+    wm:Hide()   -- (the stand-in map is only enough for Books' pins)
 
-    -- One map menu: the map's own Show menu takes Questie's, OpenMap's and Books' switches, and they work; none of
-    -- them is still in OpenMap's own menu
-    local found = {}
-    for _, sec in ipairs(BookFinder.MapMenuSections and BookFinder.MapMenuSections() or {}) do
-        for _, r in ipairs(sec.rows) do found[r[1]] = r end
-    end
-    for _, label in ipairs({ "Dungeons and raids", "Party and raid members", "Show on the map", "Optimized route", "Your drawings" }) do
-        want(found[label], "the map's Show menu has no " .. label .. " switch")
-    end
-    local r = found["Show on the map"]
-    if r then r[3]() want(B.db.hidden and not r[2](), "the books switch didn't hide the books") r[3]() want(not B.db.hidden, "the books switch didn't bring them back") end
-    r = found["Dungeons and raids"]
+    -- One menu for what the map shows: OpenMap's own panel, with Questie's icons and the books in it; nothing is added
+    -- to the game's Show menu any more
     local wmod = root.OpenMap.modules and root.OpenMap.modules.worldmap
-    if r and wmod then
-        local was = wmod.db.icons
-        r[3]() want(wmod.db.icons == not was, "the dungeons switch didn't change OpenMap's setting") r[3]()
+    want(BookFinder.MapMenuSections == nil, "BookFinder still adds switches to the game's Show menu")
+    local okRows, panelRows = pcall(wmod.PanelRows)
+    local ids = {}
+    for _, r in ipairs(okRows and panelRows or {}) do if r.id then ids[r.id] = r end end
+    for _, id in ipairs({ "icons", "group", "friends", "guild", "sketchShown", "questie", "boats", "flight" }) do
+        want(ids[id], "OpenMap's panel has no " .. id .. " switch: " .. tostring(okRows and "" or panelRows))
     end
-    local ext = 0
-    if wmod and wmod.ExtraMenuRows then
-        for _, row in ipairs(wmod.ExtraMenuRows(function(label, id) return { id = id } end)) do
-            if row.id and row.id:match("^ext%.BookFinder%.spf") then ext = ext + 1 end
-        end
-    end
-    want(ext == 0, "Shortest Path's switches are still added to OpenMap's menu (they are in the Show menu)")
+    local booksRows = 0
+    for id in pairs(ids) do if id:match("^ext%.BookFinder%.") or id:match("^ext%.Books") then booksRows = booksRows + 1 end end
+    want(booksRows >= 1, "OpenMap's panel has no Books switches")
+    local r = ids.icons
+    if r then local was = r[2]() and true or false r[3](not was) want((wmod.db.icons and true or false) == not was, "the dungeons switch didn't change OpenMap's setting") r[3](was) end
     -- One settings window: one category in the AddOns list, BookFinder, holding every part's pages
     local names = {}
     for _, c in ipairs(SETTINGS.listed) do names[#names + 1] = c.name end
@@ -179,13 +181,11 @@ INTEGRATION = r"""function(root)
     want(#SETTINGS.top == 1, "settings: top-level categories made: " .. table.concat(top, ", "))
     local pages = {}
     for _, c in ipairs(SETTINGS.listed[1] and SETTINGS.listed[1].subs or {}) do pages[c.name] = true end
-    -- (Shortest Path's eight pages are three; no Forever addons page; no index of Open buttons)
     local count = 0
     for _ in pairs(pages) do count = count + 1 end
-    want(not pages["Map marks"] and not pages["Transport"] and not pages["Forever addons"],
-        "settings: Shortest Path's thin pages are still separate pages")
-    want(count <= 7, "settings: BookFinder's window has " .. count .. " pages (expected at most 7)")
-    for _, page in ipairs({ "World map", "Map icons", "Journeys", "Interface", "Library books" }) do
+    want(not pages["Journeys"] and not pages["Map icons"] and not pages["Interface"], "settings: Shortest Path's pages are still there")
+    want(count <= 4, "settings: BookFinder's window has " .. count .. " pages (expected at most 4)")
+    for _, page in ipairs({ "World map", "Library books" }) do
         want(pages[page], "settings: no " .. page .. " page in BookFinder's window")
     end
     want(BookFinder.OpenSettings("map") and BookFinder.OpenSettings("books") and BookFinder.OpenSettings(), "settings: a page can't be opened")
@@ -195,61 +195,23 @@ INTEGRATION = r"""function(root)
     local buttons = {}
     for name in pairs(LDBI and LDBI.objects or {}) do buttons[#buttons + 1] = name end
     want(#buttons == 1 and buttons[1] == "BookFinder", "minimap buttons: " .. table.concat(buttons, ", "))
-    want(not rawget(_G, "OpenMapMinimapButton") and not rawget(_G, "ShortestPathForeverOptionsButton"), "another part made its own minimap button")
+    want(not rawget(_G, "OpenMapMinimapButton"), "another part made its own minimap button")
     local LDB = LibStub("LibDataBroker-1.1", true)
     local launchers = {}
     for name in LDB:DataObjectIterator() do launchers[#launchers + 1] = name end
     want(#launchers == 1 and launchers[1] == "BookFinder", "broker launchers: " .. table.concat(launchers, ", "))
 
-    -- Nothing on the map twice: OpenMap leaves the docks, flight masters and Shortest Path's townsfolk to it
+    -- OpenMap draws its own docks, flight masters and townsfolk again (Shortest Path drew them before 2.0)
     local wm = root.OpenMap.modules and root.OpenMap.modules.worldmap
-    want(wm and wm.SUPERSEDED and wm.SUPERSEDED.boats and wm.SUPERSEDED.flight, "OpenMap still owns docks or flight masters")
-    want(wm and wm.db and wm.db.boats == false and wm.db.zeppelins == false and wm.db.flight == false,
-        "OpenMap's docks or flight masters are still on")
+    want(wm and wm.db and wm.db.boats ~= false and wm.db.flight ~= false, "OpenMap's docks or flight masters are still off")
     local kinds = {}
     for _, k in ipairs(wm and wm.TOWNSFOLK or {}) do kinds[k.key] = true end
-    want(not kinds.vendor and not kinds.innkeeper and not kinds.classTrainer, "OpenMap still draws vendors, inns or trainers")
-    want(kinds.mailbox and kinds.spirit and kinds.rare, "OpenMap lost mailboxes, spirit healers or rares")
-    local panelIDs = {}
-    if wm and wm.ExtraMenuRows then end
-    want(wm and wm.TravelShown and wm.TravelShown("boats") == (root.SPF.db.pins ~= false), "the airships don't follow Shortest Path's boats switch")
+    want(kinds.vendor and kinds.innkeeper and kinds.mailbox and kinds.spirit and kinds.rare, "OpenMap lost some of its townsfolk")
+    want(rawget(_G, "ShortestPathForever") == nil and rawget(_G, "ForeverCore") == nil, "Shortest Path or ForeverCore is still loaded")
 
-    -- One guidance: Books' tracker steps aside while Shortest Path guides the route
-    WorldMapFrame.EnumeratePinsByTemplate = false   -- (the stub's map answers every method; Shortest Path's quest pins look for this one)
-    local api = ShortestPathForever.API
-    local nav, cur = api.NavigateRoute, api.CurrentStop
-    api.NavigateRoute = function() return true end
-    api.CurrentStop = function() return 1 end
-    B.ToggleRoute(true)
-    local tracker = _G.BooksOnMapForeverRoute
-    want(tracker and not tracker:IsShown(), "Books' route tracker shows while Shortest Path guides the route")
-    api.CurrentStop = function() return nil end
-    B.OnGuidanceChanged()
-    want(tracker and tracker:IsShown(), "Books' tracker didn't come back when Shortest Path stopped guiding")
-    want(B.GetRoute and #B.GetRoute() > 0, "no route was built to guide")
-
-
-    -- Flight points: learned from the game's list when it marks some as undiscovered, and not when it lists all as found
-    local S = root.SPF
-    local mine
-    for id, node in pairs(S.TaxiNodes or {}) do
-        if not node.faction or node.faction == UnitFactionGroup("player") then mine = id break end
-    end
-    local taxiMap = C_TaxiMap
-    C_TaxiMap = { GetTaxiNodesForMap = function() return { { nodeID = mine, isUndiscovered = false } } end }
-    S.charDB.taxi[mine] = nil
-    want(BookFinder.LearnFlights() == 0 and not S.charDB.taxi[mine], "flights learned from a list that marks none undiscovered")
-    C_TaxiMap = { GetTaxiNodesForMap = function()
-        return { { nodeID = mine, isUndiscovered = false }, { nodeID = 999999, isUndiscovered = true } }
-    end }
-    want(mine and BookFinder.LearnFlights() == 1 and S.charDB.taxi[mine], "a flight point the game lists as found wasn't learned")
-    S.charDB.taxi[mine] = nil
-    C_TaxiMap = taxiMap
-    B.ToggleRoute(false)
-    api.NavigateRoute, api.CurrentStop = nav, cur
-    -- One search: Shortest Path's services box also finds books, places and Questie's quests, NPCs and items
+    -- One search: the panel's box finds books, places and Questie's quests, NPCs and items
     local ST = BookFinder.SearchTest
-    want(ST and root.SPF.ExtraSearch, "the search isn't hooked into Shortest Path's services panel")
+    want(ST and BookFinder.DrawSearch, "the search can't draw")
     if ST then
         local function has(sections, key, test)
             for _, s in ipairs(sections) do
@@ -274,39 +236,36 @@ INTEGRATION = r"""function(root)
         want(nname and has(ST.Run(nname:lower()), "npc", function(r) return r.label == nname end),
             "search: NPC 6491 (" .. tostring(nname) .. ") isn't found by its name")
         local holder = CreateFrame("Frame")
-        local okDraw, bottom, drawn = pcall(root.SPF.ExtraSearch, holder, 0, "goaz")
+        local okDraw, bottom, drawn = pcall(BookFinder.DrawSearch, holder, 0, "goaz")
         want(okDraw and type(bottom) == "number" and bottom > 0 and (drawn or 0) >= 1,
             "search: drawing the results failed: " .. tostring(bottom))
-        local okClear, b2, n2 = pcall(root.SPF.ExtraSearch, holder, 0, "")
+        local okClear, b2, n2 = pcall(BookFinder.DrawSearch, holder, 0, "")
         want(okClear and b2 == 0 and n2 == 0, "search: clearing it left rows behind")
     end
 
-    -- The quest list in the map: Questie's tracker moves into the Quests tab, the Forever column leaves the screen, and
-    -- the journey shows at the top of the tab with every leg
+    -- The quest list in the map: Questie's tracker moves into the Quests tab, and the scrollbar beside it is its own
+    -- (Questie scrolls by the wheel and hid its bar, while the game's list bar stayed showing and never moved)
     local QL = BookFinder.QuestLog
     want(QL, "the quest log module isn't there")
     if QL then
         QuestMapFrame.QuestsFrame = QuestMapFrame.QuestsFrame or CreateFrame("Frame", nil, QuestMapFrame)
         local list = rawget(_G, "Questie_BaseFrame") or CreateFrame("Frame", "Questie_BaseFrame", UIParent)
-        local column = rawget(_G, "ForeverTrackerCompanion") or CreateFrame("Frame", "ForeverTrackerCompanion", UIParent)
+        local scroll = rawget(_G, "TrackedQuestsScrollFrame") or CreateFrame("ScrollFrame", "TrackedQuestsScrollFrame", list)
+        scroll.ScrollBar = scroll.ScrollBar or CreateFrame("Slider", nil, scroll)
+        local range = 200
+        scroll.GetVerticalScrollRange = function() return range end
+        scroll.ScrollBar:Hide()
         local holder = QL.Build()
         want(holder, "the Quests tab holder wasn't built")
         want(QL.Dock(), "Questie's tracker wasn't moved into the Quests tab")
         want(list:GetParent() == holder, "Questie's tracker isn't in the Quests tab")
-        QL.Park()
-        want(column:GetParent() == QL.Hidden, "the Forever column is still on screen")
         local p = Questie.db and Questie.db.profile
         if p then want(p.trackerLocked and p.sizerHidden, "Questie's tracker can still be dragged or sized in the map") end
-        local API3 = ShortestPathForever.API
-        local was = API3.Journey
-        API3.Journey = function() return { goal = { title = "Booty Bay", map = 1434 }, secondsLeft = 600,
-            legs = { { mode = "zeppelin", text = "Zeppelin to Grom'gol", seconds = 240 }, { mode = "walk", text = "Walk to Booty Bay", seconds = 300 } } } end
         QL.Refresh()
-        want(QL.JourneyShown() and QL.Legs() == 2, "the journey isn't at the top of the Quests tab with its 2 legs (" .. QL.Legs() .. ")")
-        API3.Journey = function() return nil end
+        want(scroll.ScrollBar:IsShown(), "a list longer than the room shows no scrollbar of its own")
+        range = 0
         QL.Refresh()
-        want(not QL.JourneyShown() and QL.Legs() == 0, "the journey stayed after it ended")
-        API3.Journey = was
+        want(not scroll.ScrollBar:IsShown(), "a list that fits still shows a scrollbar")
     end
 
     -- The in-game self-test runs from start to end and writes its record (the stub's map can't pass every check)
@@ -324,119 +283,62 @@ INTEGRATION = r"""function(root)
     end
     C_Timer.After = after
     local st = BookFinderDB.selftest
-    want(st and st.finished and not st.crashed and #st.checks >= 30 and st.routes and #st.routes == 15,
-        "the self-test didn't finish its run: " .. tostring(st and (st.crashed or (#st.checks .. " checks, " .. tostring(st.routes and #st.routes) .. " routes"))))
+    want(st and st.finished and not st.crashed and #st.checks >= 25,
+        "the self-test didn't finish its run: " .. tostring(st and (st.crashed or (#st.checks .. " checks"))))
     BookFinderDB.selftest = nil
 
-    -- No journey fails in silence: refusals say why and are written down; one asked in combat starts when it ends
-    local J = BookFinder.Journeys
-    want(J, "the journeys module isn't there")
-    if J then
-        local NAV = ShortestPathForever.API
-        local said = {}
-        -- (the stub can't run a real journey: Shortest Path's answer is stood in for, refusing as it does)
-        local realNavigate = J.Original(function(_, stops)
-            local stop = stops[1]
-            return not IN_COMBAT and stop.x >= 0 and stop.x <= 1 and stop.y >= 0 and stop.y <= 1
-        end)
-        local frameWas = rawget(_G, "UIErrorsFrame")
-        UIErrorsFrame = { AddMessage = function(_, text) said[#said + 1] = text end }
-        BookFinderDB.attempts = nil
-        want(NAV.Navigate("test", 1454, 7, 7, "the moon") == false, "a journey to a point off the map wasn't refused")
-        local last = BookFinderDB.attempts and BookFinderDB.attempts[1]
-        want(last and last.result == "refused" and last.why == "place" and #said == 1,
-            "the refusal wasn't said and recorded: " .. tostring(last and last.why) .. ", " .. #said .. " said")
-        IN_COMBAT = true
-        want(NAV.Navigate("test", 1454, 0.5, 0.5, "Orgrimmar") == true and J.Queued(), "a journey asked in combat wasn't kept")
-        want(BookFinderDB.attempts[1].result == "queued" and #said == 2, "the wait for combat wasn't said and recorded")
-        NAV.Cancel("test")
-        want(not J.Queued(), "cancelling didn't forget the journey kept for after combat")
-        NAV.Navigate("test", 1454, 0.5, 0.5, "Orgrimmar")
-        IN_COMBAT = false
-        J.Flush()
-        want(not J.Queued() and BookFinderDB.attempts[1].result ~= "queued", "the kept journey wasn't asked again after combat")
-        want(BookFinder.Journey(nil, nil, nil, "Garrett Family Crest") == false and said[#said]:find("no place is known"),
-            "a result with no place didn't say so")
-        NAV.Cancel("test")
-        UIErrorsFrame = frameWas
-        J.Original(realNavigate)
-        -- the Quests tab: still searching, and no way there, in Shortest Path's words
-        local QL2, statusWas = BookFinder.QuestLog, BookFinder.JourneyStatus
-        if QL2 and QL2.Holder() then
-            local journeyWas2 = NAV.Journey
-            NAV.Journey = function() return nil end
-            BookFinder.JourneyStatus = function() return "searching", "Booty Bay", "Finding the fastest way…" end
-            QL2.Refresh()
-            want(QL2.JourneyShown() and QL2.Legs() == 1, "a journey still searching isn't shown in the Quests tab")
-            BookFinder.JourneyStatus = function() return "unreachable", "Booty Bay", "No way there from here." end
-            QL2.Refresh()
-            want(QL2.JourneyShown() and QL2.Legs() == 1, "a journey with no way there isn't shown in the Quests tab")
-            BookFinder.JourneyStatus = function() return nil end
-            QL2.Refresh()
-            want(not QL2.JourneyShown(), "the journey's status stayed after it ended")
-            BookFinder.JourneyStatus, NAV.Journey = statusWas, journeyWas2
-        end
-    end
-
-    -- The recorder: journeys as Shortest Path plans them, once per goal, and BookFinder's errors, deduplicated
-    local API2 = ShortestPathForever.API
-    local journeyWas = API2.Journey
-    API2.Journey = function() return { goal = { title = "Booty Bay", map = 1434, x = 0.27, y = 0.77 },
-        legs = { { mode = "zeppelin", text = "Zeppelin to Grom'gol", seconds = 240 }, { mode = "walk", text = "Walk to Booty Bay", seconds = 300 } },
-        secondsLeft = 540 } end
-    BookFinder.RecordJourney()
-    BookFinder.RecordJourney()
-    API2.Journey = journeyWas
-    local js = BookFinderDB.journeys
-    want(js and #js == 1 and js[1].goal.title == "Booty Bay" and #js[1].legs == 2 and js[1].legs[1].mode == "zeppelin",
-        "the recorder didn't keep the journey once with its legs")
+    -- The recorder: BookFinder's errors, deduplicated
     BookFinder.RecordError("Interface/AddOns/BookFinder/Merge/Search.lua:1: boom")
     BookFinder.RecordError("Interface/AddOns/BookFinder/Merge/Search.lua:1: boom")
     BookFinder.RecordError("Interface/AddOns/OtherAddon/x.lua:1: not ours")
     local errs = BookFinderDB.errors or {}
     want(#errs == 1 and errs[1].count == 2, "the recorder didn't keep BookFinder's error once, counted (" .. #errs .. ")")
-    BookFinderDB.journeys, BookFinderDB.errors = nil, nil
+    BookFinderDB.errors = nil
 
     -- /bookfinder inspect records what the client has, without errors
     local okInspect, inspected = pcall(BookFinder.Inspect)
     want(okInspect and inspected and BookFinderDB.inspect and BookFinderDB.inspect.atlases and BookFinderDB.inspect.frames,
         "/bookfinder inspect failed: " .. tostring(inspected))
 
-    -- The library books tab in the quest log: built, every book drawn, travel times from Shortest Path, the nearest
-    -- book by time, a search, a click guides there, Shift-click marks it, the route's rows, and /bom opens it
+    -- The library books tab in the quest log: built, every book drawn with its distance, the nearest book, the one
+    -- search, a click puts the map pin on it, Shift-click marks it, the route's rows, and /bom opens it
     local tabAPI = BookFinder.BooksTab
     want(tabAPI and BookFinder.OpenBooks and BookFinder.OpenQuestLog, "the books tab isn't there")
     if tabAPI then
         tabAPI.Attach()
         want(rawget(_G, "BookFinderBooksPanel") and rawget(_G, "BookFinderBooksTab"), "the books tab or its panel wasn't built")
-        local API = ShortestPathForever.API
-        local estimate, navigate = API.Estimate, API.Navigate
-        local asked, sent = 0, nil
-        API.Estimate = function(_, _, _, _, x) asked = asked + 1 return 60 + x * 1000 end
-        API.Navigate = function(_, map, x, y, title) sent = title return true end
+        -- (where you stand, and a world for the books: OpenMap's stand-in from above puts each map's x beside the next)
+        C_Map.GetBestMapForUnit = function() return 1429 end
+        C_Map.GetPlayerMapPosition = function() return { x = 0.5, y = 0.5, GetXY = function(self) return self.x, self.y end } end
+        local function gap(loc) return math.sqrt((1429.5 - (loc[1] + loc[2] / 100)) ^ 2 + (0.5 - loc[3] / 100) ^ 2) end
+        local waypoint, sent = BookFinder.Waypoint, nil
+        BookFinder.Waypoint = function(map, x, y, title) sent = title return true end
         tabAPI.Shown(true)
-        local missing, quickest, quickestX = 0, nil, nil
+        local missing, quickest, quickestD = 0, nil, nil
         for _, b in ipairs(B.BOOKS) do
             if not B.IsDone(b) then
                 missing = missing + 1
                 for _, loc in ipairs(b.locs) do
-                    if not quickestX or loc[2] < quickestX then quickest, quickestX = b, loc[2] end
+                    local d = gap(loc)
+                    if not quickestD or d < quickestD then quickest, quickestD = b, d end
                 end
             end
         end
         want(tabAPI.Rows() >= #B.BOOKS + 2, "books tab: drew " .. tabAPI.Rows() .. " rows for " .. #B.BOOKS .. " books")
         for _ = 1, 500 do if not tabAPI.Step() then break end end
-        want(tabAPI.Estimates() == missing and asked > 0, "books tab: " .. tabAPI.Estimates() .. " travel times for " .. missing .. " missing books")
+        want(tabAPI.Estimates() == missing, "books tab: " .. tabAPI.Estimates() .. " distances for " .. missing .. " missing books")
         local near = tabAPI.Spec("nearest")
-        want(near and near.book == quickest, "books tab: the nearest book isn't the quickest to reach ("
+        want(near and near.book == quickest, "books tab: the nearest book isn't the nearest ("
             .. tostring(near and near.book and near.book.name) .. " vs " .. tostring(quickest and quickest.name) .. ")")
         tabAPI.Search("Goaz")
-        want(tabAPI.Rows() == 1, "books tab: a search for one book drew " .. tabAPI.Rows() .. " rows")
+        want(tabAPI.Rows() >= 1, "books tab: a search for a book drew nothing")
+        tabAPI.Search("orgrimmar")
+        want(tabAPI.Rows() >= 1, "books tab: the one search found no place called Orgrimmar")
         tabAPI.Search("")
         want(tabAPI.Rows() >= #B.BOOKS, "books tab: clearing the search didn't bring the books back")
         local spec = tabAPI.Spec(quickest.key)
         if spec then spec.onClick("LeftButton") end
-        want(sent == quickest.name, "books tab: clicking a book didn't send Shortest Path there")
+        want(sent == quickest.name, "books tab: clicking a book didn't put the map pin on it")
         local shift = IsShiftKeyDown
         IsShiftKeyDown = function() return true end
         spec = tabAPI.Spec(quickest.key)
@@ -444,17 +346,14 @@ INTEGRATION = r"""function(root)
         want(B.IsDone(quickest), "books tab: Shift-click didn't mark the book collected")
         B.SetDone(quickest, false, true)
         IsShiftKeyDown = shift
-        local nav, cur = API.NavigateRoute, API.CurrentStop
-        API.NavigateRoute = function() return true end
         B.ToggleRoute(true)
         tabAPI.Refresh()
         want(tabAPI.Spec("route") and not tabAPI.Spec("start"), "books tab: the route under way has no row")
         B.ToggleRoute(false)
         tabAPI.Refresh()
         want(tabAPI.Spec("start") and not tabAPI.Spec("route"), "books tab: no row starts the route")
-        API.NavigateRoute, API.CurrentStop = nav, cur
         tabAPI.Shown(false)
-        ForeverCore.QuestLogTabs.ShowQuests()
+        BookFinder.Tabs.ShowQuests()
         -- (the files left out of the build: Books still calls their entry points)
         local okRetired, errRetired = pcall(function()
             SlashCmdList.BOOKSONMAP("welcome")
@@ -463,12 +362,12 @@ INTEGRATION = r"""function(root)
             B.InitMinimapButton()
         end)
         want(okRetired, "a left-out Books file is still needed: " .. tostring(errRetired))
-        ForeverCore.QuestLogTabs.ShowQuests()
+        BookFinder.Tabs.ShowQuests()
         SlashCmdList.BOOKSONMAP("")
-        want(ForeverCore.QuestLogTabs.Selected() == "bookfinder.books" and not rawget(_G, "BooksOnMapForeverOptions"),
+        want(BookFinder.Tabs.Selected() == "bookfinder.books" and not rawget(_G, "BooksOnMapForeverOptions"),
             "/bom doesn't open the books tab (or still builds Books' old window)")
-        ForeverCore.QuestLogTabs.ShowQuests()
-        API.Estimate, API.Navigate = estimate, navigate
+        BookFinder.Tabs.ShowQuests()
+        BookFinder.Waypoint = waypoint
     end
 
     for k, f in pairs(saved) do C_Map[k] = f end
@@ -639,8 +538,6 @@ def run(mode):
         CreateFramePool = function() return pool() end
         CreateUnsecuredRegionPoolInstance = function() return pool() end
     """)
-    if mode == "walk":
-        L.execute("debugprofilestop = function() return os.clock() * 1000 end")
     if mode == "shadow":
         L.execute("""
             C_AddOns.GetAddOnInfo = function(name)
@@ -657,15 +554,12 @@ def run(mode):
     end""")
 
     if mode == "standalone":
-        addons = [("ForeverCore", os.path.join(SRC, "ForeverCore", "ForeverCore.toc")),
-                  ("QuestieDB", os.path.join(SRC, "QuestieDB", "QuestieDB_Forever.toc")),
+        addons = [("QuestieDB", os.path.join(SRC, "QuestieDB", "QuestieDB_Forever.toc")),
                   ("Questie", os.path.join(SRC, "Questie", "Questie_Forever.toc")),
                   ("OpenMap", os.path.join(SRC, "OpenMap", "OpenMap.toc")),
-                  ("ShortestPathForever", os.path.join(SRC, "ShortestPathForever", "ShortestPathForever.toc")),
                   ("Books_on_map_Forever", os.path.join(SRC, "Books_on_map_Forever", "Books_on_map_Forever.toc"))]
     else:
-        addons = [("ForeverCore", os.path.join(BUILD, "ForeverCore", "ForeverCore.toc")),
-                  ("BookFinder", os.path.join(BUILD, "BookFinder", "BookFinder.toc"))]
+        addons = [("BookFinder", os.path.join(BUILD, "BookFinder", "BookFinder.toc"))]
 
     # each addon's toc fields (QuestieDB's database is its toc's), and what has loaded, as the game answers them
     metadata = {name: toc_meta(toc) for name, toc in addons}
@@ -707,7 +601,6 @@ def run(mode):
         RunTimers(3)
         local commands = {
             OPENMAP = { "status", "news" },
-            SHORTESTPATHFOREVER = { "stats", "perf" },
             BOOKSONMAP = { "help", "next", "route", "route print" },
             BOOKFINDER = { "status", "help" },
         }
@@ -725,8 +618,6 @@ def run(mode):
 
     if mode == "dump":
         return lua_to_py(L.eval(DUMP)())
-    if mode == "walk":
-        return lua_to_py(L.eval(WALK)(spaces["BookFinder"]))
 
     checks = []
     if mode != "standalone":
@@ -734,12 +625,10 @@ def run(mode):
         check = L.eval("""function(root, shadow)
             local out = {}
             local function want(cond, msg) if not cond then out[#out + 1] = msg end end
-            for _, key in ipairs({ "OpenMap", "SPF", "Books" }) do want(type(root[key]) == "table", "no private table for " .. key) end
-            want(root.OpenMap ~= root.SPF and root.SPF ~= root.Books, "components share a table")
+            for _, key in ipairs({ "OpenMap", "Books", "Questie" }) do want(type(root[key]) == "table", "no private table for " .. key) end
+            want(root.OpenMap ~= root.Books and root.Books ~= root.Questie, "components share a table")
             want(BookFinder and BookFinder.components, "no BookFinder global")
-            want(root.SPF.db ~= nil and root.Books.db ~= nil, "SP or Books have no saved settings after login")
-            want(root.Books.db ~= root.SPF.db, "SP and Books share settings")
-            want(ShortestPathForever and ShortestPathForever.API, "Shortest Path's API isn't published")
+            want(root.Books.db ~= nil, "Books has no saved settings after login")
             want(SlashCmdList.BOOKFINDER and SlashCmdList.BOOKSONMAP, "a slash command is missing")
             want(BookFinder_OnAddonCompartmentClick, "no compartment function")
             -- Questie and its database, inside BookFinder: the database read from BookFinder's toc, Questie not refusing
@@ -760,7 +649,7 @@ def run(mode):
             if shadow then
                 want(root.OpenMap.__skip and not BookFinder.Active("OpenMap"), "OpenMap didn't stand aside for its standalone copy")
                 want(OpenMap == nil and OpenMapAPI == nil, "BookFinder's OpenMap still loaded while standing aside")
-                want(BookFinder.Active("SPF") and BookFinder.Active("Books"), "the other parts stood aside too")
+                want(BookFinder.Active("Books"), "the other parts stood aside too")
             else
                 want(OpenMap == root.OpenMap, "OpenMap's global isn't its own table")
                 want(OpenMapAPI and OpenMapAPI.major == 1, "OpenMap's API isn't published")
@@ -868,43 +757,6 @@ DUMP = r"""function()
 end"""
 
 
-# Shortest Path's own walking search on the walks a player saw drawn straight (and one as a control)
-WALK = r"""function(root)
-    local Path = root.SPF.Path
-    local out = {}
-    local walks = {
-        { "control: Goldshire to Stormwind", 0, { map = 0, x = -9464, y = 62 }, { map = 0, x = -8840.6, y = 489.7 } },
-        { "Powderfuse Port to Stormwind", 0, { map = 0, x = -8226.9, y = -5783.1, z = 6 }, { map = 0, x = -8840.6, y = 489.7 } },
-        { "Gadgetzan to Steamwheedle Port", 1, { map = 1, x = -7177, y = -3785 }, { map = 1, x = -6929.4, y = -4931.3, z = 6 } },
-        { "Freewind Post (lift bottom) to Blackfathom Deeps", 1, { map = 1, x = -5390.8, y = -2497.0, z = -40.4 }, { map = 1, x = 4249.1, y = 748.4 } },
-    }
-    for _, w in ipairs(walks) do
-        local name, map, from, to = w[1], w[2], w[3], w[4]
-        local r = { name = name, hasData = Path.HasData(map) }
-        local t0 = os.clock()
-        local ok, points, cost, expansions = pcall(Path.FindSync, map, from, to)
-        r.ms = math.floor((os.clock() - t0) * 1000)
-        r.expansions = expansions
-        if not ok then
-            r.error = tostring(points)
-        elseif type(points) == "table" then
-            local len, px, py = 0, from.x, from.y
-            for _, p in ipairs(points) do
-                len = len + math.sqrt((p.x - px) ^ 2 + (p.y - py) ^ 2)
-                px, py = p.x, p.y
-            end
-            r.points, r.cost = #points, cost
-            r.length = math.floor(len)
-            r.straight = math.floor(math.sqrt((to.x - from.x) ^ 2 + (to.y - from.y) ^ 2))
-        else
-            r.reason = tostring(cost)
-        end
-        out[#out + 1] = r
-    end
-    return out
-end"""
-
-
 def lua_to_py(v):
     if lupa.lua_type(v) == "table":
         keys = list(v.keys())
@@ -938,10 +790,6 @@ def report(mode, result):
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "diff"
-    if mode == "walk":
-        for r in run("walk"):
-            print(r)
-        sys.exit(0)
     if mode == "dump":
         import json
         out = sys.argv[2] if len(sys.argv) > 2 else "settings.json"
