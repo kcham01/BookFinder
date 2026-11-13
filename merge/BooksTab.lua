@@ -1114,6 +1114,14 @@ end
 -- every way into Books' window (/bom, the toast, the minimap menu) opens the tab
 BOOKS.ToggleOptions = function() public.OpenBooks(true) end
 
+-- the kit, for the search (Search.lua): the same rows, art and fonts as this tab and Shortest Path's
+public.Kit = {
+	Art = Art, CreateRow = CreateRow, CreateSmall = CreateSmall, Paint = Paint,
+	ROW_HEIGHT = ROW_HEIGHT, SMALL_HEIGHT = SMALL_HEIGHT, HEADER_HEIGHT = HEADER_HEIGHT, HEADER_GAP = HEADER_GAP,
+	ROW_GAP = ROW_GAP, GROUP_GAP = GROUP_GAP, GOLD = GOLD, WHITE = WHITE, GREY_RGB = GREY_RGB,
+	GoTo = goTo, BookSpec = bookSpec, Matches = matches,
+}
+
 -- for the offline test: build, show and count without a world map script running
 public.BooksTab = {
 	Attach = Attach,

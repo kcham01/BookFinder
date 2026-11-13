@@ -103,11 +103,36 @@ ns.Init(function()
 	-- page grows tall. The index buttons stay out of the settings search (the last argument) so it finds the
 	-- settings themselves.
 	local page
+	-- BookFinder: Shortest Path's eight pages are three of its window (Map icons, Journeys, Interface), each old page a
+	-- titled section of one, and the tree lists the pages itself, so there is no index of Open buttons
+	local MERGED = {
+		[L["Map marks"]] = "Map", [L["Transport"]] = "Map",
+		[L["Guidance"]] = "Journeys", [L["Party mage portals"]] = "Journeys",
+		[L["Interface"]] = "Interface", [L["Alerts"]] = "Interface", [L["Travel journal"]] = "Interface",
+	}
+	local merged = {}
+	if BUILT_IN then
+		local TITLES = { Map = L["Map icons"], Journeys = L["Journeys"], Interface = L["Interface"] }
+		for _, key in ipairs({ "Map", "Journeys", "Interface" }) do
+			merged[key] = Settings.RegisterVerticalLayoutSubcategory(category, TITLES[key])
+			BookFinder.RegisterPage(key, merged[key])
+		end
+	end
 	local function Page(name)
+		local target = BUILT_IN and merged[MERGED[name] or ""]
+		if target then
+			page = target
+			BookFinder.RegisterPage(name, target)
+			if CreateSettingsListSectionHeaderInitializer then
+				Settings.RegisterInitializer(page, CreateSettingsListSectionHeaderInitializer(name))
+			end
+			return
+		end
 		local subcategory = Settings.RegisterVerticalLayoutSubcategory(category, name)
 		page = subcategory
 		if BUILT_IN then
 			BookFinder.RegisterPage(name, subcategory)
+			return
 		end
 		Settings.RegisterInitializer(
 			category,
@@ -779,13 +804,18 @@ ns.Init(function()
 	-- The Forever addons page is ForeverCore's, with the hint setting on it.
 	-- With the gamepad interface on the page is the client's own rows so the Options navigation can enter it
 	-- (cjber/tweaks-forever#382).
-	local family = ForeverCore.Family.Register(category, ns.db, addonName, ns.core.SafeCall)
-	Settings.RegisterInitializer(
-		category,
-		CreateSettingsButtonInitializer(L["Forever addons"], L["Open"], function()
-			ForeverCore.OpenSettingsPanel(family:GetID())
-		end, nil, false)
-	)
+	-- (BookFinder: no Forever addons page, and no suggestions of other addons: it is one addon of its own)
+	if BUILT_IN then
+		ns.db.suggestFamily = false
+	else
+		local family = ForeverCore.Family.Register(category, ns.db, addonName, ns.core.SafeCall)
+		Settings.RegisterInitializer(
+			category,
+			CreateSettingsButtonInitializer(L["Forever addons"], L["Open"], function()
+				ForeverCore.OpenSettingsPanel(family:GetID())
+			end, nil, false)
+		)
+	end
 
 	-- (BookFinder adds its category to the list once every part's pages are in: Bridge.lua)
 	if not BUILT_IN then

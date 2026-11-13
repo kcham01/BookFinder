@@ -387,16 +387,12 @@ function QuestieOptionsEngine:Initialize()
     for _, tab in ipairs(tabs) do
         local canvas = _CreateCanvas(UIParent, tab, RenderMode.BLIZZARD)
         local category
-        -- BookFinder: Questie's tabs are pages of its one settings window: "Quests", then "Quests: <tab>"
+        -- BookFinder: Questie's tabs are pages of its one settings window: "Quests", with its other tabs under it
         local bookFinder = BookFinder and BookFinder.SettingsCategory and BookFinder.SettingsCategory()
-        if bookFinder then
-            local quests = QUESTS_LABEL or "Quests"
-            category = Settings.RegisterCanvasLayoutSubcategory(bookFinder, canvas,
-                mainCategory and (quests .. ": " .. tab.data.title) or quests)
-            if not mainCategory then
-                mainCategory = category
-                BookFinder.RegisterPage("quests", category)
-            end
+        if bookFinder and not mainCategory then
+            category = Settings.RegisterCanvasLayoutSubcategory(bookFinder, canvas, QUESTS_LABEL or "Quests")
+            mainCategory = category
+            BookFinder.RegisterPage("quests", category)
         elseif mainCategory then
             category = Settings.RegisterCanvasLayoutSubcategory(mainCategory, canvas, tab.data.title)
         else

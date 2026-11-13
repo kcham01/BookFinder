@@ -363,6 +363,19 @@ local function Rows()
 	end
 	-- other addons' switches (API.lua), each under its own heading in its tab
 	for _, r in ipairs(mod.ExtraMenuRows and mod.ExtraMenuRows(row) or {}) do rows[#rows + 1] = r end
+	-- (BookFinder: what the map shows is the world map's own Show menu, Merge/MapMenu.lua: no switch in two menus)
+	if ns.BUILT_IN then
+		local MOVED = { icons = true, group = true, friends = true, guild = true, sketchShown = true, allQuests = true,
+			questie = true, ["townsfolk.mailbox"] = true, ["townsfolk.spirit"] = true, ["townsfolk.rare"] = true }
+		for i = #rows, 1, -1 do
+			local id = rows[i].id
+			if id and (MOVED[id] or id:match("^ext%.BookFinder%.")) then table.remove(rows, i) end
+		end
+		-- (and a heading left with nothing under it goes too)
+		for i = #rows, 1, -1 do
+			if not rows[i].id and (i == #rows or not rows[i + 1].id) then table.remove(rows, i) end
+		end
+	end
 	return rows
 end
 
