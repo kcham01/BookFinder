@@ -11,6 +11,11 @@ One WoW: Forever addon made of four:
 
 Every feature of each is kept, nothing does the same job twice, and they work as one:
 
+- **One panel on the world map** with one search (places, books, every quest, NPC, object and item) and five tabs:
+  **Journey** (where you're going, each step and its time, your hearthstone), **Quests** (ready to turn in, your log
+  with objectives, quests near you, one route through every turn-in), **Nearby** (the closest of every service, by
+  travel time), **Books** (progress, rewards, the route, every book) and **Map** (find me, pins, drawing, and one
+  list of everything the map can show). Click anything to go there.
 - **One settings window**: Options › AddOns › BookFinder, the game's own settings panel. The world map, every
   journey page and the library books are its pages. `/bookfinder`, `/path`, the minimap button's right-click and the
   gear in the book list all open it.

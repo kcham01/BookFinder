@@ -2,7 +2,7 @@
 ## Title: |cff33ff99Book|rFinder
 ## Notes: One addon for the world: a seamless map, journeys anywhere, every quest and the library books. /bookfinder
 ## Author: OpenMap contributors; cjber; Daeler; Questie: Aero/Logon/Muehe/TheCrux(BreakBB)/Drejjmit/Dyaxler/Cheeq/TechnoHunter/Yttrium/Everyone else; merged as BookFinder
-## Version: 1.2.0
+## Version: 1.3.0
 ## X-OpenMap-Version: v0.8.7
 ## X-SPF-Version: v1.34.3
 ## X-Books-Version: 2.2.6
@@ -131707,5 +131707,6 @@ Books_on_map_Forever\modules\Toast.lua
 Books_on_map_Forever\modules\Nearby.lua
 Books_on_map_Forever\modules\Welcome.lua
 
-# Ties the parts together
+# Ties the parts together, and the map panel
 Merge\Bridge.lua
+Merge\Panel.lua

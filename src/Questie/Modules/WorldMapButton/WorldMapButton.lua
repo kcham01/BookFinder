@@ -26,6 +26,13 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local mapButton
 
 function WorldMapButton.Initialize()
+    -- BookFinder: its map panel has the quest icons' switch and Questie's menu; one button on the map, not two
+    if BookFinder and BookFinder.SettingsCategory then
+        mapButton = CreateFrame("Frame")
+        mapButton:Hide()
+        Questie.WorldMap = { Button = mapButton }
+        return
+    end
     mapButton = KButtons:Add("QuestieWorldMapButtonTemplate", "BUTTON")
 
     Questie.WorldMap = {

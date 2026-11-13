@@ -240,6 +240,37 @@ INTEGRATION = r"""function(root)
     C_TaxiMap = taxiMap
     B.ToggleRoute(false)
     api.NavigateRoute, api.CurrentStop = nav, cur
+    -- The map panel: built at login; every tab and a search draw, with a journey under way and a quest log
+    want(_G.BookFinderMapPanel and _G.BookFinderMapToggle, "the map panel or its button wasn't built")
+    local API = ShortestPathForever.API
+    local journey = API.Journey
+    API.Journey = function() return { goal = { title = "Stormwind" }, legs = { { text = "Walk to Goldshire", seconds = 75 }, { text = "Fly to Stormwind", seconds = 200 } }, secondsLeft = 275 } end
+    local savedQL = C_QuestLog
+    C_QuestLog = {
+        GetNumQuestLogEntries = function() return 3 end,
+        GetInfo = function(i)
+            if i == 1 then return { title = "Elwynn Forest", isHeader = true } end
+            return { title = i == 2 and "A Threat Within" or "Wolves Across the Border", level = 5, questID = i == 2 and 783 or 33 }
+        end,
+        IsComplete = function(id) return id == 783 end,
+        GetQuestObjectives = function() return { { text = "Wolf meat: 3/8", finished = false } } end,
+    }
+    local drew = {}
+    for _, tab in ipairs({ "journey", "quests", "nearby", "books", "map" }) do
+        BookFinder.OpenPanel(tab)
+        BookFinder.RefreshPanel()
+        drew[tab] = BookFinder.PanelRows()
+    end
+    want(drew.journey >= 4, "map panel: the Journey tab drew " .. drew.journey .. " rows (a journey of two steps)")
+    want(drew.quests >= 5, "map panel: the Quests tab drew " .. drew.quests .. " rows (a header, two quests)")
+    want(drew.books >= 30, "map panel: the Books tab drew " .. drew.books .. " rows")
+    want(drew.map >= 10, "map panel: the Map tab drew " .. drew.map .. " rows")
+    want(drew.nearby >= 1, "map panel: the Nearby tab drew nothing")
+    want(BookFinder.SearchPanel("Goaz") and BookFinder.PanelRows() >= 2, "map panel: a search for a book found nothing")
+    want(BookFinder.SearchPanel("") ~= nil, "map panel: clearing the search failed")
+    API.Journey = journey
+    C_QuestLog = savedQL
+
     for k, f in pairs(saved) do C_Map[k] = f end
     CreateVector2D = savedVector
     return out
