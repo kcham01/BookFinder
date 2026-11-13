@@ -25,8 +25,6 @@ d.trayOpen = true               -- the favourites' row shown (the arrow beside t
 d.trayStarted = false           -- the first favourites given, once (a fresh install's, or one with none yet)
 d.tabRail = true                -- the OpenMap button and the favourites as tabs at the window's edge (off: a row in its bottom-left corner)
 d.mapButtons = true             -- the OpenMap button and the favourites on the map at all (off: none; /openmap opens the menu)
--- (BookFinder: its map panel is the one button on the map, and opens this menu: OpenMap's own off)
-if BookFinder and BookFinder.SettingsCategory then d.mapButtons = false end
 local TRAY_START = { "find", "pin", "quill" }
 
 local map, sc, menu, toggle, trayArrow, checks, favBar, tiles, zoomRow, miniRow, opacityRow, bodyScroll, scrollBody, bodyBar

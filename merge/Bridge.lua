@@ -21,6 +21,7 @@ local function openMap()
 	if ToggleWorldMap then ToggleWorldMap() return true end
 end
 local function bookList()
+	if public.OpenBooks and public.OpenBooks() then return true end
 	if BOOKS.ToggleOptions then BOOKS.ToggleOptions() return true end
 	if SlashCmdList.BOOKSONMAP then SlashCmdList.BOOKSONMAP("") return true end
 end
@@ -42,7 +43,7 @@ local function menu(_, rootMenu)
 	rootMenu:CreateButton(WORLD_MAP or "World Map", openMap)
 	if public.Active("Books") then
 		rootMenu:CreateDivider()
-		rootMenu:CreateButton(BL("Books"), function() if not (public.OpenPanel and public.OpenPanel("books")) then bookList() end end)
+		rootMenu:CreateButton(BL("Library books"), bookList)
 		rootMenu:CreateButton((BL("Nearest:"):gsub("[:：]%s*$", "")), function() if BOOKS.GoToNearest then BOOKS.GoToNearest() end end)
 		rootMenu:CreateCheckbox(BL("Optimized route"), function() return BOOKS.db and BOOKS.db.routeOn and true or false end,
 			function() if BOOKS.ToggleRoute then BOOKS.ToggleRoute() end end)
@@ -50,7 +51,7 @@ local function menu(_, rootMenu)
 	if public.Active("Questie") and _G.QuestieLoader then
 		rootMenu:CreateDivider()
 		rootMenu:CreateButton(QUESTS_LABEL or "Quests", function()
-			if not (public.OpenPanel and public.OpenPanel("quests")) then public.OpenSettings("quests") end
+			if not (public.OpenQuestLog and public.OpenQuestLog()) then public.OpenSettings("quests") end
 		end)
 		rootMenu:CreateButton("My Journey", function()
 			local ok, journey = pcall(QuestieLoader.ImportModule, QuestieLoader, "QuestieJourney")
@@ -103,8 +104,7 @@ end
 
 local COMMANDS = {
 	settings = function() return public.OpenSettings() end,
-	find = function(rest) return public.SearchPanel and public.SearchPanel(rest, true) end,
-	panel = function(rest) return public.OpenPanel and public.OpenPanel(rest ~= "" and rest or nil) end,
+	quests = function() return public.OpenQuestLog and public.OpenQuestLog() end,
 	map = function() return public.OpenSettings("map") end,
 	books = bookList,
 	near = nearby,
@@ -120,7 +120,7 @@ SlashCmdList.BOOKFINDER = function(msg)
 		if not COMMANDS[cmd](rest) then say(cmd .. ": not available.") end
 		return
 	end
-	say("/bookfinder [settings | find <text> | panel [journey | quests | nearby | books | map] | map | books | near <service> | status]")
+	say("/bookfinder [settings | map | books | quests | near <service> | status]")
 	say("Also: /openmap (the map's menu), /path, /way, /spfnear, /bom.")
 end
 

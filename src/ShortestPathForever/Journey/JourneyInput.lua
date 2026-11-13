@@ -393,11 +393,6 @@ end
 -- and Kaliel's Tracker's dropdown (Core/KalielsTracker.lua), which is filled through the same calls.
 ---@param root table a menu description with CreateButton and CreateTitle
 ---@param questID number|string?
--- BookFinder's map panel: a journey to a quest in the log, as its menu entry plans one
-function ns.JourneyToQuest(questID)
-	return PlanQuest(questID)
-end
-
 function ns.AddQuestMenuEntry(root, questID)
 	if ns.db.journey and questID then
 		root:CreateButton(L["Plan journey"], function()

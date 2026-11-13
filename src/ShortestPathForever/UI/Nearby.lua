@@ -758,36 +758,6 @@ end
 
 -- The world map's tracking menu and the minimap's (Blizzard_Minimap/Mainline/Minimap.lua:645, Gethe/wow-ui-source
 -- branch forever, tags it MENU_MINIMAP_TRACKING) both carry this submenu.
--- BookFinder's map panel: the service rows, the nearest NPC of one (ranked by journey time), and a journey there
----@return {key: string, label: string, icon: any}[]?
-function ns.NearbyRows()
-	Build()
-	if state ~= "ready" then
-		return nil
-	end
-	local rows = {}
-	for _, group in ipairs(groups) do
-		rows[#rows + 1] = { key = group.key, label = group.label, icon = group.icon }
-	end
-	return rows
-end
-
-function ns.NearbyNearest(key)
-	local world = PlayerWorld()
-	if state ~= "ready" or not world then
-		return nil
-	end
-	return TravelNearest(key, world)
-end
-
-function ns.NearbyGo(key, place)
-	return Navigate(key, place or ns.NearbyNearest(key)) and true or false
-end
-
-function ns.NearbyOpen()
-	OpenServices()
-end
-
 local function AddTrackingEntry(_, root)
 	Build()
 	local world = PlayerWorld()

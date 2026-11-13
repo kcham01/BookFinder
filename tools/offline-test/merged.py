@@ -217,10 +217,6 @@ INTEGRATION = r"""function(root)
     want(tracker and tracker:IsShown(), "Books' tracker didn't come back when Shortest Path stopped guiding")
     want(B.GetRoute and #B.GetRoute() > 0, "no route was built to guide")
 
-    -- The book list opens (the gear button that replaced its language picker has no Refresh)
-    local okList, errList = pcall(B.ToggleOptions)
-    want(okList, "the book list doesn't open: " .. tostring(errList))
-    if okList then pcall(B.ToggleOptions) end
 
     -- Flight points: learned from the game's list when it marks some as undiscovered, and not when it lists all as found
     local S = root.SPF
@@ -240,36 +236,65 @@ INTEGRATION = r"""function(root)
     C_TaxiMap = taxiMap
     B.ToggleRoute(false)
     api.NavigateRoute, api.CurrentStop = nav, cur
-    -- The map panel: built at login; every tab and a search draw, with a journey under way and a quest log
-    want(_G.BookFinderMapPanel and _G.BookFinderMapToggle, "the map panel or its button wasn't built")
-    local API = ShortestPathForever.API
-    local journey = API.Journey
-    API.Journey = function() return { goal = { title = "Stormwind" }, legs = { { text = "Walk to Goldshire", seconds = 75 }, { text = "Fly to Stormwind", seconds = 200 } }, secondsLeft = 275 } end
-    local savedQL = C_QuestLog
-    C_QuestLog = {
-        GetNumQuestLogEntries = function() return 3 end,
-        GetInfo = function(i)
-            if i == 1 then return { title = "Elwynn Forest", isHeader = true } end
-            return { title = i == 2 and "A Threat Within" or "Wolves Across the Border", level = 5, questID = i == 2 and 783 or 33 }
-        end,
-        IsComplete = function(id) return id == 783 end,
-        GetQuestObjectives = function() return { { text = "Wolf meat: 3/8", finished = false } } end,
-    }
-    local drew = {}
-    for _, tab in ipairs({ "journey", "quests", "nearby", "books", "map" }) do
-        BookFinder.OpenPanel(tab)
-        BookFinder.RefreshPanel()
-        drew[tab] = BookFinder.PanelRows()
+    -- The library books tab in the quest log: built, every book drawn, travel times from Shortest Path, the nearest
+    -- book by time, a search, a click guides there, Shift-click marks it, the route's rows, and /bom opens it
+    local tabAPI = BookFinder.BooksTab
+    want(tabAPI and BookFinder.OpenBooks and BookFinder.OpenQuestLog, "the books tab isn't there")
+    if tabAPI then
+        tabAPI.Attach()
+        want(rawget(_G, "BookFinderBooksPanel") and rawget(_G, "BookFinderBooksTab"), "the books tab or its panel wasn't built")
+        local API = ShortestPathForever.API
+        local estimate, navigate = API.Estimate, API.Navigate
+        local asked, sent = 0, nil
+        API.Estimate = function(_, _, _, _, x) asked = asked + 1 return 60 + x * 1000 end
+        API.Navigate = function(_, map, x, y, title) sent = title return true end
+        tabAPI.Shown(true)
+        local missing, quickest, quickestX = 0, nil, nil
+        for _, b in ipairs(B.BOOKS) do
+            if not B.IsDone(b) then
+                missing = missing + 1
+                for _, loc in ipairs(b.locs) do
+                    if not quickestX or loc[2] < quickestX then quickest, quickestX = b, loc[2] end
+                end
+            end
+        end
+        want(tabAPI.Rows() >= #B.BOOKS + 2, "books tab: drew " .. tabAPI.Rows() .. " rows for " .. #B.BOOKS .. " books")
+        for _ = 1, 500 do if not tabAPI.Step() then break end end
+        want(tabAPI.Estimates() == missing and asked > 0, "books tab: " .. tabAPI.Estimates() .. " travel times for " .. missing .. " missing books")
+        local near = tabAPI.Spec("nearest")
+        want(near and near.book == quickest, "books tab: the nearest book isn't the quickest to reach ("
+            .. tostring(near and near.book and near.book.name) .. " vs " .. tostring(quickest and quickest.name) .. ")")
+        tabAPI.Search("Goaz")
+        want(tabAPI.Rows() == 1, "books tab: a search for one book drew " .. tabAPI.Rows() .. " rows")
+        tabAPI.Search("")
+        want(tabAPI.Rows() >= #B.BOOKS, "books tab: clearing the search didn't bring the books back")
+        local spec = tabAPI.Spec(quickest.key)
+        if spec then spec.onClick("LeftButton") end
+        want(sent == quickest.name, "books tab: clicking a book didn't send Shortest Path there")
+        local shift = IsShiftKeyDown
+        IsShiftKeyDown = function() return true end
+        spec = tabAPI.Spec(quickest.key)
+        if spec then spec.onClick("LeftButton") end
+        want(B.IsDone(quickest), "books tab: Shift-click didn't mark the book collected")
+        B.SetDone(quickest, false, true)
+        IsShiftKeyDown = shift
+        local nav, cur = API.NavigateRoute, API.CurrentStop
+        API.NavigateRoute = function() return true end
+        B.ToggleRoute(true)
+        tabAPI.Refresh()
+        want(tabAPI.Spec("route") and not tabAPI.Spec("start"), "books tab: the route under way has no row")
+        B.ToggleRoute(false)
+        tabAPI.Refresh()
+        want(tabAPI.Spec("start") and not tabAPI.Spec("route"), "books tab: no row starts the route")
+        API.NavigateRoute, API.CurrentStop = nav, cur
+        tabAPI.Shown(false)
+        ForeverCore.QuestLogTabs.ShowQuests()
+        SlashCmdList.BOOKSONMAP("")
+        want(ForeverCore.QuestLogTabs.Selected() == "bookfinder.books" and not rawget(_G, "BooksOnMapForeverOptions"),
+            "/bom doesn't open the books tab (or still builds Books' old window)")
+        ForeverCore.QuestLogTabs.ShowQuests()
+        API.Estimate, API.Navigate = estimate, navigate
     end
-    want(drew.journey >= 4, "map panel: the Journey tab drew " .. drew.journey .. " rows (a journey of two steps)")
-    want(drew.quests >= 5, "map panel: the Quests tab drew " .. drew.quests .. " rows (a header, two quests)")
-    want(drew.books >= 30, "map panel: the Books tab drew " .. drew.books .. " rows")
-    want(drew.map >= 10, "map panel: the Map tab drew " .. drew.map .. " rows")
-    want(drew.nearby >= 1, "map panel: the Nearby tab drew nothing")
-    want(BookFinder.SearchPanel("Goaz") and BookFinder.PanelRows() >= 2, "map panel: a search for a book found nothing")
-    want(BookFinder.SearchPanel("") ~= nil, "map panel: clearing the search failed")
-    API.Journey = journey
-    C_QuestLog = savedQL
 
     for k, f in pairs(saved) do C_Map[k] = f end
     CreateVector2D = savedVector
