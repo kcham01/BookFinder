@@ -172,6 +172,28 @@ INTEGRATION = r"""function(root)
     B.OnGuidanceChanged()
     want(tracker and tracker:IsShown(), "Books' tracker didn't come back when Shortest Path stopped guiding")
     want(B.GetRoute and #B.GetRoute() > 0, "no route was built to guide")
+
+    -- The book list opens (the gear button that replaced its language picker has no Refresh)
+    local okList, errList = pcall(B.ToggleOptions)
+    want(okList, "the book list doesn't open: " .. tostring(errList))
+    if okList then pcall(B.ToggleOptions) end
+
+    -- Flight points: learned from the game's list when it marks some as undiscovered, and not when it lists all as found
+    local S = root.SPF
+    local mine
+    for id, node in pairs(S.TaxiNodes or {}) do
+        if not node.faction or node.faction == UnitFactionGroup("player") then mine = id break end
+    end
+    local taxiMap = C_TaxiMap
+    C_TaxiMap = { GetTaxiNodesForMap = function() return { { nodeID = mine, isUndiscovered = false } } end }
+    S.charDB.taxi[mine] = nil
+    want(BookFinder.LearnFlights() == 0 and not S.charDB.taxi[mine], "flights learned from a list that marks none undiscovered")
+    C_TaxiMap = { GetTaxiNodesForMap = function()
+        return { { nodeID = mine, isUndiscovered = false }, { nodeID = 999999, isUndiscovered = true } }
+    end }
+    want(mine and BookFinder.LearnFlights() == 1 and S.charDB.taxi[mine], "a flight point the game lists as found wasn't learned")
+    S.charDB.taxi[mine] = nil
+    C_TaxiMap = taxiMap
     B.ToggleRoute(false)
     api.NavigateRoute, api.CurrentStop = nav, cur
     for k, f in pairs(saved) do C_Map[k] = f end
@@ -532,11 +554,15 @@ WALK = r"""function(root)
         { "control: Goldshire to Stormwind", 0, { map = 0, x = -9464, y = 62 }, { map = 0, x = -8840.6, y = 489.7 } },
         { "Powderfuse Port to Stormwind", 0, { map = 0, x = -8226.9, y = -5783.1, z = 6 }, { map = 0, x = -8840.6, y = 489.7 } },
         { "Gadgetzan to Steamwheedle Port", 1, { map = 1, x = -7177, y = -3785 }, { map = 1, x = -6929.4, y = -4931.3, z = 6 } },
+        { "Freewind Post (lift bottom) to Blackfathom Deeps", 1, { map = 1, x = -5390.8, y = -2497.0, z = -40.4 }, { map = 1, x = 4249.1, y = 748.4 } },
     }
     for _, w in ipairs(walks) do
         local name, map, from, to = w[1], w[2], w[3], w[4]
         local r = { name = name, hasData = Path.HasData(map) }
-        local ok, points, cost = pcall(Path.FindSync, map, from, to)
+        local t0 = os.clock()
+        local ok, points, cost, expansions = pcall(Path.FindSync, map, from, to)
+        r.ms = math.floor((os.clock() - t0) * 1000)
+        r.expansions = expansions
         if not ok then
             r.error = tostring(points)
         elseif type(points) == "table" then

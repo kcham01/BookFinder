@@ -146,7 +146,7 @@ function ns.RefreshOptions()
   frame.toasts:SetChecked(not ns.db.noToasts)
   frame.nearby:SetChecked(not ns.db.noNearby)
   frame.minimapSize:SetValue(ns.db.minimapPinSize or ns.DEFAULT_MINIMAP_PIN_SIZE)
-  frame.lang.Refresh()
+  if frame.lang.Refresh then frame.lang.Refresh() end -- (BookFinder: a gear button, the language is in its settings)
 
   for _, h in ipairs(frame.headers) do
     local n, total = 0, 0

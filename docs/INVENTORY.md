@@ -314,6 +314,12 @@ its standalone copy.
 
 ## 6. Merge quirks and risks (read before changing anything)
 
+0. **Flight points.** Shortest Path learns flight points only at a flight master's map, and keeps them in
+   `ShortestPathForeverCharDB.taxi`. Without the migration below, BookFinder starts with none, and every journey is
+   planned on foot (a player's report: Thousand Needles to Blackfathom Deeps as a 33-minute walk). Since 1.1.1 the
+   Bridge learns the points the game lists as found (`C_TaxiMap.GetTaxiNodesForMap`) at login, only when that list
+   also marks some as undiscovered (WoW Forever can list every point as found, learned or not: OpenMap's guard),
+   and never forgets any from it; and while none are known past level 10 it says in chat how to fix it.
 1. **Saved settings don't carry over by themselves.** The game keeps saved variables per addon folder
    (`WTF/Account/<acct>/SavedVariables/OpenMap.lua` …). BookFinder reads `BookFinder.lua`. Run
    `tools/migrate_savedvariables.py <WTF folder>` once with the game closed: it copies the six variables from the

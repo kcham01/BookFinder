@@ -206,6 +206,9 @@ regionMT.__index = function(t, k)
 		end
 	end
 	if type(k) ~= "string" then return nil end
+	-- (a frame an addon makes has no Refresh of its own in the game: only Blizzard's mixin frames do. BookFinder: a
+	-- button standing in for Books' language picker was refreshed as if it were one, an error only the game showed)
+	if k == "Refresh" and not rawget(t, "__blizz") then return nil end
 	-- unknown widget methods (verb-prefixed) are no-ops
 	for _, verb in ipairs(VERBS) do
 		local nxt = k:sub(#verb + 1, #verb + 1)
