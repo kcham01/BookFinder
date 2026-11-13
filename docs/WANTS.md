@@ -82,7 +82,27 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
 - **`/bookfinder selftest`**: you asked for the addon to test itself in game. It runs every feature, plans
   journeys to 15 places, and logs every check, error and route.
 
+## Said after 1.7.0
+- **"It simply just won't route sometimes."** Every bit of code should work together; rewrite whatever is needed to get
+  rid of the frankenstein feel.
+
+## Done in 1.8.0 (for you to test)
+- **No journey fails in silence** (`merge/Journeys.lua`). Every part asks for journeys through one door. What used to
+  be dropped without a word now says why on screen and in chat: in combat (the journey is kept and starts when the
+  fight ends), journeys turned off, no position (instances), a place on no map, a quest or item with no known place.
+- **The Quests tab shows a journey from the first moment**: "Finding the fastest way…" while it searches, and "No way
+  there from here" in red when there is none. Before, both were only in the tracker that 1.7.0 took off the screen,
+  so a slow or failed search looked like nothing happened.
+- **Questie's "Set TomTom Target" is "Plan a journey"** (Ctrl-click a quest, or its menu), and works with the TomTom
+  stand-in switched off.
+- **Every request is recorded** in `BookFinderDB.attempts` (who asked, where to, started / kept for after combat /
+  refused and why, and whether a way was found). The self-test checks it and waits for each search to finish.
+- **Offline routing rig** (`tools/routing/`): Shortest Path's real planner and walking search on its real data,
+  without the game. 500+ journeys from all six capitals to every flight point, book and test place: every one gets a
+  route, with every flight point known and with none. So the planner is sound; what failed was the hand-off.
+
 ## Still to do (waiting on your data)
+- **If a journey still doesn't start**, it now says why. Send `BookFinder.lua`: `attempts` has each one.
 - **Routing quality**: run `/bookfinder selftest` somewhere, `/reload`, and send `BookFinder.lua`. Its 15 routes, plus
   the journey log from normal play, are what the routing work starts from.
 - **Native duplicates** in the Show menu (the game's own "Low-Level Quests" vs Questie's low-level quests): needs the

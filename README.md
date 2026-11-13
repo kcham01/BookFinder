@@ -34,6 +34,9 @@ Every feature of each is kept, nothing does the same job twice, and they work as
 - Shift-clicking a neighbouring zone on the seamless map plans the journey to that zone (and its floor).
 - OpenMap's map menu has switches for the books, the route and Shortest Path's icons.
 
+No journey fails in silence: one asked for in combat starts when the fight ends, and anything else that stops a
+journey (journeys turned off, an instance, a place on no map, no way there) is said on screen.
+
 `/bookfinder selftest` checks every feature in game and logs the results, errors and test journeys to its saved
 variables.
 
