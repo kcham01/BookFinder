@@ -304,6 +304,45 @@ local function registerPathToggles()
 	end
 end
 
+-- Flight points: Shortest Path learns them only at a flight master's map, so a character new to it (or whose saved
+-- data didn't come along into BookFinder) plans every journey on foot. The game lists the points this character has
+-- found, wherever it stands (OpenMap greys the rest out from the same list): Shortest Path learns those at login.
+-- The same guard as OpenMap's (Map/Flights.lua): WoW Forever can list every point as found, learned or not, and
+-- then it isn't saying, so nothing is learned from it; and nothing is ever forgotten from it.
+local CONTINENT_MAPS = { 1414, 1415 }   -- Kalimdor, the Eastern Kingdoms
+
+local function learnFlights()
+	if not (public.Active("SPF") and SPF.charDB and SPF.charDB.taxi and SPF.SetTaxiKnown and SPF.TaxiNodes) then return 0 end
+	if not (C_TaxiMap and C_TaxiMap.GetTaxiNodesForMap) then return 0 end
+	local found, undiscovered = {}, 0
+	for _, mapID in ipairs(CONTINENT_MAPS) do
+		local ok, list = pcall(C_TaxiMap.GetTaxiNodesForMap, mapID)
+		if ok and type(list) == "table" then
+			for _, info in ipairs(list) do
+				if type(info) == "table" and info.nodeID then
+					if info.isUndiscovered == false then found[#found + 1] = info.nodeID
+					elseif info.isUndiscovered == true then undiscovered = undiscovered + 1 end
+				end
+			end
+		end
+	end
+	if undiscovered == 0 then return 0 end
+	local learned = 0
+	for _, nodeID in ipairs(found) do
+		if not SPF.charDB.taxi[nodeID] and SPF.TaxiNodes[nodeID] and SPF.SetTaxiKnown(nodeID, true) then learned = learned + 1 end
+	end
+	return learned
+end
+
+public.LearnFlights = learnFlights   -- (the offline test drives it)
+
+-- With none known past the first levels, journeys are long walks: say why, and how to fix it, each login until it is
+local function flightHint()
+	if not (public.Active("SPF") and SPF.charDB and SPF.charDB.taxi) or next(SPF.charDB.taxi) then return end
+	if (UnitLevel("player") or 0) < 10 then return end
+	say("Shortest Path doesn't know your flight paths yet, so it plans journeys on foot. Open any flight master's map once and it learns every one you have. Moving from the separate addons? tools/migrate_savedvariables.py brings your old settings, flights and books over.")
+end
+
 -- Load and login ---------------------------------------------------------------------------------------------
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("ADDON_LOADED")
@@ -325,6 +364,12 @@ boot:SetScript("OnEvent", function(self, event, name)
 	public.PublishSettings()
 	makeLauncher()
 	C_Timer.After(0, registerPathToggles)
+	-- (a few seconds in: the taxi lists are filled once the world has loaded)
+	C_Timer.After(4, function()
+		local learned = learnFlights()
+		if learned > 0 then say(("Shortest Path learned the %d flight points you have."):format(learned)) end
+		flightHint()
+	end)
 	if #public.shadowed > 0 then
 		say(("%s also installed on its own: that copy runs, and BookFinder's stands aside. Disable it in the AddOns list to use BookFinder's.")
 			:format(table.concat(public.shadowed, ", ")))
