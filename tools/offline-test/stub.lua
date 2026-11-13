@@ -298,9 +298,17 @@ function M:CreateAnimationGroup() return NewRegion("AnimationGroup", nil, self) 
 function M:CreateAnimation(kind) return NewRegion("Animation", nil, self) end
 function M:IsPlaying() return false end
 function M:SetTexture() return true end
-function M:SetFont() self.__font = true return true end
+function M:SetFont(file, size, flags)
+	self.__font = true
+	if file then rawset(self, "__fontSpec", { file, size, flags or "" }) end
+	return true
+end
 function M:SetFontObject() self.__font = true end
-function M:GetFont() return STANDARD_TEXT_FONT, 12, "" end
+function M:GetFont()
+	local f = rawget(self, "__fontSpec")
+	if f then return f[1], f[2], f[3] end
+	return STANDARD_TEXT_FONT, 12, ""
+end
 function M:SetText(t)
 	if self.__kind == "FontString" and not self.__font then error("FontString:SetText(): Font not set", 2) end
 	self.__text = t

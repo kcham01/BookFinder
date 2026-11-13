@@ -1,5 +1,8 @@
--- BookFinder: /bookfinder inspect. Writes what this client actually has into BookFinderDB.inspect, so the addon can be
--- built against the real game rather than guesses. It reads only, and changes nothing:
+-- BookFinder: the recorder. WoW lets an addon write nothing but its saved variables, so this is how the game reports
+-- back: every session, a few seconds after login, it writes what this client actually has into BookFinderDB.inspect,
+-- and all session long it keeps BookFinderDB.errors (BookFinder's Lua errors) and BookFinderDB.journeys (the last
+-- journeys Shortest Path planned, leg by leg). Send WTF/Account/<account>/SavedVariables/BookFinder.lua after a
+-- /reload or logging out. /bookfinder inspect takes the snapshot again on the spot. It reads only, and changes nothing:
 --   * the client's build, and which parts run here
 --   * which art (atlases), fonts and frame templates exist
 --   * every entry of the world map's Show menu, with the game settings (CVars) about quests, maps and tracking
@@ -39,7 +42,8 @@ local TEMPLATES = {
 local FRAMES = {
 	"ObjectiveTrackerFrame", "Questie_BaseFrame", "ForeverTrackerHost", "QuestMapFrame", "WorldMapFrame",
 	"ShortestPathForeverServicesPanel", "BookFinderBooksPanel", "BooksOnMapForeverRoute",
-	"QuestieWorldMapButton", "QuestieFrameGroup",
+	"QuestieWorldMapButton", "QuestieFrameGroup", "ForeverTrackerCompanion", "ShortestPathForeverObjectiveTracker",
+	"Questie_HeaderFrame", "TrackedQuests",
 }
 local CVAR_HINTS = { "quest", "poi", "track", "map", "trivial", "lowlevel", "objective" }
 
@@ -102,14 +106,24 @@ local function describe(desc, depth)
 end
 
 local watching = false
+local current
 local function watchMenu(store)
-	if watching or not (Menu and Menu.ModifyMenu) then return end
-	watching = true
-	-- (runs after the game's own entries and every addon's registered before it)
-	Menu.ModifyMenu("MENU_WORLD_MAP_TRACKING", function(_, rootDescription)
+	current = store
+	if watching then return end
+	local SPF = root.SPF
+	local function read(_, rootDescription)
+		if not current then return end
 		local ok, entries = pcall(describe, rootDescription, 0)
-		store.mapShowMenu = ok and entries or ("failed: " .. tostring(entries))
-	end)
+		current.mapShowMenu = ok and entries or ("failed: " .. tostring(entries))
+	end
+	-- (through Shortest Path's modifier when it runs: it keeps menus clean for the gamepad interface)
+	if SPF and not SPF.__skip and type(SPF.ModifyMenu) == "function" and type(SPF.Init) == "function" then
+		watching = true
+		SPF.Init(function() SPF.ModifyMenu("MENU_WORLD_MAP_TRACKING", "bookfinder-inspect", read) end)
+	elseif Menu and Menu.ModifyMenu then
+		watching = true
+		Menu.ModifyMenu("MENU_WORLD_MAP_TRACKING", read)
+	end
 end
 
 function public.Inspect()
@@ -151,8 +165,90 @@ function public.Inspect()
 	end
 	store.cvars = cvars()
 	store.questLogTab = ForeverCore and ForeverCore.QuestLogTabs and ForeverCore.QuestLogTabs.Selected() or false
-	store.mapShowMenu = "open the world map's Show menu once, then /reload"
+	store.mapShowMenu = (db.inspect and type(db.inspect.mapShowMenu) == "table" and db.inspect.mapShowMenu)
+		or "open the world map's Show menu once, then /reload"
 	db.inspect = store
 	watchMenu(store)
 	return true
 end
+
+-- Errors: BookFinder's own, as they happen (the handler before stays in charge: BugGrabber, the game's) -------------
+local MAX_ERRORS, MAX_JOURNEYS = 40, 25
+local function recordError(message)
+	local db = public.db
+	if not db then return end
+	local text = tostring(message)
+	local stack = debugstack and debugstack(3, 12, 0) or ""
+	-- (ours when it happened in our files, or one of ours called into it; this handler's own lines don't count)
+	local ownStack = stack:gsub("[^\n]*Merge[/\\]Inspect%.lua[^\n]*\n?", "")
+	local function ours(t) return t:find("BookFinder", 1, true) or t:find("ForeverCore", 1, true) end
+	if not (ours(text) or ours(ownStack)) then return end
+	db.errors = type(db.errors) == "table" and db.errors or {}
+	for _, e in ipairs(db.errors) do
+		if e.message == text then
+			e.count, e.last = (e.count or 1) + 1, time()
+			return
+		end
+	end
+	table.insert(db.errors, 1, { message = text, stack = stack, count = 1, first = time(), last = time(),
+		version = C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata("BookFinder", "Version") })
+	while #db.errors > MAX_ERRORS do table.remove(db.errors) end
+end
+
+if geterrorhandler and seterrorhandler then
+	local previous = geterrorhandler()
+	seterrorhandler(function(message, ...)
+		pcall(recordError, message)
+		if previous then return previous(message, ...) end
+	end)
+end
+
+-- Journeys: each one Shortest Path plans, with where you were and every leg it chose ------------------------------
+local lastGoal
+local function copyLegs(legs)
+	local out = {}
+	for i, leg in ipairs(type(legs) == "table" and legs or {}) do
+		if i > 40 then break end
+		if type(leg) == "table" then
+			out[i] = { text = leg.text, seconds = leg.seconds, mode = leg.mode, kind = leg.kind }
+		end
+	end
+	return out
+end
+local function recordJourney()
+	local db = public.db
+	local api = ShortestPathForever and ShortestPathForever.API
+	if not (db and api and api.Journey) then return end
+	local ok, journey = pcall(api.Journey)
+	if not ok or type(journey) ~= "table" or type(journey.goal) ~= "table" then return end
+	local goal = journey.goal
+	-- (once per goal: the legs left shrink as you travel, and only the whole plan is worth keeping)
+	local key = ("%s|%s|%s|%s"):format(tostring(goal.title), tostring(goal.map), tostring(goal.x), tostring(goal.y))
+	if key == lastGoal then return end
+	lastGoal = key
+	local map = C_Map.GetBestMapForUnit("player")
+	local pos = map and C_Map.GetPlayerMapPosition(map, "player")
+	db.journeys = type(db.journeys) == "table" and db.journeys or {}
+	table.insert(db.journeys, 1, {
+		time = time(), level = UnitLevel("player"),
+		from = { map = map, zone = map and C_Map.GetMapInfo(map) and C_Map.GetMapInfo(map).name,
+			x = pos and math.floor(pos.x * 1000 + 0.5) / 10, y = pos and math.floor(pos.y * 1000 + 0.5) / 10 },
+		goal = { title = goal.title, map = goal.map, x = goal.x, y = goal.y },
+		secondsLeft = journey.secondsLeft, legs = copyLegs(journey.legs),
+	})
+	while #db.journeys > MAX_JOURNEYS do table.remove(db.journeys) end
+end
+
+-- Every session: the snapshot a few seconds after login, and the journeys as they are planned
+local auto = CreateFrame("Frame")
+auto:RegisterEvent("PLAYER_LOGIN")
+auto:SetScript("OnEvent", function()
+	C_Timer.After(10, function() pcall(public.Inspect) end)
+	local api = ShortestPathForever and ShortestPathForever.API
+	if api and type(api.Subscribe) == "function" then
+		pcall(api.Subscribe, function() pcall(recordJourney) end)
+	end
+end)
+
+public.RecordJourney = recordJourney   -- (for the offline test)
+public.RecordError = recordError

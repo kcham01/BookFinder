@@ -17,6 +17,7 @@ Every feature of each is kept, nothing does the same job twice, and they work as
   Shift-click to mark it collected, right-click for its places. `/bom` and the minimap menu open it.
 - **One search for everything**: the quest log's Nearby services box finds services and goods, and also every quest,
   NPC, object and item Questie knows, every zone and city, and the library books. Click a result for a journey there.
+- **One tracker**: Questie's quest list, with the journey and boat, lift and tram departures under it in the same look.
 - **One map menu**: the map's own Show menu holds every switch for what the map draws (Shortest Path's travel icons,
   Questie's quest icons, OpenMap's dungeons, people and drawings, the library books), each in one place.
 - **One settings window**: Options › AddOns › BookFinder, the game's own settings panel. The world map, every
@@ -52,7 +53,7 @@ The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spf
 | Path | What |
 |---|---|
 | `src/` | The three addons and ForeverCore, upstream plus small integration patches (see `git log`) |
-| `merge/` | BookFinder's own files: `Namespaces.lua` (loads first), `Retired.lua`, `BooksTab.lua` (the quest-log tab), `Search.lua`, `MapMenu.lua`, `Inspect.lua`, `Bridge.lua` (loads last) |
+| `merge/` | BookFinder's own files: `Namespaces.lua` (loads first), `Retired.lua`, `BooksTab.lua` (the quest-log tab), `Search.lua`, `MapMenu.lua`, `TrackerSkin.lua`, `Inspect.lua` (the recorder), `Bridge.lua` (loads last) |
 | `tools/build.py` | Assembles `build/BookFinder` from `src/` and `merge/`; fetches OpenMap's textures |
 | `tools/offline-test/merged.py` | Loads standalone vs merged in a stubbed client and fails on anything only the merge breaks |
 | `tools/migrate_savedvariables.py` | Copies the old addons' saved settings into BookFinder's |

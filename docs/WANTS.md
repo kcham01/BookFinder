@@ -62,8 +62,14 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
 - **Dead files out**: Books' welcome page, broker, minimap button and old side panels are no longer in the build.
 - **`/bookfinder inspect`**: run it, open the map's Show menu once, `/reload`, and send `SavedVariables/BookFinder.lua`.
 
+## Done in 1.6.0 (for you to test)
+- **One tracker**: under Questie's list, the journey and departures block is as wide as the list and uses Questie's
+  fonts and grey section names, with no native header bar, so it reads as part of Questie's tracker.
+- **The game reports back by itself**: every session it records the client snapshot, BookFinder's errors and your
+  journeys, leg by leg. Send `SavedVariables/BookFinder.lua` now and then; no commands needed.
+- Your search screenshots (garre) worked: quests, NPCs, objects and items, with journeys from Undercity via Grom'gol.
+
 ## Still to do (waiting on your data)
-- **One tracker** (the "Lifts" block under Questie's): needs your `/fstack` and inspect data to style it right.
 - **Routing quality**: needs `/path report` after a bad route.
 - **Native duplicates** in the Show menu (the game's own "Low-Level Quests" vs Questie's low-level quests): needs the
   inspect data to see which game setting each native entry uses.

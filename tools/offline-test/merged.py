@@ -281,6 +281,63 @@ INTEGRATION = r"""function(root)
         want(okClear and b2 == 0 and n2 == 0, "search: clearing it left rows behind")
     end
 
+    -- One tracker: under Questie's list the Forever column wears Questie's fonts and no native header art
+    local TS = BookFinder.TrackerSkin
+    want(TS, "the tracker skin isn't there")
+    if TS then
+        local host = rawget(_G, "ForeverTrackerCompanion") or CreateFrame("Frame", "ForeverTrackerCompanion", UIParent)
+        local module = CreateFrame("Frame", nil, host)
+        module.Header = CreateFrame("Frame", nil, module)
+        module.Header.Background = module.Header:CreateTexture()
+        module.Header.Text = module.Header:CreateFontString()
+        module.Header.Text:SetFont("Fonts\\FRIZQT__.TTF", 14, "")
+        module.ContentsFrame = CreateFrame("Frame", nil, module)
+        local block = CreateFrame("Frame", nil, module.ContentsFrame)
+        block.HeaderText = block:CreateFontString()
+        block.HeaderText:SetFont("Fonts\\FRIZQT__.TTF", 14, "")
+        local dirty = 0
+        module.MarkDirty = function() dirty = dirty + 1 end
+        module.Update = function() end
+        local list = rawget(_G, "Questie_BaseFrame")
+        local made = not list
+        if made then list = CreateFrame("Frame", "Questie_BaseFrame", UIParent) end
+        list:Show()
+        local hadDB = Questie.db
+        if not (Questie.db and Questie.db.profile) then
+            Questie.db = { profile = { trackerFontSizeZone = 12, trackerFontSizeQuest = 10, trackerFontSizeObjective = 10, trackerFontOutline = "" } }
+        end
+        TS.Scan()
+        local _, size = module.Header.Text:GetFont()
+        local _, bsize = block.HeaderText:GetFont()
+        want(TS.Hooked[module], "the tracker skin didn't pick up the column's section")
+        want(size and math.abs(size - (Questie.db.profile.trackerFontSizeZone or 12)) < 0.1, "the section header isn't in Questie's zone font size (" .. tostring(size) .. ")")
+        want(bsize and math.abs(bsize - (Questie.db.profile.trackerFontSizeQuest or 10)) < 0.1, "a block title isn't in Questie's quest font size (" .. tostring(bsize) .. ")")
+        want(dirty == 1, "the skin didn't ask for one more layout after changing fonts (" .. dirty .. ")")
+        module.Update()
+        want(dirty == 1, "the skin keeps asking for layouts")
+        if made then list:Hide() end
+        Questie.db = hadDB
+    end
+
+    -- The recorder: journeys as Shortest Path plans them, once per goal, and BookFinder's errors, deduplicated
+    local API2 = ShortestPathForever.API
+    local journeyWas = API2.Journey
+    API2.Journey = function() return { goal = { title = "Booty Bay", map = 1434, x = 0.27, y = 0.77 },
+        legs = { { mode = "zeppelin", text = "Zeppelin to Grom'gol", seconds = 240 }, { mode = "walk", text = "Walk to Booty Bay", seconds = 300 } },
+        secondsLeft = 540 } end
+    BookFinder.RecordJourney()
+    BookFinder.RecordJourney()
+    API2.Journey = journeyWas
+    local js = BookFinderDB.journeys
+    want(js and #js == 1 and js[1].goal.title == "Booty Bay" and #js[1].legs == 2 and js[1].legs[1].mode == "zeppelin",
+        "the recorder didn't keep the journey once with its legs")
+    BookFinder.RecordError("Interface/AddOns/BookFinder/Merge/Search.lua:1: boom")
+    BookFinder.RecordError("Interface/AddOns/BookFinder/Merge/Search.lua:1: boom")
+    BookFinder.RecordError("Interface/AddOns/OtherAddon/x.lua:1: not ours")
+    local errs = BookFinderDB.errors or {}
+    want(#errs == 1 and errs[1].count == 2, "the recorder didn't keep BookFinder's error once, counted (" .. #errs .. ")")
+    BookFinderDB.journeys, BookFinderDB.errors = nil, nil
+
     -- /bookfinder inspect records what the client has, without errors
     local okInspect, inspected = pcall(BookFinder.Inspect)
     want(okInspect and inspected and BookFinderDB.inspect and BookFinderDB.inspect.atlases and BookFinderDB.inspect.frames,
