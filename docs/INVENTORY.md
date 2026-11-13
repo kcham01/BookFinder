@@ -170,19 +170,34 @@ default is upstream's), Questie's map button stays off, and Shortest Path's pane
   exist, the Show menu's entries, quest/map/tracking CVars and the trackers' and quest log's frames into
   `BookFinderDB.inspect`.
 
-### 1.3d One tracker, and the recorder (1.6.0)
+### 1.3d The quest list in the map, and the recorder (1.6.0, 1.7.0)
 
-- **One tracker** (`merge/TrackerSkin.lua`, and a width rule in ForeverCore's `UI/TrackerHost.lua`): with Questie's
-  list on screen, the Forever column under it (Shortest Path's journey and its lift, tram and boat departures,
-  `ForeverTrackerCompanion`) takes the list's width and Questie's look: no native header art, the section name in
-  Questie's zone font and grey (C0C0C0), block titles in its quest font, lines in its objective font, its sizes and
-  outline (LibSharedMedia). Each section is post-hooked (`EndLayout`, else `Update`); a pass that changed a font asks
-  for one more layout so heights are measured in the new font. Without Questie's list: the game's look.
+- **No tracker on screen; the quest list is in the map** (`merge/QuestLog.lua`, 1.7.0; 1.6.0's TrackerSkin.lua and its
+  ForeverCore width rule are gone): Questie's real tracker frame (`Questie_BaseFrame`, every feature with it) is
+  parented to `BookFinderQuestList` over the map's Quests tab (`QuestMapFrame.QuestsFrame`, on the quest log's
+  parchment and border), locked, without sizer or backdrop, its `TrackerWidth`/`TrackerHeight` set to the room there
+  (it scrolls inside). A hook on its `SetPoint` keeps it there when Questie re-places it. The Forever column
+  (`ForeverTrackerCompanion`: Shortest Path's journey and departures, any Forever addon's section) is parked under a
+  hidden frame. The journey shows at the top of the tab in Questie's fonts: goal, time left, each leg with its mode
+  mark and time (current in gold), × cancels, a click shows the goal's map; it counts down each second while shown
+  and follows Shortest Path's `Subscribe`. Moves wait for combat to end (Questie's item buttons are secure).
 - **The recorder** (`merge/Inspect.lua`): the inspect snapshot runs by itself 10 s after every login; BookFinder's
   and ForeverCore's Lua errors go to `BookFinderDB.errors` (40, deduplicated and counted, with a stack; the error
-  handler before keeps running: BugGrabber, the game's); every journey Shortest Path plans goes to
+  handler before keeps running: BugGrabber, the game's). Templates are checked through `C_XMLUtil.GetTemplateInfo`
+  (1.6.0 made one of each to see, which raised errors; fixed in 1.7.0); every journey Shortest Path plans goes to
   `BookFinderDB.journeys` once per goal (25: where you were, your level, the goal, every leg's mode, text and
   seconds). The Show menu snapshot is read through Shortest Path's menu modifier.
+- **The self-test** (`merge/SelfTest.lua`, `/bookfinder selftest`, 1.7.0): out of combat, in about a minute, it
+  checks every part runs; opens each settings page; opens the map, the books tab (rows, travel times), the quests
+  tab (Questie's list there) and the services tab; checks nothing tracks on screen; searches a place, a book and
+  Questie's quests, NPCs, items and objects (after the index reads); flips every Show-menu switch and back (not
+  the books route); plans a journey to 15 places across both continents (skipped while a journey of yours is under
+  way) and keeps each route's estimate, time and legs; builds the books route; takes the inspect snapshot; counts
+  new Lua errors. Everything goes to `BookFinderDB.selftest` (checks with pass/fail, detail and ms; routes), the
+  failures to chat.
+- **Fixed in 1.7.0 from Shortest Path's own error journal** (`ShortestPathForeverDB.errors`): its waypoint
+  tooltip hook compared a minimap mouseover title that can be a secret value (140 errors); it now checks
+  `canaccessvalue` first (`Journey/JourneyGuide.lua`).
 - **Client facts** from the first snapshot (1.60.1, build 70938, toc 16001): `Campaign-QuestLog-LoreBook`,
   `QuestLog-icon-setting`, `common-icon-checkmark` and `common-icon-redx` exist; the Show menu's native entries are
   Quest Objectives (`questPOI`), Show Quest Levels (`showQuestLevel`), Quest Difficulty Color

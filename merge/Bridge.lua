@@ -105,6 +105,7 @@ end
 local COMMANDS = {
 	settings = function() return public.OpenSettings() end,
 	quests = function() return public.OpenQuestLog and public.OpenQuestLog() end,
+	selftest = function() return public.SelfTest and public.SelfTest() end,
 	inspect = function()
 		if not (public.Inspect and public.Inspect()) then return false end
 		say("Recorded. Now open the world map's Show menu once, then /reload: the details are in WTF/Account/<account>/SavedVariables/BookFinder.lua.")
@@ -125,7 +126,7 @@ SlashCmdList.BOOKFINDER = function(msg)
 		if not COMMANDS[cmd](rest) then say(cmd .. ": not available.") end
 		return
 	end
-	say("/bookfinder [settings | map | books | quests | near <service> | status | inspect]")
+	say("/bookfinder [settings | map | books | quests | near <service> | status | inspect | selftest]")
 	say("Also: /openmap (the map's menu), /path, /way, /spfnear, /bom.")
 end
 

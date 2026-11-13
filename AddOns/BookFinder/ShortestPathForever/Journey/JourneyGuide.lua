@@ -232,6 +232,11 @@ local function NameWaypointTooltip(tooltip)
 	end
 	local titleLine = GameTooltipTextLeft1
 	local clientTitle = titleLine and titleLine.GetText and titleLine:GetText()
+	-- (a minimap mouseover's title can be a secret value, which addon code may not compare: it is never our pin's)
+	local canAccess = rawget(_G, "canaccessvalue")
+	if canAccess and not canAccess(clientTitle) then
+		return
+	end
 	if not (clientTitle and (clientTitle == MAP_PIN or clientTitle == MAP_PIN_SHARING)) then
 		return
 	end
