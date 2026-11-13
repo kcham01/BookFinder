@@ -23,6 +23,7 @@ local TIERS = {
     { 277260, "Researcher's Night Light" },
   } },
 }
+ns.REWARD_TIERS = TIERS -- (BookFinder: its books tab lists the same tiers)
 
 -- item API: global in older clients, under C_Item in newer ones
 local getInfo = C_Item and C_Item.GetItemInfo or GetItemInfo
