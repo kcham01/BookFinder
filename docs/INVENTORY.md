@@ -99,30 +99,48 @@ before publishing BookFinder anywhere public.
 | ⚙ | SP `UI/OpenMap.lua` | `OpenMap.CursorMapPoint()`: the zone under the cursor on the stitched map (API v3 `CursorPosition` + `MapAt` + `MapFromWorld`). |
 | ⚙ | SP `Journey/JourneyInput.lua` | Shift-click and Alt-click plan to the zone under the cursor when stitched, not to the centred zone's coordinates run off its edge. The underground flag (`UNDERGROUND[uiMap]`, the stop's floor) now comes from the zone clicked. |
 
-### 1.3b The map panel (`merge/Panel.lua`, since 1.3.0)
+### 1.3b The library books tab (`merge/BooksTab.lua`, since 1.4.0)
 
-One panel docked on the world map's right side (strata DIALOG, a child of `WorldMapFrame`, no secure frames), opened
-and closed by the one button on the map (the map's top right); open or closed and the last tab are remembered
-(`BookFinderDB.panel`). It replaces the map's other buttons: OpenMap's button column (`mapButtons` off by default in
-BookFinder; its menu is the Map tab's "Map menu") and Questie's map button (not made in BookFinder).
+Books on map's own window (its skinned list, Rewards and Group side panels) is replaced by one tab of the world
+map's quest log, registered with `ForeverCore.QuestLogTabs` (key `bookfinder.books`, order 30, below Shortest
+Path's Nearby services at 20). It is built with Shortest Path's ServicesPanel kit, so the two tabs read as one
+design: the quest log's parchment (`QuestLog-main-background`, covered) and border (`QuestLogBorderFrameTemplate`),
+`SearchBoxTemplate`, `ScrollFrameTemplate`, list headers on `common-button-list-collapseExpand` with
+`CollapseButtonTemplate`, and the Who list's 44-high rows (`common-button-list-large`, hover in HIGHLIGHT/ADD) with
+Shortest Path's fonts and offsets. Shortest Path's `Art` helpers are used when it runs here (local copies otherwise).
 
-- **Search** (top): places (every zone and city) and library books as you type; with Enter, Questie's database too
-  (`QuestieSearch:ByName`: quests, NPCs, objects, items). Quest: in your log, a journey to it; else to its giver.
-  NPC or object: a journey to its nearest spawn. Item: its tooltip. `/bookfinder find <text>` opens it on a search.
-- **Journey:** Shortest Path's journey (`API.Journey`): goal, time left, each step in the tracker's words and its
-  time; Cancel. Your hearthstone's place and cooldown. Redrawn each second while shown, and on its `Subscribe`.
-- **Quests:** Route turn-ins (one Shortest Path journey through every finished quest's turn-in, nearest first, from
-  Questie's finisher NPCs and their spawns); My Journey (Questie's). Ready to turn in, then the log by zone (tooltip:
-  objectives); click: a journey there (`ns.JourneyToQuest`, Shortest Path's quest planning). Available near you:
-  Questie's available quests by their givers' nearest spawn (worked out every 10 s at most).
-- **Nearby:** every Shortest Path service row with the nearest NPC by journey time, ranked one a frame
-  (`ns.NearbyRows`, `NearbyNearest`, `NearbyGo`); All services opens Shortest Path's full panel.
-- **Books:** progress bar and rewards, Guide me / Stop route, Nearest, Book list; every book by set (click: a
-  journey; Shift-click: collected or not).
-- **Map:** Find me, Drop a pin, Draw, Map menu, Settings; one checklist of what shows: library books, Questie's
-  quests, dungeons, boats and zeppelins, lifts and tram, portals, flight masters, routes, shops and trainers,
-  mailboxes, spirit healers, rares, party, friends; zone levels, coordinates, your arrow.
-- The minimap button's Books and Quests entries open the panel at that tab; `/bookfinder panel [tab]`.
+- **Header:** the lore-book glyph (or the book icon, cut round), "Library books", "N of M collected · K to the next
+  reward".
+- **Collect:** the nearest missing book *by Shortest Path's travel time* (Books' straight line until the times are
+  in), and the optimised route: "Optimized route" starts it; while on, its next stop (books left, time; click: Shortest
+  Path guides it, Shift-click: start again from the nearest) and "Stop the route".
+- **Rewards:** each tier (10 necklace, 20 ring, 25 bow/crest/light; Books' own `ns.REWARD_TIERS`): unlocked, or how
+  many to go, then its items in their quality colours with their slots; hover: the item; Shift-click: link it.
+  Folded by default once every tier is reached.
+- **Group** (in a group only): each member who shares their books (class colour, how many of yours they still need,
+  "n / M"), then the members without the addon or with another book list.
+- **Sets** (Starting, Level 35, 45, 60): every book, missing ones nearest first, collected ones greyed and ticked at
+  the bottom; detail = the place (and "+1" when it has two), "n in your group need it". Click: Shortest Path's
+  journey to its quickest place. Shift-click: collected or not. Right-click: each place, Show on the map, Collected.
+  The book's icon gives its item tooltip and links it. A set is folded by default once it's complete.
+- **Gear** beside the search: Hide collected books, Only sets for my level, Also show the books my group is missing
+  (Books' own filters, `BooksOnMapForeverDB`), mark every book collected / shown again, and the settings page.
+- **Search:** book names and places; sets only, unfolded.
+- Folds are saved (`BooksOnMapForeverDB.tabFolded`).
+- Travel times: one `API.Estimate` per frame, only while the tab is shown, for every place of every missing book;
+  the last round stays on screen until the next is complete (so opening the tab or the 15 s ticker never blanks
+  the times or reorders twice); a new zone starts afresh.
+- Redrawn (at most once a frame) on Books' `RefreshOptions`, `RefreshGroupPanel`, `ToggleRoute`, `RefreshRoute`,
+  on item data arriving and the group changing. No OnShow/OnHide under the world map: ForeverCore's `shown`.
+- `/bom`, the minimap menu's Library books, Books' toast click: `ns.ToggleOptions` opens this tab (or closes the map
+  when it's already showing). Books' old window is never built in BookFinder.
+- `BookFinder.OpenBooks([toggle])`, `BookFinder.OpenQuestLog()` (the map at its Quests tab: the minimap menu's
+  Quests); `BookFinder.BooksTab` is for the offline test.
+
+Gone with 1.4.0: the 1.3.0 map panel (`merge/Panel.lua`) and its button. It duplicated Shortest Path's Nearby
+services and stacked a second menu beside OpenMap's. OpenMap's map menu is the one map menu again (its `mapButtons`
+default is upstream's), Questie's map button stays off, and Shortest Path's panel-only additions
+(`ns.NearbyRows`, `NearbyGo`, `JourneyToQuest`) were taken back out.
 
 ### 1.4 One addon: what used to be done twice, and who does it now
 
@@ -132,7 +150,7 @@ addon (quirk 2) behaves as upstream.
 
 | Job | Before | Now | What the other side kept |
 |---|---|---|---|
-| Settings | OpenMap's own window (AceConfig) + its Settings stub page; SP's Settings category; Books' own window section | **One window: Options › AddOns › BookFinder.** Pages: Shortest Path's (Map marks, Transport, Travel journal, Guidance, Party mage portals, Alerts, Interface, Forever addons), **World map** (OpenMap's whole options table, embedded with `AceConfigDialog:AddToBlizOptions`), **Books**. Every way into settings opens it at its page: `/path`, `/bookfinder`, right-click on the button, the gear in Books' window, OpenMap's options page. | OpenMap's in-map menu stays: it is the map's own quick panel (what shows, search, find me, pins, draw), like Blizzard's map filter. Books' window stays as the book journal (progress, rewards, group, the list and its filters); its settings block is gone, a gear opens the page. |
+| Settings | OpenMap's own window (AceConfig) + its Settings stub page; SP's Settings category; Books' own window section | **One window: Options › AddOns › BookFinder.** Pages: Shortest Path's (Map marks, Transport, Travel journal, Guidance, Party mage portals, Alerts, Interface, Forever addons), **World map** (OpenMap's whole options table, embedded with `AceConfigDialog:AddToBlizOptions`), **Books**. Every way into settings opens it at its page: `/path`, `/bookfinder`, right-click on the button, the gear in Books' window, OpenMap's options page. | OpenMap's in-map menu stays: it is the map's own quick panel (what shows, search, find me, pins, draw), like Blizzard's map filter. Books' window became the Library books tab of the quest log (1.3b); its settings are the Books page. |
 | Minimap button / LDB launcher | Books' LibDBIcon button + launcher; OpenMap's optional button + launcher; SP's "Journey" button under the minimap | **One: BookFinder** (`BookFinderDB.minimap`) | Books' broker text (books collected) is the button's text. Their switches are hidden. |
 | Docks (boats, zeppelins) on the world map | OpenMap's + SP's | **Shortest Path's** (live departures, clusters, click opens the other end and pings it, Shift-click a journey) | OpenMap's **airships to Zephras Isle** (own pin set `airships`, follow SP's boats switch) and OpenMap's always-on **route lines** (follow SP's boats switch). OpenMap's Boats and Zeppelins switches leave its menu and options. |
 | Flight masters | OpenMap's (learned/grey, click two for a route and time) + SP's (stock look, flights and times in the tooltip, super-track, Shift-click a journey) | **Shortest Path's** | A real journey covers the two-click route. OpenMap's Flight masters switch leaves its menus. |
@@ -443,8 +461,7 @@ its standalone copy.
 
 ### Still needs an in-game check
 - Install, `/reload`, no Lua errors; textures show (full client restart after first install).
-- The map panel: opens and closes from its button; each tab with real data; Enter in the search (Questie's database
-  scan may take a moment); a click on a quest, book, service or result starts the journey; fits a small map window.
+- The Library books tab: its glyph beside the quest log's other tabs, the parchment and rows like Shortest Path's Nearby services, travel times filling in, click/Shift-click/right-click on a book, the gear's filters.
 - Stitched map: books of neighbouring zones show and line up with the art; trail follows when panning/zooming.
 - Shift-click a neighbouring zone on the stitched map: SP plans to that spot (and the right floor underground).
 - Books' route tracker: travel time appears, sensible.
