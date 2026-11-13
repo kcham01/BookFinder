@@ -1,5 +1,49 @@
 # BookFinder inventory: features, functions, quirks
 
+> **2.0.0: Shortest Path Forever and ForeverCore were removed** (the owner's decision, `docs/WANTS.md`). Everything
+> below about Shortest Path, journeys, travel times, the Nearby services tab, the journey card, the routing rig and
+> ForeverCore describes 1.0 to 1.8.1 and is kept as history. What 2.0.0 is, is in section 0.
+
+## 0. BookFinder 2.0.0
+
+| Part | Folder in BookFinder | Private table |
+|---|---|---|
+| QuestieDB, Questie | `QuestieDB/`, `Questie/` | `root.QuestieDB`, `root.Questie` |
+| OpenMap v0.8.7 | `OpenMap/` | `root.OpenMap` |
+| Books on map (Forever) 2.2.6 | `Books_on_map_Forever/` | `root.Books` |
+
+- **Map pin** (`merge/Waypoint.lua`): `BookFinder.Waypoint(map, x, y, title)` (x, y in 0-100) sets the client's user
+  waypoint (`C_Map.SetUserWaypoint` with `UiMapPoint.CreateFromCoordinates`) and tracks it
+  (`C_SuperTrack.SetSuperTrackedUserWaypoint(true)`); a map that `C_Map.CanSetUserWaypointOnMap` refuses, or no
+  spot, is said on screen (`BookFinder.Notice`: `UIErrorsFrame` and chat, once in 4 s) and the map opens there.
+  `BookFinder.CurrentWaypoint()`, `BookFinder.ClearWaypoint()`.
+- **Books' navigation** (`src/Books_on_map_Forever/Core/Navigation.lua`, rewritten): every waypoint is the map pin;
+  the route is guided one book at a time (the pin on its first stop, moved by `SyncRouteWaypoints` as books are
+  collected or skipped). `TravelSeconds` answers nil: distances are yards. The route tracker on screen hides while
+  the pin guides the route; its map trail stays.
+- **Questie** (`src/Questie`): `TrackerUtils:SetTomTomTarget` uses the map pin when there is no TomTom; Ctrl-click a
+  quest icon on the map does too (`FramePool/QuestieFrame.lua`); its "Set TomTom Target" buttons and menu entries
+  read "Map pin" and show without TomTom.
+- **Tabs** (`merge/Tabs.lua`): ForeverCore's QuestLogTabs, kept whole as `BookFinder.Tabs` (Register, Select,
+  ShowQuests, Selected).
+- **The BookFinder tab** (`merge/BooksTab.lua`): the books, with distances in yards (straight across the continent,
+  nearest first); its search box is the one search: two letters or more draw `BookFinder.DrawSearch` (Search.lua)
+  in the list's place.
+- **Quests tab** (`merge/QuestLog.lua`): Questie's list over the game's, the holder now to the frame's edge (the game's
+  list scrollbar covered) and Questie's own `TrackedQuestsScrollFrame.ScrollBar` shown in that gutter while the
+  list is longer than the room. The bug it fixes: the bar beside the list was the game's and never moved.
+- **One map menu**: OpenMap's own panel. BookFinder adds nothing to the game's Show menu (`MapMenu.lua` is gone);
+  OpenMap's panel keeps every switch it has (dungeons, people, drawings, quests from every zone, Questie icons, docks,
+  flight masters), and Books' "Show on the map" and "Optimized route" under "Library books". `mod.PanelRows`
+  (Panel.lua) is exposed for the self-test.
+- **OpenMap draws its own docks, flight masters and townsfolk again** (Shortest Path did in 1.2 to 1.8.1); a save
+  that had them off for that is put back once (`db.bfSupersededBack`).
+- **Gone**: `merge/Journeys.lua`, `merge/MapMenu.lua`, `src/ShortestPathForever`, `src/ForeverCore`,
+  `tools/routing`, the journey recorder (`BookFinderDB.journeys`, `attempts`), `/bookfinder near`.
+- **Still to do**: every setting into OpenMap's panel (the owner likes it), with duplicates removed; the settings
+  window's Library books page and front page are still Blizzard settings pages.
+
+
 This is the working checklist for the merge. Every feature of the three addons is listed here so a rebuild,
 an upstream update or a new patch can be checked against it. **Nothing in this list was removed by the merge.**
 The rows marked ⚙ are what the merge added or changed.

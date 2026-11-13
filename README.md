@@ -1,55 +1,38 @@
 # BookFinder
 
-One WoW: Forever addon made of four:
+One WoW: Forever addon made of three:
 
 - **[OpenMap](https://github.com/openmap-world/openmap)**: one seamless world map, every zone stitched together.
-- **[Shortest Path Forever](https://github.com/cjber/shortest-path-forever)**: journeys on foot, by air, by sea
-  and through portals, with directions in the tracker, an arrow and a compass.
-- **Books on map (Forever)**: the library books on the map, with an optimised collection route.
+- **Books on map (Forever)**: the library books on the map, with a collection route.
 - **[Questie](https://github.com/Questie/Questie)** and its database: every quest giver, objective and turn-in on the
-  map, its tracker, and its search of every quest, NPC and item.
+  map, its quest list, and every quest, NPC and item it knows.
 
-Every feature of each is kept, nothing does the same job twice, and they work as one:
+They work as one:
 
-- **Library books in the quest log**: a tab beside Shortest Path's Nearby services, drawn the same way. It shows
-  your progress and the next reward, the nearest book by real travel time, the optimised route (start, next stop,
-  stop), the rewards, your group's books, and every book by set with its travel time. Click a book to go there,
-  Shift-click to mark it collected, right-click for its places. `/bom` and the minimap menu open it.
-- **One search for everything**: the quest log's Nearby services box finds services and goods, and also every quest,
-  NPC, object and item Questie knows, every zone and city, and the library books. Click a result for a journey there.
-- **Quests in the map, nothing on screen**: Questie's quest list (every feature of its tracker) is the map's Quests tab,
-  with the journey under way at the top; nothing tracks on screen, and the arrow and compass guide you.
-- **One map menu**: the map's own Show menu holds every switch for what the map draws (Shortest Path's travel icons,
-  Questie's quest icons, OpenMap's dungeons, people and drawings, the library books), each in one place.
-- **One settings window**: Options › AddOns › BookFinder, the game's own settings panel. The world map, every
-  the library books and Questie's quest options are its pages. `/bookfinder`, `/path`, the minimap button's right-click and the
-  gear in the books tab all open it.
-- **One minimap button** (and one launcher for Titan/ElvUI): your books collected, the nearest book and the journey
-  under way in its tooltip; left-click the map, right-click a menu.
-- **One set of travel icons**: Shortest Path draws the docks, flight masters, shops and trainers (live departures,
-  flight times, a journey a click away); OpenMap keeps the seamless map, dungeons, mailboxes, spirit healers, rares
-  and the Zephras Isle airships.
-- **One guidance**: turn on the books route and Shortest Path guides it, with its tracker, arrow and compass.
+- **"Take me there" is the game's own map pin.** Click a quest, a book or a search result and the game's own pin and
+  tracking arrow go on it. When a spot can't take a pin, it says so and opens the map there.
+- **The BookFinder tab beside the quest log** has one search box for everything: quests, NPCs, objects, items,
+  zones and the library books. With the box empty it shows the books: your progress and the next reward, the nearest
+  book, the route, the rewards, your group's books and every book by set with its distance. `/bom` opens it.
+- **Quests in the map, nothing on screen**: Questie's quest list (every feature of its tracker) is the map's Quests
+  tab, with its own scrollbar.
+- **One map menu**: OpenMap's own panel holds every switch for what the map draws, Questie's quest icons and the
+  library books included.
+- **One minimap button** (and one launcher for Titan/ElvUI): your books collected and the nearest book in its
+  tooltip; left-click the map, right-click a menu.
 - Books of **every zone in view** show on the seamless map, with the route trail, above its art.
-- Shift-clicking a neighbouring zone on the seamless map plans the journey to that zone (and its floor).
-- OpenMap's map menu has switches for the books, the route and Shortest Path's icons.
 
-No journey fails in silence: one asked for in combat starts when the fight ends, and anything else that stops a
-journey (journeys turned off, an instance, a place on no map, no way there) is said on screen.
+`/bookfinder selftest` checks every feature in game and logs the results and errors to its saved variables.
 
-`/bookfinder selftest` checks every feature in game and logs the results, errors and test journeys to its saved
-variables.
-
-The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spfnear`, `/bom` (the books tab).
+Shortest Path Forever (journey planning) was part of BookFinder until 1.8.1 and was removed in 2.0.0.
 
 ## Install
 
 1. Download this repository (Code › Download ZIP).
-2. Copy the two folders inside its `AddOns/` folder, `BookFinder/` and `ForeverCore/`, into the client's
-   `Interface/AddOns/` (`_forever_` live, `_classic_beta_` beta). ForeverCore is the shared library every Forever addon needs: keep it
-   even if you have other Forever addons.
-3. Disable or delete the standalone `OpenMap`, `ShortestPathForever`, `Books_on_map_Forever`, `Questie` and
-   `QuestieDB` folders. If one is
+2. Copy the `BookFinder/` folder inside its `AddOns/` folder into the client's `Interface/AddOns/` (`_forever_` live,
+   `_classic_beta_` beta). Since 2.0.0 BookFinder no longer needs `ForeverCore/`: delete it unless another Forever
+   addon you use needs it.
+3. Disable or delete the standalone `OpenMap`, `Books_on_map_Forever`, `Questie` and `QuestieDB` folders. If one is
    still enabled, BookFinder's copy of it stands aside and says so in chat.
 4. To keep your old settings, close the game and run once:
    `python3 tools/migrate_savedvariables.py "<game>/_forever_/WTF"` (add `--dry-run` to see first).
@@ -59,8 +42,8 @@ The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spf
 
 | Path | What |
 |---|---|
-| `src/` | The three addons and ForeverCore, upstream plus small integration patches (see `git log`) |
-| `merge/` | BookFinder's own files: `Namespaces.lua` (loads first), `Retired.lua`, `BooksTab.lua` (the quest-log tab), `Search.lua`, `MapMenu.lua`, `QuestLog.lua`, `Inspect.lua` (the recorder), `Bridge.lua` (loads last) |
+| `src/` | The parts, upstream plus small integration patches (see `git log`) |
+| `merge/` | BookFinder's own files: `Namespaces.lua` (loads first), `Retired.lua`, `Waypoint.lua` (the map pin), `Tabs.lua` (tabs beside the quest log), `BooksTab.lua` (the BookFinder tab), `Search.lua`, `QuestLog.lua`, `Inspect.lua` (the recorder), `SelfTest.lua`, `Bridge.lua` (loads last) |
 | `tools/build.py` | Assembles `build/BookFinder` from `src/` and `merge/`; fetches OpenMap's textures |
 | `tools/offline-test/merged.py` | Loads standalone vs merged in a stubbed client and fails on anything only the merge breaks |
 | `tools/migrate_savedvariables.py` | Copies the old addons' saved settings into BookFinder's |
@@ -85,6 +68,6 @@ The offline test can't draw the map; `docs/INVENTORY.md` lists what still needs 
 
 ## Licences
 
-Shortest Path Forever and ForeverCore are GPL-3.0-or-later, OpenMap's code is MIT (its map art is Blizzard's),
-and Books on map ships no licence: the combined addon is GPL-3.0-or-later, and Books' author should be asked
+Questie is GPL-3.0, `merge/Tabs.lua` comes from ForeverCore (GPL-3.0-or-later), OpenMap's code is MIT (its map art is
+Blizzard's), and Books on map ships no licence: the combined addon is GPL-3.0-or-later, and Books' author should be asked
 before BookFinder is published anywhere.
