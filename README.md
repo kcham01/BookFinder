@@ -11,14 +11,13 @@ One WoW: Forever addon made of four:
 
 Every feature of each is kept, nothing does the same job twice, and they work as one:
 
-- **One panel on the world map** with one search (places, books, every quest, NPC, object and item) and five tabs:
-  **Journey** (where you're going, each step and its time, your hearthstone), **Quests** (ready to turn in, your log
-  with objectives, quests near you, one route through every turn-in), **Nearby** (the closest of every service, by
-  travel time), **Books** (progress, rewards, the route, every book) and **Map** (find me, pins, drawing, and one
-  list of everything the map can show). Click anything to go there.
+- **Library books in the quest log**: a tab beside Shortest Path's Nearby services, drawn the same way. It shows
+  your progress and the next reward, the nearest book by real travel time, the optimised route (start, next stop,
+  stop), the rewards, your group's books, and every book by set with its travel time. Click a book to go there,
+  Shift-click to mark it collected, right-click for its places. `/bom` and the minimap menu open it.
 - **One settings window**: Options › AddOns › BookFinder, the game's own settings panel. The world map, every
   journey page and the library books are its pages. `/bookfinder`, `/path`, the minimap button's right-click and the
-  gear in the book list all open it.
+  gear in the books tab all open it.
 - **One minimap button** (and one launcher for Titan/ElvUI): your books collected, the nearest book and the journey
   under way in its tooltip; left-click the map, right-click a menu.
 - **One set of travel icons**: Shortest Path draws the docks, flight masters, shops and trainers (live departures,
@@ -29,7 +28,7 @@ Every feature of each is kept, nothing does the same job twice, and they work as
 - Shift-clicking a neighbouring zone on the seamless map plans the journey to that zone (and its floor).
 - OpenMap's map menu has switches for the books, the route and Shortest Path's icons.
 
-The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spfnear`, `/bom` (the book list).
+The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spfnear`, `/bom` (the books tab).
 
 ## Install
 
@@ -49,11 +48,12 @@ The old commands still work: `/openmap` (the map's menu), `/path`, `/way`, `/spf
 | Path | What |
 |---|---|
 | `src/` | The three addons and ForeverCore, upstream plus small integration patches (see `git log`) |
-| `merge/` | BookFinder's own files: `Namespaces.lua` (loads first), `Bridge.lua` (loads last) |
+| `merge/` | BookFinder's own files: `Namespaces.lua` (loads first), `BooksTab.lua` (the quest-log tab), `Bridge.lua` (loads last) |
 | `tools/build.py` | Assembles `build/BookFinder` from `src/` and `merge/`; fetches OpenMap's textures |
 | `tools/offline-test/merged.py` | Loads standalone vs merged in a stubbed client and fails on anything only the merge breaks |
 | `tools/migrate_savedvariables.py` | Copies the old addons' saved settings into BookFinder's |
 | `docs/INVENTORY.md` | Every feature, command, setting, API and quirk, and how the merge works |
+| `docs/WANTS.md` | What the addon is meant to be: the owner's wishes and decisions, kept current |
 
 ## Checks
 
