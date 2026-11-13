@@ -122,6 +122,19 @@ Code: OpenMap `mod.SUPERSEDED` and `mod.TravelShown` (`Map/WorldMap.lua`), the t
 (`Map/Launcher.lua`); SP `UI/Settings.lua` (`BUILT_IN`); Books `modules/Options.lua`, `Broker.lua`, `Welcome.lua`,
 `Route.lua` (`ns.OnGuidanceChanged`), `Core/Navigation.lua` (`watchGuidance`).
 
+Dragging and zooming the seamless map (1.1.2). OpenMap changes the map underneath as the view crosses zones,
+and each change tells every map addon "new map":
+- Books on the stitched map is in OpenMap's own icon layer (`S.PinSet("bookfinder_books")`, world space): built
+  when the books, the route or a setting change, never on a map change, drag or zoom; culled and sized by OpenMap.
+  Click a book: journey there; Shift-click: collected (OpenMap's icons take left clicks only; right-click zooms out
+  as everywhere on it). Off the stitched map: Books' canvas pins as upstream.
+- Books' own trail is drawn only while Shortest Path isn't guiding the route (its line is the route then).
+- OpenMap's scan of every canvas frame for Books' pins (Compat.lua, on each map change and zoom step) is off while
+  Books is built in: Books places them above the art itself.
+- Shortest Path places its route points on the stitched map with `CanvasFromWorldPos` directly: its old lookup read
+  a continent number as a map ID, found nothing, and fell back to two game calls and two vectors per point on every
+  redraw.
+
 Still more than one of (different jobs, kept on purpose): bug reports (`/openmap` Report a problem, `/path report`,
 `/bom bug`: each goes to its own project's tracker); search (OpenMap: places; SP Nearby: NPCs and items).
 
