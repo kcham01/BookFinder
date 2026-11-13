@@ -99,6 +99,31 @@ before publishing BookFinder anywhere public.
 | ⚙ | SP `UI/OpenMap.lua` | `OpenMap.CursorMapPoint()`: the zone under the cursor on the stitched map (API v3 `CursorPosition` + `MapAt` + `MapFromWorld`). |
 | ⚙ | SP `Journey/JourneyInput.lua` | Shift-click and Alt-click plan to the zone under the cursor when stitched, not to the centred zone's coordinates run off its edge. The underground flag (`UNDERGROUND[uiMap]`, the stop's floor) now comes from the zone clicked. |
 
+### 1.3b The map panel (`merge/Panel.lua`, since 1.3.0)
+
+One panel docked on the world map's right side (strata DIALOG, a child of `WorldMapFrame`, no secure frames), opened
+and closed by the one button on the map (the map's top right); open or closed and the last tab are remembered
+(`BookFinderDB.panel`). It replaces the map's other buttons: OpenMap's button column (`mapButtons` off by default in
+BookFinder; its menu is the Map tab's "Map menu") and Questie's map button (not made in BookFinder).
+
+- **Search** (top): places (every zone and city) and library books as you type; with Enter, Questie's database too
+  (`QuestieSearch:ByName`: quests, NPCs, objects, items). Quest: in your log, a journey to it; else to its giver.
+  NPC or object: a journey to its nearest spawn. Item: its tooltip. `/bookfinder find <text>` opens it on a search.
+- **Journey:** Shortest Path's journey (`API.Journey`): goal, time left, each step in the tracker's words and its
+  time; Cancel. Your hearthstone's place and cooldown. Redrawn each second while shown, and on its `Subscribe`.
+- **Quests:** Route turn-ins (one Shortest Path journey through every finished quest's turn-in, nearest first, from
+  Questie's finisher NPCs and their spawns); My Journey (Questie's). Ready to turn in, then the log by zone (tooltip:
+  objectives); click: a journey there (`ns.JourneyToQuest`, Shortest Path's quest planning). Available near you:
+  Questie's available quests by their givers' nearest spawn (worked out every 10 s at most).
+- **Nearby:** every Shortest Path service row with the nearest NPC by journey time, ranked one a frame
+  (`ns.NearbyRows`, `NearbyNearest`, `NearbyGo`); All services opens Shortest Path's full panel.
+- **Books:** progress bar and rewards, Guide me / Stop route, Nearest, Book list; every book by set (click: a
+  journey; Shift-click: collected or not).
+- **Map:** Find me, Drop a pin, Draw, Map menu, Settings; one checklist of what shows: library books, Questie's
+  quests, dungeons, boats and zeppelins, lifts and tram, portals, flight masters, routes, shops and trainers,
+  mailboxes, spirit healers, rares, party, friends; zone levels, coordinates, your arrow.
+- The minimap button's Books and Quests entries open the panel at that tab; `/bookfinder panel [tab]`.
+
 ### 1.4 One addon: what used to be done twice, and who does it now
 
 Every part keeps every feature it alone has. Where two did the same job, one does it now; the other's unique
@@ -418,6 +443,8 @@ its standalone copy.
 
 ### Still needs an in-game check
 - Install, `/reload`, no Lua errors; textures show (full client restart after first install).
+- The map panel: opens and closes from its button; each tab with real data; Enter in the search (Questie's database
+  scan may take a moment); a click on a quest, book, service or result starts the journey; fits a small map window.
 - Stitched map: books of neighbouring zones show and line up with the art; trail follows when panning/zooming.
 - Shift-click a neighbouring zone on the stitched map: SP plans to that spot (and the right floor underground).
 - Books' route tracker: travel time appears, sensible.
