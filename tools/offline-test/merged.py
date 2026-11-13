@@ -26,7 +26,7 @@ BUILD = os.path.join(ROOT, "build")
 OWN_GLOBALS = [
     "OpenMapDB", "OpenMapCharDB", "ShortestPathForeverDB", "ShortestPathForeverCharDB", "BooksOnMapForeverGlobal",
     "BooksOnMapForeverDB", "ShortestPathForever", "ShortestPathForeverPathData", "ForeverCore", "ForeverCoreDB",
-    "ForeverCoreCharDB", "BookFinder", "BookFinderDB", "OpenMapAPI", "OpenMap", "TomTom", "Questie", "QuestieLoader", "RXPCData",
+    "ForeverCoreCharDB", "BookFinder", "BookFinderDB", "ForeverTrackerHost", "OpenMapAPI", "OpenMap", "TomTom", "Questie", "QuestieLoader", "RXPCData",
     "Guidelime", "RXP", "Zygor", "ZGV", "ForeverCoreAPI", "WorldMapFrame_OnShow",
 ]
 
@@ -129,8 +129,8 @@ INTEGRATION = r"""function(root)
     want(#SETTINGS.top == 1, "settings: top-level categories made: " .. table.concat(top, ", "))
     local pages = {}
     for _, c in ipairs(SETTINGS.listed[1] and SETTINGS.listed[1].subs or {}) do pages[c.name] = true end
-    -- (the stub stops Shortest Path's settings at its tracker-host row, before Alerts and Interface: those need the game)
-    for _, page in ipairs({ "World map", "Map marks", "Transport", "Guidance", "Books" }) do
+    for _, page in ipairs({ "World map", "Map marks", "Transport", "Travel journal", "Guidance", "Party mage portals",
+            "Alerts", "Interface", "Books" }) do
         want(pages[page], "settings: no " .. page .. " page in BookFinder's window")
     end
     want(BookFinder.OpenSettings("map") and BookFinder.OpenSettings("books") and BookFinder.OpenSettings(), "settings: a page can't be opened")
@@ -245,8 +245,57 @@ def run(mode):
             SETTINGS.byID[c.ID] = c
             return c
         end
+        -- what goes on each page, recorded (mode "dump" draws them): settings, and the rows made from them
+        local function record(t)
+            return setmetatable(t, { __index = function(_, k)
+                if type(k) == "number" then return nil end
+                return function() return object() end
+            end })
+        end
+        local byVariable = {}
+        local function Setting(variable, key, tbl, varType, name, default, get, set)
+            local st = record({ variable = variable, key = key, tbl = tbl, varType = varType, name = name, default = default, get = get, set = set })
+            st.GetValue = function(self)
+                local get, tbl, key = rawget(self, "get"), rawget(self, "tbl"), rawget(self, "key")
+                if get then return get() end
+                local v = tbl and key and tbl[key]
+                if v == nil then return rawget(self, "default") end
+                return v
+            end
+            st.SetValue = function(self, v)
+                local set, tbl, key = rawget(self, "set"), rawget(self, "tbl"), rawget(self, "key")
+                if set then set(v) elseif tbl and key then tbl[key] = v end
+                local cb = rawget(self, "callback")
+                if cb then pcall(cb, nil, self, v) end
+            end
+            st.SetValueChangedCallback = function(self, fn) self.callback = fn end
+            if variable then byVariable[variable] = st end
+            return st
+        end
         local known = {
             VarType = { Boolean = "boolean", Number = "number", String = "string" },
+            RegisterAddOnSetting = function(_, variable, key, tbl, varType, name, default)
+                return Setting(variable, key, tbl, varType, name, default)
+            end,
+            RegisterProxySetting = function(_, variable, varType, name, default, get, set)
+                return Setting(variable, nil, nil, varType, name, default, get, set)
+            end,
+            GetSetting = function(variable) return byVariable[variable] end,
+            RegisterInitializer = function(c, init) c.items = c.items or {} c.items[#c.items + 1] = init end,
+            CreateCheckboxInitializer = function(setting, _, tooltip) return record({ kind = "checkbox", setting = setting, tooltip = tooltip }) end,
+            CreateSliderInitializer = function(setting, options, tooltip) return record({ kind = "slider", setting = setting, options = options, tooltip = tooltip }) end,
+            CreateDropdownInitializer = function(setting, options, tooltip) return record({ kind = "dropdown", setting = setting, options = options, tooltip = tooltip }) end,
+            CreateSliderOptions = function(min, max, step)
+                local o = record({ min = min, max = max, step = step })
+                o.SetLabelFormatter = function(self, _, fn) self.fmt = fn end
+                return o
+            end,
+            CreateControlTextContainer = function()
+                local c = record({ data = {} })
+                c.Add = function(self, value, label, tooltip) self.data[#self.data + 1] = { value = value, label = label, tooltip = tooltip } end
+                c.GetData = function(self) return self.data end
+                return c
+            end,
             RegisterVerticalLayoutCategory = function(name) return Category(name) end,
             RegisterCanvasLayoutCategory = function(_, name) return Category(name) end,
             RegisterVerticalLayoutSubcategory = function(parent, name) return Category(name, parent) end,
@@ -255,8 +304,14 @@ def run(mode):
             GetCategory = function(id) return SETTINGS.byID and SETTINGS.byID[id] end,
         }
         Settings = setmetatable(known, { __index = function() return function() return object() end end })
-        CreateSettingsButtonInitializer = function() return object() end
-        CreateSettingsListSectionHeaderInitializer = function() return object() end
+        CreateSettingsButtonInitializer = function(name, text, onClick, tooltip)
+            return setmetatable({ kind = "button", name = name, buttonText = text, tooltip = tooltip, onClick = onClick },
+                { __index = function(_, k) if type(k) ~= "number" then return function() return object() end end end })
+        end
+        CreateSettingsListSectionHeaderInitializer = function(name)
+            return setmetatable({ kind = "header", name = name },
+                { __index = function(_, k) if type(k) ~= "number" then return function() return object() end end end })
+        end
         MinimalSliderWithSteppersMixin = { Label = { Right = 1 } }
         -- LibDBIcon registrations, by name (the minimap buttons)
         MINIMAP_BUTTONS = {}
@@ -330,6 +385,9 @@ def run(mode):
         RunTimers(3)
     end""")(names)
 
+    if mode == "dump":
+        return lua_to_py(L.eval(DUMP)())
+
     checks = []
     if mode != "standalone":
         root = spaces["BookFinder"]
@@ -374,6 +432,100 @@ def run(mode):
     return load_errors, runtime, checks, slash
 
 
+# Every page of the settings window, as the code builds it (mode "dump"): BookFinder's category from the recording
+# Settings stub, and OpenMap's World map page from its own options table (AceConfig), names and values resolved
+DUMP = r"""function()
+    local function value(setting)
+        if not setting then return nil end
+        local ok, v = pcall(setting.GetValue, setting)
+        if ok then return v end
+        return setting.default
+    end
+    local function items(c)
+        local list = {}
+        for _, it in ipairs(c.items or {}) do
+            local st = rawget(it, "setting")
+            local e = { kind = rawget(it, "kind"), name = rawget(it, "name") or (st and rawget(st, "name")), tooltip = rawget(it, "tooltip"),
+                button = rawget(it, "buttonText") }
+            if st then e.value = value(st) e.default = rawget(st, "default") end
+            local o = rawget(it, "options")
+            if e.kind == "slider" and o then
+                e.min, e.max, e.step = rawget(o, "min"), rawget(o, "max"), rawget(o, "step")
+                local fmt = rawget(o, "fmt")
+                if fmt and e.value ~= nil then local ok, t = pcall(fmt, e.value) if ok then e.valueText = tostring(t) end end
+            elseif e.kind == "dropdown" and type(o) == "function" then
+                local ok, data = pcall(o)
+                if ok and type(data) == "table" then
+                    e.choices = {}
+                    for _, d in ipairs(data) do e.choices[#e.choices + 1] = { value = d.value, label = d.label } end
+                end
+            end
+            list[#list + 1] = e
+        end
+        return list
+    end
+    local cat = SETTINGS.listed[1]
+    local out = { root = { name = cat.name, items = items(cat) }, pages = {} }
+    for _, sub in ipairs(cat.subs) do out.pages[#out.pages + 1] = { name = sub.name, items = items(sub) } end
+
+    -- OpenMap's options table (the World map page draws it)
+    local ACR = LibStub("AceConfigRegistry-3.0")
+    local ok, opts = pcall(ACR.GetOptionsTable, ACR, "OpenMap", "dialog", "AceGUI-3.0")
+    local function walk(node, path, inh, into)
+        local args = {}
+        for k, child in pairs(node.args or {}) do args[#args + 1] = { k = k, c = child } end
+        table.sort(args, function(a, b)
+            local oa, ob = tonumber(a.c.order) or 100, tonumber(b.c.order) or 100
+            if oa ~= ob then return oa < ob end
+            return tostring(a.k) < tostring(b.k)
+        end)
+        for _, a in ipairs(args) do
+            local child, key = a.c, a.k
+            local p = { unpack(path) } p[#p + 1] = key
+            local ih = {}
+            for kk, vv in pairs(inh) do ih[kk] = vv end
+            for _, f in ipairs({ "get", "set", "disabled", "hidden", "handler" }) do if child[f] ~= nil then ih[f] = child[f] end end
+            local info = { options = opts, option = child, type = child.type, handler = ih.handler, appName = "OpenMap" }
+            for i, s in ipairs(p) do info[i] = s end
+            local function resolve(v, ...) if type(v) == "function" then local okr, r = pcall(v, info, ...) return okr and r or nil end return v end
+            local e = { key = key, type = child.type, name = resolve(child.name), desc = resolve(child.desc),
+                hidden = resolve(ih.hidden) and true or false, disabled = resolve(ih.disabled) and true or false,
+                min = child.min, max = child.max, step = child.step, isPercent = child.isPercent }
+            if child.type ~= "group" and child.type ~= "header" and child.type ~= "description" and child.type ~= "execute" then
+                e.value = resolve(ih.get)
+                if type(e.value) == "table" then e.value = nil end
+            end
+            if child.type == "select" then
+                local vals = resolve(child.values)
+                if type(vals) == "table" then
+                    e.choices = {}
+                    for vk, vl in pairs(vals) do e.choices[#e.choices + 1] = { value = vk, label = vl } end
+                    table.sort(e.choices, function(x, y) return tostring(x.value) < tostring(y.value) end)
+                end
+            end
+            if child.type == "group" then e.items = {} walk(child, p, ih, e.items) end
+            into[#into + 1] = e
+        end
+    end
+    out.openmap = {}
+    if ok and opts then walk(opts, {}, {}, out.openmap) end
+    return out
+end"""
+
+
+def lua_to_py(v):
+    if lupa.lua_type(v) == "table":
+        keys = list(v.keys())
+        if keys and all(isinstance(k, int) for k in keys) and sorted(keys) == list(range(1, len(keys) + 1)):
+            return [lua_to_py(v[i]) for i in range(1, len(keys) + 1)]
+        if not keys:
+            return []
+        return {str(k): lua_to_py(v[k]) for k in keys if lupa.lua_type(v[k]) != "function"}
+    if lupa.lua_type(v) == "function":
+        return None
+    return v
+
+
 def first_line(e):
     # the message without the chunk name's component prefix, so standalone and merged compare
     line = e.split("\n")[0]
@@ -394,6 +546,13 @@ def report(mode, result):
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "diff"
+    if mode == "dump":
+        import json
+        out = sys.argv[2] if len(sys.argv) > 2 else "settings.json"
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(run("dump"), f, ensure_ascii=False, indent=1)
+        print("wrote", out)
+        sys.exit(0)
     if mode in ("standalone", "merged", "shadow"):
         le, rt, ck = report(mode, run(mode))[:3]
         for e in le + rt:
