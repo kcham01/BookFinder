@@ -1,0 +1,331 @@
+# BookFinder inventory: features, functions, quirks
+
+This is the working checklist for the merge. Every feature of the three addons is listed here so a rebuild,
+an upstream update or a new patch can be checked against it. **Nothing in this list was removed by the merge.**
+The rows marked ⚙ are what the merge added or changed.
+
+Sources (what was merged):
+
+| Part | Upstream version | Author / licence | Folder in BookFinder | Private table |
+|---|---|---|---|---|
+| OpenMap | v0.8.7 (commit `91c84b3`, 2026-11-12) | OpenMap contributors, MIT (code); map art Blizzard's | `OpenMap/` | `root.OpenMap` (also global `OpenMap`) |
+| Shortest Path Forever | v1.34.3 | cjber, GPL-3.0-or-later | `ShortestPathForever/` | `root.SPF` |
+| Books on map (Forever) | 2.2.6 | Daeler (no licence file shipped) | `Books_on_map_Forever/` | `root.Books` |
+| ForeverCore (library) | v1.9.0 | cjber, GPL-3.0-or-later | stays its own addon folder | its own |
+
+The whole is GPL-3.0-or-later because of Shortest Path. Books on map has no licence file: ask its author
+before publishing BookFinder anywhere public.
+
+---
+
+## 1. How the merge works
+
+### 1.1 Build
+
+`python3 tools/build.py [--no-textures] [--zip]` writes `build/BookFinder/` and `build/ForeverCore/`
+(and `dist/BookFinder-1.0.0.zip` with `--zip`). Never edit `build/`: edit `src/` or `merge/` and rebuild.
+
+1. Each part is copied into its subfolder. Its own `.toc`, `Bindings.xml` and `README.md` stay behind (OpenMap's
+   retail data, retail textures and `OpenMap_Mainline.toc` are never vendored).
+2. **Private tables.** The game hands every file of one addon the same private table. Each file's first
+   `local _, ns = ...`, `local ADDON, ns = ...` or `local ns = select(2, ...)` line gets
+   `; ns = ns.<Part>; if ns.__skip then return end` added *on the same line*, so line numbers in error messages
+   still match upstream. The build fails when a file has two such lines, or reads `...` in a form it doesn't know.
+   `Libs/` are left alone (LibStub versions them). SP's `Nav/Nav*_N.lua` and `Data` tables are plain globals
+   with no `ns`.
+3. **Paths.** Every `Interface\AddOns\<Part>\…` (escaped `\\` in Lua, single `\` in XML) becomes
+   `Interface\AddOns\BookFinder\<Part>\…`. The build fails if any file still points at a standalone folder.
+4. **Patches** (each must match exactly once or the build fails):
+   - OpenMap `Core.lua`: `ns.Media.path` built from the addon name gets `\OpenMap\` inserted.
+   - OpenMap `Core.lua`: `ns.version` reads `X-OpenMap-Version` (its What's new window and report codes).
+   - OpenMap `Map/Compat.lua`: "Books on map loaded?" also answers yes for the built-in part.
+   - SP `UI/CompanionMaps.lua`: "OpenMap loaded?" → `BookFinder.Loaded("OpenMap")`.
+   - SP `UI/WhatsNew.lua`: reads `X-SPF-Version` so What's new doesn't fire for BookFinder's own version.
+   - Books `Core/Skin.lua`: media path built from the addon name gets `\Books_on_map_Forever\`.
+   - Books `Group.lua`, `Welcome.lua`, `Options.lua`: version from `X-Books-Version` (group sync compares it
+     with other players running standalone Books, so it must stay Books' own).
+5. **The toc** is one `BookFinder.toc`: `Merge\Namespaces.lua`, then OpenMap's files, then SP's, then Books',
+   then `Merge\Bridge.lua`, each in its upstream order with `[AllowLoadTextLocale xx]` kept. Metadata: union
+   of `SavedVariables`, `SavedVariablesPerCharacter` and `OptionalDeps`; `Dependencies: ForeverCore`;
+   `X-Forever-Core`/`X-Forever-Icon` from SP (ForeverCore reads them by addon name); one compartment entry.
+6. **Bindings.xml**: every `<Binding>` of OpenMap and SP in one file.
+7. **Textures**: OpenMap's `Media/Textures/Forever` (335 MB, 2369 files) is sparse-fetched from the pinned commit
+   into `.cache/openmap/` once, then copied. Not in git.
+
+### 1.2 Merge layer (`merge/`)
+
+- `Namespaces.lua` (first file): makes `root.OpenMap`, `root.SPF`, `root.Books`. For each part whose standalone
+  addon is installed, loadable and enabled for this character, it sets `__skip`: every file of that part returns
+  at once and the standalone copy runs alone. It publishes the global `BookFinder`:
+  `BookFinder.Active(key)`, `BookFinder.Loaded(folder)` (IsAddOnLoaded that also knows built-in parts),
+  `BookFinder.components`, `BookFinder.shadowed`.
+- `Bridge.lua` (last file):
+  - `/bookfinder` and `/bfind` with `map`, `path`, `books`, `near [service]`, `status` and `help`
+    (`status` says for each part whether it's built in, standalone or off, and prints both API versions).
+  - The compartment entry: left-click runs OpenMap's own compartment click (the map), right-click opens a menu
+    of each part's settings. The tooltip says so.
+  - SP's world-map marks as OpenMap menu switches (section "Shortest Path"): boats and zeppelins, lifts and
+    tram, portals, flight masters. They write through the game's setting object
+    (`Settings.GetSetting("ShortestPathForever_<key>")`) so SP's page and its redraw callback follow, then check the
+    saved value took, and write it directly and redraw if it didn't.
+  - A login line when a standalone copy took a part's place.
+
+### 1.3 Integration patches in `src/` (on top of upstream; `git log` shows them)
+
+| ⚙ | Where | What |
+|---|---|---|
+| ⚙ | Books `Core/Navigation.lua` | Accepts SP API **v1 and v2**. Books 2.2.6 checked `version == 1`, and SP 1.34 publishes v2, so Books **never reached SP**: whole-route guiding fell back to TomTom/SP's stand-in, single waypoints went through SP's one-waypoint TomTom shim. Fixed. |
+| ⚙ | Books `Core/Navigation.lua` | `ns.TravelSeconds(loc)`: SP's `API.Estimate` from the player to a book, at most every 2 s per book (each step is a new origin to SP's cache). |
+| ⚙ | Books `modules/Route.lua` | The route tracker shows SP's travel time (game-localised `SecondsToTime`) when the book is over 300 yd away or on another continent; yards when close; "other continent" with no SP. |
+| ⚙ | Books `modules/Map.lua` | On OpenMap's stitched map, pins and the route trail are placed with `OpenMapAPI.CanvasFromWorldPos`, so **books in every zone in view show**, not only the zone underneath. Off the stitched map: exactly as before. |
+| ⚙ | Books `modules/Map.lua` | Smaller pins on any map above zone level (continents, Azeroth when OpenMap zooms out), not only the two continents. |
+| ⚙ | Books `modules/Map.lua` | Redraws on `OpenMap_StitchedChanged`, and on `OpenMap_ViewChanged` when the map underneath changed without telling. |
+| ⚙ | Books `modules/Map.lua` | OpenMap menu switches (section "Books on map"): "Show on the map" (`db.hidden`) and "Optimized route" (`ToggleRoute`). Reuse existing translated strings. |
+| ⚙ | Books `modules/Map.lua` | All calls into OpenMap go through `pcall`; the API must be major 1, version ≥ 2. |
+| ⚙ | Books toc | `OptionalDeps` gains `OpenMap` (standalone load order). |
+| ⚙ | SP `UI/OpenMap.lua` | `OpenMap.CursorMapPoint()`: the zone under the cursor on the stitched map (API v3 `CursorPosition` + `MapAt` + `MapFromWorld`). |
+| ⚙ | SP `Journey/JourneyInput.lua` | Shift-click and Alt-click plan to the zone under the cursor when stitched, not to the centred zone's coordinates run off its edge. The underground flag (`UNDERGROUND[uiMap]`, the stop's floor) now comes from the zone clicked. |
+
+---
+
+## 2. OpenMap (built in at `OpenMap/`)
+
+### Features
+- One seamless world map: every zone stitched; zoom from Azeroth to street level toward the cursor. It lives in
+  Blizzard's world map, so the quest log, map buttons and Questie keep working.
+- Closest zoom blends in the game's minimap art (`Close.lua`); zone borders fade and are colour-matched.
+- Land with no Forever zone map (Gilneas, ridges round Orgrimmar, west of Searing Gorge, edges of Stonetalon,
+  Feralas, Silithus…) drawn from Blizzard's classic and pre-Cataclysm maps (`Gaps`, `GapFills`, `Reveal`).
+- Ocean and continent labels rebuilt to scale (`Labels`, `Banners`).
+- Dungeon and raid entrances with level ranges coloured for your level; click opens the dungeon's own map in the
+  map, every floor, bosses and quests beside it (Questie, Dungeon Journal or NeedRoll); player-drawn maps for
+  Forever's own dungeons (`DungeonDrawn`, credited). Five Forever entrances hand-placed, the rest recorded in game.
+- Boats, zeppelins and airships (Forever's own too); click one to jump to the other end; routes drawn.
+- Underground: caves, mines, crypts and dungeon entrance areas show their map when zoomed in.
+- Flight paths: learned in colour, others grey; click two flight masters for the route and rough time.
+- Search for a zone, city, dungeon or flight master; Find me button or middle-click; how the map reopens;
+  party and raid members across the whole map; optional: hide your own arrow.
+- Map pins: Ctrl-click, any number, note and colour, followed with Blizzard's waypoint and TomTom's; share with
+  group, guild or a friend (addon messages, prefix `OpenMap`; `OpenMapLoc` for friends' places).
+- Drawing on the map: pen, lines, arrows, circles, raid marks; on its own or on a pin (`Sketch.lua`).
+- Townsfolk and rares (repair, innkeepers, trainers, bankers, auctioneers, stable masters, spirit healers, rare
+  mobs) from Questie's database or a registered provider; toggle Questie's own quest icons from the menu.
+- Map fits the screen: resizable window or full screen.
+- "Report a problem": draw on the spot, add a note, copy a code (`OM1|…`) for a GitHub issue.
+- Gamepad: leaves Blizzard's map alone under the Gamepad UI unless `padMap` or `padView` is on.
+- Other addons' HereBeDragons pins (Questie, TomTom, gatherers, notes) placed from every zone in view.
+- Compat warnings at login when another map addon's option fights its window (Leatrix Maps, Mapster, Magnify…).
+- What's new window from its own changelog.
+
+### Commands, bindings and entry points
+- `/openmap` or `/omap`: options. Sub-commands: `status`, `paint`/`notes`, `debug`, `bench [zoom]`, `pins`,
+  `news`, `entrance <name>`, `draw`, `dungeons`, `bosses`, `forgetflights`, `welcome`, `highlights`, `warm`,
+  `reset` (window size and place), `padview`.
+- Key bindings (Keybindings › OpenMap): find me, drop pin, pins, quill (draw), quest log, menu.
+- Settings › AddOns › OpenMap (button opens the AceConfig options); optional LDB minimap button.
+- ⚙ Its compartment entry is now BookFinder's (left-click still calls OpenMap's own handler).
+
+### Saved variables
+`OpenMapDB` (account) and `OpenMapCharDB` (character). `worldmap` defaults: `enabled`, `autoSwitch`,
+`hoverHighlight`, `icons`, `boats`, `zeppelins`, `flight`, `playerArrow`, `iconsFrom`, `iconScale`,
+`brightness`, `darkening`, `darkenColor`, `routes`, `foundOnly`, `colorMatch`, `desaturate`, `unexplored`,
+`gapFills`, `maxZoom`, `chart`, `padMap`, `padView`; plus pins, sketches, favourites (starred switches), window.
+
+### Public API (`OpenMapAPI`, major 1, version 4)
+`IsStitched`, `WorldFromMap`, `MapFromWorld`, `CanvasFromWorldPos` (v2), `ArtTopLevel` (v2), `MapAt`,
+`CursorPosition` (v3), `GetView`, `ShowWorld`; callbacks `OpenMap_StitchedChanged`, `OpenMap_ViewChanged`,
+`OpenMap_DungeonMapShown`, `OpenMap_DungeonMapHidden`; `RegisterMenuToggle`, `RegisterDungeonSection`,
+`RegisterTownsfolkProvider` (v4). Global `OpenMap` is its private table (`OpenMap.modules.worldmap` …).
+
+### Its quirks (upstream)
+- Replaces the scroll container's `CalculateScrollExtentsAtScale` and, while stitched, `ResetZoom`; swaps the area
+  label's OnUpdate. Map switching waits out combat.
+- Never compares or nil-tests secret values (`ns.Safe`). `MOD` blend makes the map see-through; alpha-0 regions
+  still cost draw time.
+- Under the stitched map, `WorldMapFrame:GetMapID()` is only the zone the view is on (why Books needed patching).
+- Questie's NPC data and quests are read through non-public modules; they fail quietly if Questie changes.
+- Textures need a full client restart when files are added; `/reload` is enough for Lua.
+
+---
+
+## 3. Shortest Path Forever (built in at `ShortestPathForever/`)
+
+### Features
+- Plan a journey: Shift-click the world map or minimap, Alt-click over a Questie icon, or *Plan journey* on a
+  quest. Mixes walking, flights, boats, zeppelins, lifts, the tram, portals, teleports and hearthstone; replans as
+  you move. A spot inside a dungeon leads to its entrance. Walks avoid zones 4+ levels above you and the other
+  faction's towns, and say so when they can't. *Keep journeys after a reload*.
+- Directions in the shared Forever objective-tracker column (ForeverCore): each step, time and distance left;
+  click the current step to complete it; skip a Hearthstone for that journey.
+- Route on both maps: breadcrumbs on the minimap, native waypoint to the next step, rim marker off-map, smooth
+  flight lines, stop pins (quest-style kinds: pickup, turnin, objective, innkeeper, dungeon, trainer, battlemaster,
+  flightmaster, vendor, boat, zeppelin, lift, tram, portal).
+- Direction arrow (eases to bearings, distance/time/both label, objectives under it, movable, scalable);
+  compass strip (turns, stops, destination, time left; dims when the turn is behind; green in a quest's area;
+  movable and resizable separately; pixel nudging with Shift-drag or arrow keys).
+- Corpse run: red route to your body as a ghost; the journey resumes when alive.
+- Arrival distance 5–50 yd; arrival sound; a map pin set as destination is cleared on arrival.
+- Flights and departures: flight-map highlight, flight-master tooltips with times, dock tooltips with
+  destinations and departure countdowns, ride times learned across sessions and characters.
+- Alerts: banner, transport sound and taskbar flash before your boat; cast prompts for Hearthstone/teleports.
+- Nearby services tab (world map quest log side tab): vendors by goods, trainers, inns, banks, AH, flight masters,
+  stables, repair, dungeon/raid doors; travel time each; best ammo/food/drink for your level; item search;
+  click to travel; nameplate arrows on arrival. Town services drawn on zone/city maps with minimap icons and
+  market stalls. Needs QuestieDB; class trainers also use Tweaks Forever.
+- Follow guides: RestedXP and Guidelime steps by default; *Resume guide*; TomTom waypoints from other guides when
+  TomTom is absent; *Follow TomTom's arrow*; Zygor and Kaliel's Tracker hooks.
+- `/way [zone] x y [title]` (claims `/way` only when TomTom and others leave it free); `/path way` always.
+- Party mage portals (per-city switches), teleports, minimum hearthstone saving.
+- Travel journal (`/path stats`): distance walked, journeys, transports, flights, portals.
+- Other faction's boats (off by default) and a hover note when they'd be 2+ minutes faster.
+- On OpenMap's stitched map: route and stops drawn across it into neighbouring zones, above OpenMap's art.
+  ⚙ Shift-click resolves the zone under the cursor there.
+- Forever family hints (grey suggestions for Adventure Guide / Legacy).
+
+### Commands, bindings and entry points
+- `/path` or `/shortestpath`: settings; `report`, `issue`, `perf`, `debug`, `stats`, `way …`, `follow [unit|off]`.
+- `/spfnear [service]`: Nearby services tab, or route to the nearest service.
+- `/way`; `/forever debug` (ForeverCore).
+- Bindings (Keybindings › AddOns): travel to map pin, travel to tracked quest, clear journey
+  (`CLICK ShortestPathForever…Button:LeftButton`).
+- Settings › AddOns › Shortest Path Forever: pages Transport, Guidance, Map marks, Interface, Alerts, Forever addons.
+- Its own compartment function `ShortestPathForever_OnAddonCompartmentClick` still exists; ⚙ the toc entry is
+  BookFinder's, whose right-click menu opens SP's settings.
+
+### Saved variables
+`ShortestPathForeverDB` (account) and `ShortestPathForeverCharDB` (character). Defaults (`ns.Defaults`): `pins`,
+`transit`, `portals`, `minimapPins`, `mapFlightMasters`, `mapRoutes`, `townServices` (`"capitals"`),
+`townService*` (Innkeeper, Flight, Stable, Repair, Bank, Auction, Class, Professions, Food, Ammunition, Bags,
+Reagents, Books, Gear), `mapPinScale`, `flightPinScale`, `minimapPinScale`, `routeColor`, `mapLine`,
+`minimapLine`, `laterLegs`, `otherFaction`, `tracker`, `alerts`, `alertSound`, `flightPathReminder`,
+`arrivalSound`, `journey`, `destinationPin`, `npcArrows`, `resumeJourney`, `tomtom`, `tomtomFollow`, `restedxp`,
+`restedxpHideArrow`, `guidelime`, `taxiRoute`, `teleports`, `partyMagePortals`, `partyMage<City>` ×6,
+`hearthMinimumSavings`, `stats`, `guideStops`, `journeyTracker`, `arrow`, `arrowLabel`, `arrowObjectives`,
+`arrivalPin`, `arrivalDistance`, `metres`, `minimapButton`, `compass`, `compassTime`, `compassScale`,
+`arrowScale`, `compassBackground`, `corpse`, `avoidHighZones`, `followRoads`, `whatsNew`.
+
+### Public API (`ShortestPathForever.API`, version 2, minor 0; also `ForeverCore.APIKit` "ShortestPathForever")
+`Estimate`, `EstimateDetail`, `NavigateRoute(owner, stops)` (≤64 stops; `map`, `x`, `y` 0..1, `title`,
+`tooltip`, `kind`, `hold`, `radius`, `z`, `questID(s)`, `handins`, `npc`, `shapes`), `Navigate`, `CurrentStop`,
+`Cancel`, `Journey`, `Pause`, `Resume`, `SkipLeg`, `RenameStop`, `Ended`, `Stats`, `Subscribe`, `Active`.
+Reads answer `nil, "loading" | "none" | "combat" | "invalid" | "unreachable"`. Refuses in combat.
+
+### Its quirks (upstream)
+- Needs ForeverCore ≥ the toc's `X-Forever-Core`; otherwise `ns.broken` and every file returns.
+- Estimates cost 0.5–2.5 ms uncached; callers should make at most one uncached call per frame.
+- A journey owned by another addon isn't kept through a reload: the owner resubmits (Books does, 1 s after login).
+- `/way` is only taken when free; with RestedXP's TomTom option on, two addons would follow the guide.
+
+---
+
+## 4. Books on map (Forever) (built in at `Books_on_map_Forever/`)
+
+### Features
+- The WoW Forever library books (`Data/Books.lua`: key, item, quest, set 1/35/45/60, icon, name, one or more
+  locations with place names) as world-map pins; other faction's books removed.
+- Pickup detection by item ID (any language) and turned-in detection by quest ID (`Core/Detection.lua`).
+- Shift-click a pin: mark collected; right-click: waypoint (SP, else TomTom). Tooltip: place, coordinates,
+  route step, count, group needs.
+- Minimap pins (size setting), minimap button (LibDBIcon), LibDataBroker launcher.
+- Optimised route: nearest neighbour + 2-opt per set, lowest set first (or nearest first), continent penalty;
+  skip and recalc; route tracker frame (next book, place, distance, arrow; draggable, position saved);
+  trail on the world map (next 5 steps, fading dots, moving spark, numbered pins).
+- ⚙ Tracker shows SP's real travel time past 300 yd or across continents.
+- Send the whole route to SP (one journey, ≤64 stops, kind `pickup`), kept in step as books are collected,
+  re-sent after combat if refused, resumed after a reload; or to TomTom.
+- Group: share progress with party/raid/guild, see what group members still need (desaturated pins), group panel.
+- Rewards panel (goals 10 necklace, 20 ring, 25 bow/crest/light), completion toast and sound.
+- Nearby notice, welcome page, side tabs, options window (list per set, filters, sizes, language selector,
+  bug report button), its own skin.
+- Ten languages chosen in options (auto = client).
+- ⚙ On OpenMap's stitched map: books of every zone in view; switches in OpenMap's menu.
+
+### Commands
+`/bom` or `/books` (options); `list`, `next`, `recalc`, `share [group|guild|say] [missing]`, `done N`, `undo N`,
+`route [list|guide|tomtom]`, `toggle`, `minimap`, `welcome`, `bug`, `reset`, `ids`, `test`.
+
+### Saved variables
+`BooksOnMapForeverGlobal` (account: `welcomeSeen`) and `BooksOnMapForeverDB` (character): `collected`, `hidden`,
+`pinSize`, `hideMinimapPins`, `minimapPinSize`, `hideMinimap`, `minimapIcon`, `routeOn`, `routePos`,
+`resumeRoute`, `lang`, `sideTab`, `folded`, `foldedSets`, `noToasts`, `noNearby`, `hideGroupBooks`,
+`showRewards`, `myLevelOnly`, `hideCollected`, `itemIDs`.
+
+### Its quirks (upstream)
+- Before this merge it checked SP's API for `version == 1` only (fixed, see 1.3).
+- Pins are canvas buttons; OpenMap's `Compat.lua` lifts any canvas child with `.book` and `.loc` above its art.
+- Rebuilding pins on every zoom step flickered under OpenMap: zoom only resizes, the trail re-lays after 0.15 s.
+
+---
+
+## 5. How the parts work together (after the merge)
+
+| From → to | How | Works without the other? |
+|---|---|---|
+| Books → SP | `ShortestPathForever.API` v1/v2: Navigate, NavigateRoute, CurrentStop, Cancel, Estimate | yes: TomTom, or nothing |
+| Books → OpenMap | `OpenMapAPI`: IsStitched, ArtTopLevel, CanvasFromWorldPos, callbacks, RegisterMenuToggle | yes: Blizzard's map |
+| SP → OpenMap | `OpenMapAPI`: IsStitched, ArtTopLevel, CanvasFromWorldPos, ⚙ CursorPosition/MapAt/MapFromWorld | yes |
+| OpenMap → Books | `Compat.lua` lifts Books' pins above the art (⚙ also for the built-in part) | yes |
+| OpenMap → SP | `WorldMap.lua:979` calls `ShortestPathForever.API.Navigate("OpenMap", …)` | yes |
+| Bridge → all | `/bookfinder`, compartment entry, SP switches in OpenMap's menu | — |
+
+They talk only through these public APIs, so each part still works when another is turned off or replaced by
+its standalone copy.
+
+---
+
+## 6. Merge quirks and risks (read before changing anything)
+
+1. **Saved settings don't carry over by themselves.** The game keeps saved variables per addon folder
+   (`WTF/Account/<acct>/SavedVariables/OpenMap.lua` …). BookFinder reads `BookFinder.lua`. Run
+   `tools/migrate_savedvariables.py <WTF folder>` once with the game closed: it copies the six variables from the
+   old files into BookFinder's (account and every character), keeping what's already there.
+2. **Don't run a standalone copy alongside.** If OpenMap, Shortest Path Forever or Books on map is also enabled,
+   BookFinder's copy of that part stands aside and a chat line says so. The standalone copy then works with the
+   built-in others through the same APIs.
+3. **ForeverCore stays separate.** Other Forever addons (Adventure Guide, Legacy, SkillUp…) declare
+   `Dependencies: ForeverCore` by folder name, and two copies would fight over the shared tracker column. Install
+   `ForeverCore/` beside `BookFinder/` (the zip has both).
+4. **Name-based checks from other addons.** Anything that asks `IsAddOnLoaded("ShortestPathForever")`,
+   `("OpenMap")` or `("Books_on_map_Forever")` now gets false. Inside BookFinder these checks were patched.
+   ForeverCore's *Forever addons* page lists Shortest Path Forever as "not installed" (cosmetic: its API is
+   published and works). Unverified: whether Adventure Guide/SkillUp/Legacy find SP by name or by
+   `ShortestPathForever.API` / `ForeverCore.APIKit` (SP publishes both). If one of them stops sending journeys,
+   run SP standalone (quirk 2).
+5. **Versions.** `## Version` is BookFinder's (1.0.0). Each part reads its own: `X-OpenMap-Version`,
+   `X-SPF-Version`, `X-Books-Version`. ForeverCore's bug report shows BookFinder's version as the addon's.
+6. **One addon in the game's CPU/memory profiler.** `/path perf` measures the whole BookFinder now.
+7. **Overlapping marks.** OpenMap and SP both draw boats/zeppelins and flight masters on the world map. Both are
+   kept (nothing removed); turn one side off in OpenMap's menu (its own switches, or the "Shortest Path" section).
+8. **Shared libraries.** OpenMap ships LibStub, CallbackHandler, AceGUI, AceConfig; Books ships LibStub,
+   CallbackHandler, LibDataBroker, LibDBIcon. Both copies load; LibStub keeps the newest.
+9. **Map art not in git.** Build with textures before installing; a `--no-textures` build has no map art.
+10. **Load order inside the toc** is OpenMap → SP → Books. Books and SP find each other's APIs lazily (at login or
+    on use), so the order only matters for upstream `OptionalDeps`, which it follows.
+11. **Licences.** GPL-3.0 (SP) + MIT (OpenMap) combine as GPL-3.0; Books' terms unknown.
+
+---
+
+## 7. Verification
+
+- `luac5.1 -p` on every Lua file of `src/` and `build/` (281 files): no syntax errors.
+- `python3 tools/offline-test/merged.py` (needs `pip install lupa`; build first): loads ForeverCore and the three
+  standalone addons in OpenMap's WoW stub, then ForeverCore + BookFinder, then BookFinder with standalone OpenMap
+  enabled ("shadow"). It fires login, entering world, combat and every part's slash commands, and fails on any
+  error only the merged build has, on a missing slash command, and on these checks:
+  separate private tables; `OpenMap` global = OpenMap's table; OpenMap's media path inside BookFinder; APIs
+  published; OpenMap stands aside in shadow mode while SP and Books keep running; **Books sends waypoints and its
+  whole route to SP v2 as `pickup` stops; Books gets SP's travel time; on a stitched map Books shows books of
+  several zones above OpenMap's art, and only the zone's own off it; OpenMap's menu has all six switches and
+  they change Books' and SP's settings.** A mutation test (restoring Books' old `version == 1` check) fails 4
+  of them, so the checks bite.
+- The stub has gaps both runs hit the same way (8 errors: Blizzard's settings layout, a canvas, a skinned frame):
+  SP's settings page, Books' skinned frames and the real stitched map are not exercised offline.
+
+### Still needs an in-game check
+- Install, `/reload`, no Lua errors; textures show (full client restart after first install).
+- Stitched map: books of neighbouring zones show and line up with the art; trail follows when panning/zooming.
+- Shift-click a neighbouring zone on the stitched map: SP plans to that spot (and the right floor underground).
+- Books' route tracker: travel time appears, sensible.
+- OpenMap menu: Books and Shortest Path sections; switches work and survive a reload.
+- Compartment entry: left-click map, right-click menu.
+- With the old standalone folders still enabled: the chat note, and nothing breaks.
