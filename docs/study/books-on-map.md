@@ -5,8 +5,8 @@ here is their code. Version studied: 2.3.0 (the zip you sent), author Daeler.
 
 ## What it is
 
-The WoW: Forever library books: 39 in the list (one book exists for one faction only, so 38 count for each player),
-in four sets: **Starting set** (16), **Level 35 set** (7), **Level 45 set** (7), **Level 60 set** (8). A book can have
+The WoW: Forever library books: 38 in the list (a first reading counted 39: that was a comment line; no book is
+faction-only in 2.3.0, though the list allows it), in four sets: **Starting set** (16), **Level 35 set** (7), **Level 45 set** (7), **Level 60 set** (8). A book can have
 more than one place (Rumi of Gnomeregan: Sentinel Hill, Westfall, or Thelsamar, Loch Modan). Books the other faction
 can't loot are dropped from your list at login.
 
@@ -133,7 +133,7 @@ and place names translated; the window can use a language other than the client'
 - **Request**: `R`: everyone answers with their state.
 - A state whose book count or length differs from yours is "another version": listed, books not shared.
 - Names are full names without the realm (on Forever, names are two words).
-- So BookFinder must: keep the same 39 books **in the same order** (the order is the protocol), send and answer `R`,
+- So BookFinder must: keep the same 38 books **in the same order** (the order is the protocol), send and answer `R`,
   and treat a different count as another version.
 
 ## Saved settings

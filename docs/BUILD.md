@@ -142,3 +142,12 @@ See the log. Current phase is the first unchecked one.
   rotation), `Quests/PinTooltip.lua` (Questie's layout; Shift for more; clicks), `Map/Waypoint.lua` (the game's pin).
   Still to do in the map: patrol paths, townsfolk (with the Show dropdown, phase 8), coordinates, party objectives.
   Decision: one pin per NPC spot carries all its roles; Shift-click offers to hide every quest offered there.
+- Phase 6 (arrow and compass) done: `Map/Guide.lua` (settings on page "Map/Guide"; move mode; arrival clears the
+  game's pin, the gold pin stays until 2x the arrival distance). Test geometry now matches the client's axes.
+- Phase 7 (books) core done: `Books/List.lua` (our list: order = Books on map's protocol, 38 books; positions from
+  the data's book objects, `at` overrides for the cave mouth), `Books.lua` (collected = bags/bank via
+  GetItemCount(item, true), hand-in, or ticked; BooksOnMapFE both ways; we send "<version> BookFinder" as the version,
+  shown as "v3.0.0-dev BookFinder" in their panel), `Map.lua` (book pins, minimap with the route's next book on the
+  rim), `Route.lua` (set by set, nearest + 2-opt, guided by the map pin; no trail), `Alerts.lua` (cards).
+  Still to do for books: the Books tab beside the quest log (phase 10 UI), the item tooltip line (phase 5), commands.
+  Not carried over: Books on map's "New reward tier!" card (an upgrade notice for its own users).

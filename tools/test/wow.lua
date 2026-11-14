@@ -397,7 +397,7 @@ end
 GetQuestLogSelection = function() return 0 end
 SelectQuestLogEntry = function() end
 
-GetItemCount = function(id) return World.bags[id] or 0 end
+GetItemCount = function(id, bank) return (World.bags[id] or 0) + (bank and World.bank and World.bank[id] or 0) end
 GetNumSkillLines = function() return #World.skills end
 GetSkillLineInfo = function(i) local s = World.skills[i] return s.name, false, false, s.rank, 0, 0, s.max end
 GetFactionInfoByID = function(id)
@@ -491,7 +491,7 @@ local function newCanvas()
 		local pin = CreateFrame("Frame", nil, self)
 		Mixin(pin, mixin)
 		pin.owningMap, pin.template = self, template
-		pin.Icon, pin.Glow = pin:CreateTexture(), pin:CreateTexture()
+		pin.Icon, pin.Glow, pin.Step = pin:CreateTexture(), pin:CreateTexture(), pin:CreateFontString()
 		if pin.OnLoad then pin:OnLoad() end
 		pin:OnAcquired(...)
 		self.pins[#self.pins + 1] = pin
@@ -543,3 +543,9 @@ YES, NO = "Yes", "No"
 CreateAtlasMarkup = function(a) return "|A:" .. a .. "|a" end
 issecretvalue = function() return false end
 issecrettable = function() return false end
+World.templates.BookFinderBookPinTemplate = "BookFinderBookPinMixin"
+BackdropTemplateMixin = {}
+C_Item = strict("C_Item", {
+	GetItemNameByID = function() return nil end,
+	GetItemIconByID = function() return 134400 end,
+})
