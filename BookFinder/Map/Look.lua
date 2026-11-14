@@ -22,6 +22,7 @@ end
 local function completeKind(quest)
 	local kind = Rules:Kind(quest)
 	if kind.event then return "completeEvent" end
+	if kind.pvp then return "completePvP" end
 	if kind.repeatable or kind.daily or kind.weekly then return "completeRepeatable" end
 	return "complete"
 end

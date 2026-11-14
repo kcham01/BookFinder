@@ -37,7 +37,7 @@ return {
 		expect(#pinsWithRole(WorldMapFrame, "complete", 5261) >= 1, "Eagan Peltskinner turn-in")
 		expect(#pinsWithRole(WorldMapFrame, "objective", 7) >= 1, "Kobold Vermin")
 		local pin = pinsWithRole(WorldMapFrame, "complete", 5261)[1]
-		equal(pin.Icon.texture, "Interface\\GossipFrame\\ActiveQuestIcon", "turn-in icon (no atlas in this client)")
+		equal(pin.Icon.texture, "Interface\\AddOns\\BookFinder\\Media\\Questie\\complete", "Questie's turn-in icon")
 	end,
 
 	["world map: the setting hides them"] = function(BF)

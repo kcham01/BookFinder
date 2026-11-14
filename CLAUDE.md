@@ -22,7 +22,10 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
 3. **The one exception is data, as decided**: quest, NPC, object and item knowledge comes from **QuestieDB's data**,
    credited, under its GPL-3 licence (so BookFinder is GPL-3). Only the data; every line of code is new. The map is
    built from the **game's own map art**, by BookFinder (not OpenMap's prepared textures). The books list is written
-   by BookFinder (names and places are facts, checked in game).
+   by BookFinder (names and places are facts, checked in game). **Questie's icon files are shipped too**
+   (`BookFinder/Media/Questie`, credited): the owner asked for Questie's icons used the way Questie uses them.
+   **Improve on every feature**: the owner wants each part better than the original (the map better-looking than
+   OpenMap's), not a copy.
 4. **Talk to the other addons**: a party member using Questie, OpenMap or Books on map must still share with
    BookFinder (Questie's party quest sharing, OpenMap's friend/guild positions and shared pins, Books on map's
    `BooksOnMapFE` group sharing). Match their addon-message protocols exactly.
