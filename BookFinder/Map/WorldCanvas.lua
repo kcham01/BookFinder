@@ -83,6 +83,7 @@ end
 local layerList = {}
 local overlay
 local pool, used = {}, 0
+local lines, linesUsed = {}, 0 -- Line regions on the overlay (patrol paths): add.line(e1, n1, e2, n2, spec)
 
 function Canvas:AddLayer(name, fn)
 	for _, l in ipairs(layerList) do if l.name == name then l.fn = fn return end end
@@ -113,6 +114,8 @@ end
 function Canvas:Redraw()
 	if not frame or not frame:IsShown() or not continent then return end
 	for i = 1, used do pool[i]:Hide() end
+	for i = 1, linesUsed do lines[i]:Hide() end
+	linesUsed = 0
 	used = 0
 	local w, h = frame:GetWidth(), frame:GetHeight()
 	local function add(east, north, spec)
@@ -132,7 +135,27 @@ function Canvas:Redraw()
 		b:ClearAllPoints()
 		b:SetPoint("CENTER", frame, "TOPLEFT", px, -py)
 	end
-	for _, l in ipairs(layerList) do BF.safecall(l.fn, continent, add) end
+	-- A line between two world points (spec: { thickness, colour = {r, g, b, a} }), cut off where it leaves the view.
+	local function line(e1, n1, e2, n2, spec)
+		local x1, y1 = (e1 - centre.east) * zoom + w / 2, (centre.north - n1) * zoom + h / 2
+		local x2, y2 = (e2 - centre.east) * zoom + w / 2, (centre.north - n2) * zoom + h / 2
+		if (x1 < 0 and x2 < 0) or (x1 > w and x2 > w) or (y1 < 0 and y2 < 0) or (y1 > h and y2 > h) then return end
+		linesUsed = linesUsed + 1
+		local l = lines[linesUsed]
+		if not l then
+			l = overlay:CreateLine(nil, "BACKGROUND")
+			l:SetColorTexture(1, 1, 1, 1)
+			lines[linesUsed] = l
+		end
+		l:SetStartPoint("TOPLEFT", frame, x1, -y1)
+		l:SetEndPoint("TOPLEFT", frame, x2, -y2)
+		l:SetThickness(spec.thickness or 2)
+		local c = spec.colour or { 1, 1, 1, 1 }
+		l:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+		l:Show()
+	end
+	local api = setmetatable({ line = line }, { __call = function(_, ...) return add(...) end })
+	for _, l in ipairs(layerList) do BF.safecall(l.fn, continent, api) end
 end
 
 local redrawSoon = BF:Debounce(0.05, function() Canvas:Redraw() end)
