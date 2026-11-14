@@ -33,19 +33,33 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
 7. **Native, not bloated**: the game's own look and art, no clutter, no features nobody asked for.
 8. **Report honestly**: say what was tested and what wasn't; nothing has run in game until the owner says it did.
 
-## Where things stand
+## Where things stand (read this, then `docs/BUILD.md`'s log and its last section, "Next")
 
-- The repository holds no other addon's code, and none of the owner's review files, anywhere in its history: GitHub's
-  history was rewritten (every branch; `main` matches this branch). Copies survive only behind the old pull requests
-  #1 to #12; removing those needs the repository recreated.
-- **Study (first pass done)**: `docs/study/` holds, per addon, how it works from a player's side (in our words):
-  `books-on-map.md` (2.3.0), `openmap.md` (v0.8.9), `questie.md` (12.9.0 with QuestieDB 1.1.1), each ending with the
-  protocols BookFinder must speak.
-- **The build is under way**: `docs/BUILD.md` has the plan (13 phases), which are done, and a log of what was learned.
-  Offline tests: `tools/test/run.sh` (lua5.1). Nothing has run in game until the owner says so.
-- Newest reference versions: Questie 12.9.0, QuestieDB 1.1.1, Books on map 2.3.0, OpenMap v0.8.9
-  (https://github.com/openmap-world/openmap). QuestieTrace: ignored. The zips lived in an earlier session's scratchpad
-  and are gone: ask the owner to send them again when they are needed (OpenMap is public).
+- **Code**: `BookFinder/` is the addon (TOC `BookFinder/BookFinder.toc`). Folders: `Core` (events, settings, data access,
+  zones, player), `Data` (generated from QuestieDB by `tools/data/convert.py`: never edit by hand), `Quests` (log,
+  rules, objectives, marks, tooltips, nameplates, the quest list, automation, announcements, sounds, chat links),
+  `Map` (world map and minimap pins, paths, coordinates, arrow and compass, townsfolk, the Show dropdown, map pins,
+  friends and guild), `Books`, `Comms` (Questie's protocol, party objectives), `Journey`, `UI` (one dropdown, widgets,
+  the settings panel, the map window's tabs, minimap button, commands).
+- **Done (phases 1-11, 13, and OpenMap's pins and people)**: see `docs/BUILD.md`, its plan and its log, newest last.
+  Questie's party protocol is checked byte for byte against Questie's own code (`tools/check/`).
+- **Next: phase 12, OpenMap's map**: the stitched world map from the game's own art, zooming down to minimap detail
+  (the owner's favourite), dungeons, boats, flights, the quill... The owner chose **"own code, OpenMap as guide"**.
+  Settle where the minimap tiles come from before building (`docs/BUILD.md`, "Next").
+- **Tests**: `tools/test/run.sh` (needs `lua5.1`: `apt-get install -y lua5.1`) runs every file of the TOC against
+  stand-ins of the game (`tools/test/wow.lua`) and every `tools/test/test_*.lua`: 142 pass. They prove logic only.
+  **Nothing has run in game yet**: the owner is about to test. Every "Not verified in game" in `docs/BUILD.md` is a
+  guess to check against their screenshots.
+- **Branches**: the work is on the session's branch (pushed), in pull request kcham01/BookFinder#13 (open, not
+  merged; #14 is older and contained in it). `main` is behind: it ends at "Notes: answered questions cleared".
+  A new session gets its own branch name: start it from this branch's latest commit (a fast-forward, nothing lost).
+- **Reference files are gone with each session** (they live only in a session's scratchpad, never in the repository):
+  Questie 12.9.0 with QuestieDB 1.1.1 and Books on map 2.3.0 (ask the owner to send them again when needed), OpenMap
+  v0.8.9 (public: `git clone https://github.com/openmap-world/openmap` into the scratchpad). QuestieTrace: ignored.
+- The repository holds no other addon's code, and none of the owner's review files, anywhere in its history. Copies
+  survive only behind the old pull requests #1 to #12; removing those needs the repository recreated.
+- **Study**: `docs/study/` (per addon, from a player's side; `questie-protocol.md` is Questie's wire format byte by
+  byte; `openmap.md` ends with OpenMap's place and pin protocols).
 
 ## The owner's design notes (summary; full text in `docs/NOTES.md`)
 
