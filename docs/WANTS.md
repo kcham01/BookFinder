@@ -1,5 +1,7 @@
 # What you want from BookFinder (running notes)
 
+> **Now in note-taking mode** (`docs/NOTES.md`): your notes are recorded as given; no building until you say so.
+
 Kept up to date as you say things. Newest decisions win; anything struck out was replaced.
 
 ## The goal
