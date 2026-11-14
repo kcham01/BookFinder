@@ -286,20 +286,27 @@ C_AddOns = strict("C_AddOns", {
 
 UnitName = function(unit) if unit == "player" then return World.player.name, nil end return nil end
 UnitFullName = function(unit) if unit == "player" then return World.player.name, World.player.realm end end
-UnitGUID = function(unit) if unit == "player" then return World.player.guid end end
+-- Other units (a target, a nameplate's mob): World.units[token] = { guid =, dead =, player = }.
+World.units = {}
+UnitGUID = function(unit)
+	if unit == "player" then return World.player.guid end
+	return World.units[unit] and World.units[unit].guid
+end
+UnitIsPlayer = function(unit) return unit == "player" or (World.units[unit] and World.units[unit].player) or false end
+UnitIsDead = function(unit) return World.units[unit] and World.units[unit].dead or false end
 UnitFactionGroup = function() return World.player.faction, World.player.faction end
 UnitRace = function() return World.player.race, World.player.race, World.player.raceID end
 UnitClass = function() return World.player.class, World.player.class, World.player.classID end
 UnitClassBase = function() return World.player.class, World.player.classID end
 UnitLevel = function() return World.player.level end
 UnitSex = function() return 2 end
-UnitExists = function(unit) return unit == "player" end
+UnitExists = function(unit) return unit == "player" or World.units[unit] ~= nil end
 UnitIsDeadOrGhost = function() return false end
 UnitAffectingCombat = function() return false end
-InCombatLockdown = function() return false end
+InCombatLockdown = function() return World.combat == true end
 IsInGroup = function() return false end
 IsInRaid = function() return false end
-IsInInstance = function() return false, "none" end
+IsInInstance = function() if World.instance then return true, "party" end return false, "none" end
 GetNumGroupMembers = function() return 0 end
 GetRealmName = function() return World.player.realm end
 GetLocale = function() return "enUS" end
@@ -549,3 +556,39 @@ C_Item = strict("C_Item", {
 	GetItemNameByID = function() return nil end,
 	GetItemIconByID = function() return 134400 end,
 })
+
+-- Tooltips: the client's data processor (post-calls by data type) and the tooltip's first line ----------------------
+Enum.TooltipDataType = { Item = 0, Spell = 1, Unit = 2, Corpse = 3, Object = 4 }
+World.tooltipPostCalls = {}
+TooltipDataProcessor = strict("TooltipDataProcessor", {
+	AddTooltipPostCall = function(kind, fn)
+		World.tooltipPostCalls[kind] = World.tooltipPostCalls[kind] or {}
+		table.insert(World.tooltipPostCalls[kind], fn)
+	end,
+})
+GameTooltipTextLeft1 = GameTooltip:CreateFontString("GameTooltipTextLeft1")
+function GameTooltip:GetUnit() return nil end
+function GameTooltip:GetItem() return nil end
+function GameTooltip:GetSpell() return nil end
+
+--- Shows GameTooltip as the client would for a thing of `kind` ("Unit", "Item", "Spell", "Object") with `data`
+--- ({guid =} or {id =}); `title` is its first line. Returns the tooltip's lines.
+function World.ShowTooltip(kind, data, title)
+	local tip = GameTooltip
+	tip:SetOwner(UIParent)
+	if tip.scripts.OnTooltipCleared then tip.scripts.OnTooltipCleared(tip) end
+	tip.lines = {}
+	GameTooltipTextLeft1:SetText(title)
+	if title then tip:AddLine(title) end
+	for _, fn in ipairs(World.tooltipPostCalls[Enum.TooltipDataType[kind]] or {}) do fn(tip, data) end
+	tip:Show()
+	return tip.lines
+end
+
+-- Nameplates and the target frame ---------------------------------------------------------------------------------
+World.nameplates = {} -- [token] = frame
+C_NamePlate = strict("C_NamePlate", {
+	GetNamePlateForUnit = function(unit) return World.nameplates[unit] end,
+	GetNamePlates = function() local t = {} for _, f in pairs(World.nameplates) do t[#t + 1] = f end return t end,
+})
+TargetFrame = CreateFrame("Frame", "TargetFrame", UIParent)

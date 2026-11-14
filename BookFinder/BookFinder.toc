@@ -32,12 +32,15 @@ Quests\Events.lua
 Quests\Log.lua
 Quests\Rules.lua
 Quests\Objectives.lua
+Quests\Needs.lua
 Quests\Marks.lua
 Quests\Reward.lua
 
 Map\Icons.lua
 Map\Look.lua
 Quests\PinTooltip.lua
+Quests\Tooltips.lua
+Quests\Nameplates.lua
 Map\Waypoint.lua
 Map\Pins.xml
 Map\WorldMap.lua

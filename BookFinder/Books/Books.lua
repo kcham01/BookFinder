@@ -292,3 +292,22 @@ BF:At("login", function()
 	BF:Listen("BF_BOOKS_CHANGED", function() Books:SendState() end)
 	Books:SendState(true)
 end, 21)
+
+-- Item tooltips ----------------------------------------------------------------------------------------------------
+--
+-- Every library book's tooltip says whether the player has it, and its set: "Library book - collected (Starting set)"
+-- in green, "Library book - missing (Level 35 set)" in red, as Books on map writes it.
+
+--- "Starting set", "Level 35 set"...
+function Books:SetName(set)
+	if set == 1 then return L["Starting set"] end
+	return L["Level %d set"]:format(set)
+end
+
+BF.Tooltips:Register("item", function(tip, item)
+	local book = Books.byItem[item]
+	if not book then return end
+	local done = Books:IsDone(book)
+	local text = ("%s - %s (%s)"):format(L["Library book"], done and L["collected"] or L["missing"], Books:SetName(book.set))
+	if done then tip:AddLine(text, 0.2, 1, 0.2) else tip:AddLine(text, 1, 0.25, 0.25) end
+end)

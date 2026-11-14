@@ -94,10 +94,10 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 
 1. ~~Data converter + generated data files + credits.~~ Done.
 2. ~~Core: namespace, events, saved variables, settings store, offline harness.~~ Done (slash commands: phase 13).
-3. Quest engine: player's log and progress, completed quests, availability rules, objective spawns.
+3. ~~Quest engine: player's log and progress, completed quests, availability rules, objective spawns.~~ Done.
 4. World map + minimap pins (quest givers, turn-ins, objectives, townsfolk), icon tooltips, Shift-click hide.
-5. Unit/item/object tooltips, nameplate and target icons.
-6. Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).
+5. ~~Unit/item/object tooltips, nameplate and target icons.~~ Done (party lines wait for phase 11).
+6. ~~Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).~~ Done.
 7. Books: list (ours), detection, pins, Books tab, route (no trail), cards, minimap button.
 8. The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).
 9. Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.
@@ -156,3 +156,17 @@ See the log. Current phase is the first unchecked one.
   any item, so Questie's Pet Food vendors are empty on Forever too: left out rather than guessed. Meeting stones and
   moonwells come from object names; mailboxes from Questie's curated list (55, not the 149 objects named Mailbox).
   Faction: NPCs by friendlyTo, objects by factionTemplate (an enemy-group mask: 2 Alliance, 4 Horde).
+- (New session: the reference zips from the first build session's scratchpad are gone with its container. The data
+  is already generated and committed; re-running the converter, or checking behaviour against Questie, OpenMap or
+  Books on map, needs the owner to send them again. OpenMap is public on GitHub.)
+- Phase 5 (tooltips, nameplates) done: `Quests/Needs.lua` (which NPCs, objects and items the log still needs, indexed
+  once per log change; BF_NEEDS_CHANGED), `Quests/Tooltips.lua` (TooltipDataProcessor post-calls for Unit, Item,
+  Spell, Object; NPC: quest title, the log's own objective line, drop chance; the giver's "!" quests and "?" turn-ins
+  (`tooltips.npcQuests`); IDs; `BF.Tooltips:Register(kind, fn)` for other files' lines), `Quests/Nameplates.lua`
+  (objective icon at the nameplate's left and on the target frame; stands down in combat and in instances, as Questie
+  does on Forever). Books: "Library book - collected / missing (<set>)" on its item tooltip (`Books:SetName`).
+  Object tooltips: a world object's tooltip may carry no GUID, so its first line is matched by name against only the
+  objects the player's quests touch (log objectives, turn-in objects, quest-giving objects on the current map).
+  **Not verified in game**: whether Forever's Object tooltip data has a GUID; the target icon's anchor (CENTER on
+  TargetFrame's RIGHT, offset by the settings) and the nameplate anchor (CENTER on the plate's LEFT) are guesses
+  from Questie's defaults; object names match English only (no l10n data converted yet).
