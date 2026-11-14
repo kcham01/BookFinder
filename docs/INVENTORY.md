@@ -52,6 +52,16 @@
   element with children a submenu, a boolean `IsSelected` a tick box, one with a responder a button, the rest
   titles; each click is the element's own `Pick`. Nothing readable to click: the game's menu opens
   (`button:OpenMenu()`). The recorder notes the overlay buttons (`inspect.overlays`) and whether the cover is on.
+- **Where settings live** (`merge/Settings.lua`, 2.1.0): every switch in the map's menu (OpenMap's panel), the
+  settings window only for sliders, choices and Questie's options. OpenMap's options table hides the keys the panel
+  holds (`Init.lua`, `IN_MENU`) and its changelog; the panel drops What's new and Report a problem in BookFinder.
+  `BookFinder.TownsfolkRows()` gives the panel Questie's townsfolk (`QuestieMenu.BookFinderTownsfolk`, in Questie's
+  order and filter) and two chooser rows (Questie's trainer and vendor menus); `Townsfolk.lua` keeps only OpenMap's
+  rare mobs. `BookFinder.FilterQuestieOptions(tab, data)` (called from Questie's options engine) sets
+  `visible = false` on `QUESTIE_HIDDEN`'s keys. Books' and BookFinder's switches go in through
+  `OpenMapAPI.RegisterMenuToggle` (section Library books; the minimap button in More, section BookFinder); Books'
+  own route switch is left out. `BookFinder.OpenMapMenu()` opens the map with its menu. Once
+  (`BookFinderDB.settingsMoved21`), OpenMap's townsfolk choices become Questie's.
 - **Gone**: `merge/Journeys.lua`, `merge/MapMenu.lua`, `src/ShortestPathForever`, `src/ForeverCore`,
   `tools/routing`, the journey recorder (`BookFinderDB.journeys`, `attempts`), `/bookfinder near`.
 - **Still to do**: every setting into OpenMap's panel (the owner likes it), with duplicates removed; the settings
