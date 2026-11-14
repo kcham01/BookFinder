@@ -213,3 +213,6 @@ See the log. Current phase is the first unchecked one.
   ":") and adds only "Cursor: x, y" to its right in its font; without it, BookFinder's line says both (bottom centre).
   The gear beside "Quests: n/40" is a second game menu: "Show Quest Objectives" (the quest log's objective lines);
   untouched, question to the owner. Continents in the map's picker: Eastern Kingdoms, Kalimdor, Zephras Isle (phase 12).
+- The quest log's gear menu ("Show Quest Objectives") ditched at the owner's word: `ShowMenu:FindQuestLogGear()`
+  (QuestMapFrame.QuestsFrame.SettingsDropdown, QuestScrollFrame.SettingsDropdown, else a menu button its parent keeps
+  under a key with "Settings" in it) is hidden and kept hidden. **Not verified in game**: the gear's name on Forever.

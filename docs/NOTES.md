@@ -153,8 +153,9 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   "Quests: 13/40" opens a second game menu: "Show Quest Objectives" (ticked; the objective lines under each quest in
   the quest log). Continents: Eastern Kingdoms, Kalimdor, Zephras Isle; Kalimdor's zones include Mount Hyjal and
   Shen'dralas.
+- **The quest log's gear menu: "we can ditch it too."** Gone; its one switch stays as it was (ticked), so the quest
+  log keeps its objective lines.
 
 ## Questions (only what I can't tell from your notes)
 
-- **The quest log's gear menu** ("Show Quest Objectives"): leave it as the game's, or take it away like the Show menu's
-  entries?
+- None open.

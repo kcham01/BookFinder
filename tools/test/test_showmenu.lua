@@ -116,4 +116,21 @@ return {
 		local l = labels(root.rows)
 		equal(l[1], "Repair", "the game's rows emptied, ours in")
 	end,
+
+	["the quest log's gear menu is gone, and stays gone"] = function(BF)
+		setup()
+		local gear = QuestMapFrame.QuestsFrame.SettingsDropdown
+		expect(not gear.shown, "hidden")
+		gear:Show()
+		expect(not gear.shown, "stays hidden")
+		expect(QuestMapFrame.QuestsFrame.SearchBox.shown, "the search box stays")
+	end,
+
+	["the gear found without its usual name"] = function(BF)
+		local q = QuestMapFrame.QuestsFrame
+		q.FilterSettings, q.SettingsDropdown = q.SettingsDropdown, nil
+		setup()
+		expect(not q.FilterSettings.shown, "found by its parent's key")
+		expect(q.SearchBox.shown, "the search box stays")
+	end,
 }

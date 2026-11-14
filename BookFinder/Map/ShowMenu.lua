@@ -223,6 +223,52 @@ local function hideReset(button)
 	end
 end
 
+-- The quest log's gear menu --------------------------------------------------------------------------------------
+--
+-- Beside "Quests: n/40" the game has a second menu, a gear with one entry, "Show Quest Objectives". The owner: "we can
+-- ditch it too". The gear is hidden and kept hidden; its one switch stays as it is (ticked: the quest log keeps its
+-- objective lines).
+--
+-- Found by the names the client gives it, else among the quest log's menu buttons as the one its parent keeps under a
+-- name with "Settings" in it (the Show button is the map's, not the quest log's, so it is never this one).
+
+local function namedGear()
+	local q = QuestMapFrame
+	local candidates = {
+		q and q.QuestsFrame and q.QuestsFrame.SettingsDropdown,
+		QuestScrollFrame and QuestScrollFrame.SettingsDropdown,
+		q and q.SettingsDropdown,
+	}
+	for _, f in pairs(candidates) do
+		if type(f) == "table" and f.Hide then return f end
+	end
+end
+
+local function searchGear(frame, depth)
+	if depth > 5 or type(frame) ~= "table" or not frame.GetChildren then return nil end
+	for _, child in ipairs({ frame:GetChildren() }) do
+		if type(child) == "table" and child.SetupMenu then
+			for key, value in pairs(frame) do
+				if value == child and type(key) == "string" and key:find("Settings") then return child end
+			end
+		end
+		local found = searchGear(child, depth + 1)
+		if found then return found end
+	end
+end
+
+function ShowMenu:FindQuestLogGear()
+	return namedGear() or (QuestMapFrame and searchGear(QuestMapFrame, 0))
+end
+
+local function ditch(frame)
+	frame:Hide()
+	if frame.HookScript and not frame.bookFinderHidden then
+		frame.bookFinderHidden = true
+		frame:HookScript("OnShow", function(self) self:Hide() end)
+	end
+end
+
 BF:At("login", function()
 	local button = ShowMenu:FindButton()
 	if button then
@@ -235,5 +281,10 @@ BF:At("login", function()
 		hideReset(button)
 	elseif Menu and Menu.ModifyMenu then
 		Menu.ModifyMenu(TAG, function(_, root) ShowMenu:Fill(root) end)
+	end
+	local gear = ShowMenu:FindQuestLogGear()
+	if gear then
+		ShowMenu.questLogGear = gear
+		ditch(gear)
 	end
 end, 75)
