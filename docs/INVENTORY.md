@@ -44,6 +44,11 @@
   Cancel; a second right-click on the same owner closes it). Without that library whole, the game's menu draws it.
   Used by the minimap button and compartment menu, the books tab's gear and a book's right-click. The minimap menu's
   "Townsfolk and quest icons" opens Questie's own map menu (`QuestieMenu:Show`).
+- **2.2.2: saved paths** (`merge/Namespaces.lua`, at BookFinder's ADDON_LOADED, before any part's handler): every
+  string in QuestieConfig, QuestieConfigCharacter, OpenMapDB, OpenMapCharDB, BooksOnMapForeverDB and
+  BooksOnMapForeverGlobal that starts `Interface\AddOns\<part>\` (any case or slash) becomes
+  `Interface\AddOns\BookFinder\<part>\`. Questie stores chosen icons that way (`profile.ICON_SLAY` …); with the
+  standalone folder gone each drew as a green square.
 - **2.2.1: the Show dropdown holds what the map shows.** The Show button is the overlay whose `OnLoad` is
   `WorldMapTrackingOptionsButtonMixin.OnLoad`, else whose built menu carries the tag `MENU_WORLD_MAP_TRACKING`
   (2.0.2 to 2.2.0 took the first dropdown overlay with a generator, which can be the floor picker). After the game's
