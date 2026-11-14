@@ -26,37 +26,83 @@ local function playerOn(map)
 end
 
 -- World map -----------------------------------------------------------------------------------------------------
+--
+-- WoW: Forever's map already shows the player's position at its bottom left ("Player: 67.7, 57.0", seen in game with
+-- no addons). BookFinder does not repeat it: it adds "Cursor: x, y" right after the game's line, in the game's font.
+-- Where the game's line is not found (another client, another language), BookFinder's line says both, at the bottom.
 
 local mapText
+local gameLine -- the game's own "Player: x, y" font string, once found
 
-local function mapLine()
-	local map = WorldMapFrame:GetMapID()
-	local parts = {}
-	local px, py = playerOn(map)
-	if px then parts[#parts + 1] = L["Player"] .. L[": "] .. "|cffffffff" .. Coords:Format(px, py) .. "|r" end
+local function cursorPart()
 	local scroll = WorldMapFrame.ScrollContainer
 	if scroll and scroll.GetNormalizedCursorPosition and scroll:IsMouseOver() then
 		local cx, cy = scroll:GetNormalizedCursorPosition()
 		if cx and cx >= 0 and cx <= 1 and cy >= 0 and cy <= 1 then
-			parts[#parts + 1] = L["Cursor"] .. L[": "] .. "|cffffffff" .. Coords:Format(cx, cy) .. "|r"
+			return L["Cursor"] .. L[": "] .. Coords:Format(cx, cy)
 		end
 	end
+end
+
+local function mapLine()
+	local cursor = cursorPart()
+	if gameLine then return cursor or "" end
+	local parts = {}
+	local px, py = playerOn(WorldMapFrame:GetMapID())
+	if px then parts[#parts + 1] = L["Player"] .. L[": "] .. Coords:Format(px, py) end
+	if cursor then parts[#parts + 1] = cursor end
 	return table.concat(parts, "     ")
 end
 Coords.MapLine = mapLine
+
+-- The game's player line: a font string inside the map whose text starts "Player:" (the client's own word for it).
+local function findGameLine(frame, depth)
+	if depth > 6 or not frame then return nil end
+	if frame.GetRegions then
+		for _, region in ipairs({ frame:GetRegions() }) do
+			if region ~= mapText and region.GetObjectType and region:GetObjectType() == "FontString" then
+				local text = region:GetText()
+				if type(text) == "string" and not (issecretvalue and issecretvalue(text))
+					and text:find("^" .. (PLAYER or "Player") .. ":") then
+					return region
+				end
+			end
+		end
+	end
+	if frame.GetChildren then
+		for _, child in ipairs({ frame:GetChildren() }) do
+			local found = findGameLine(child, depth + 1)
+			if found then return found end
+		end
+	end
+end
+
+local function useGameLine(found)
+	gameLine = found
+	mapText:ClearAllPoints()
+	mapText:SetPoint("LEFT", found, "RIGHT", 16, 0)
+	if found.GetFontObject and found:GetFontObject() then mapText:SetFontObject(found:GetFontObject()) end
+	if found.GetTextColor then mapText:SetTextColor(found:GetTextColor()) end
+end
 
 local function buildMap()
 	local parent = WorldMapFrame.ScrollContainer or WorldMapFrame
 	local holder = CreateFrame("Frame", nil, parent)
 	holder:SetAllPoints(parent)
 	holder:SetFrameLevel(parent:GetFrameLevel() + 20)
-	mapText = holder:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	mapText = holder:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	mapText:SetPoint("BOTTOM", holder, "BOTTOM", 0, 8)
-	local elapsed = 0
+	local elapsed, sinceSearch = 0, 1
 	holder:SetScript("OnUpdate", function(_, e)
-		elapsed = elapsed + e
+		elapsed, sinceSearch = elapsed + e, sinceSearch + e
 		if elapsed < 0.1 then return end
 		elapsed = 0
+		-- Look for the game's line about once a second until it is there (it fills in once the map has a position).
+		if not gameLine and sinceSearch >= 1 then
+			sinceSearch = 0
+			local found = findGameLine(WorldMapFrame, 0)
+			if found then useGameLine(found) end
+		end
 		mapText:SetText(BF:Get("coords.map") and mapLine() or "")
 	end)
 end

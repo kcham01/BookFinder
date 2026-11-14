@@ -147,7 +147,14 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   its own (heading "Show:", then its entries), so those five have no switch left and stay off. The red cross on the
   button, the coordinates in the title bar and the "Player" box at the map's foot may be OpenMap's: to check against
   the photos of the bare map.
+- **The bare game's map (your photos, no addons)**: the window is "Map & Quest Log". The Show button and its red cross
+  are the game's own (the cross puts the game's filters back: it stays hidden). The game shows "Player: 67.7, 57.0" at
+  the map's bottom left, so BookFinder adds only "Cursor: x, y" beside it, in the same font. The gear by
+  "Quests: 13/40" opens a second game menu: "Show Quest Objectives" (ticked; the objective lines under each quest in
+  the quest log). Continents: Eastern Kingdoms, Kalimdor, Zephras Isle; Kalimdor's zones include Mount Hyjal and
+  Shen'dralas.
 
 ## Questions (only what I can't tell from your notes)
 
-- None open.
+- **The quest log's gear menu** ("Show Quest Objectives"): leave it as the game's, or take it away like the Show menu's
+  entries?

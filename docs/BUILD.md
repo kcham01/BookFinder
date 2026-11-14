@@ -207,3 +207,9 @@ See the log. Current phase is the first unchecked one.
   The same screenshot shows with OpenMap's coordinates in the title bar ("Cursor: x X, y Y |
   Player: ...") and a "Player 45.0, 49.7" box at the map's bottom right: check in game that BookFinder's coordinate
   line (bottom centre of the scroll area) does not double the game's own, if that box is the game's.
+- The owner's photos of the bare game's map (no addons): "Map & Quest Log" window; the Show button's red cross is the
+  game's (filters changed from their defaults: kept hidden). The game shows "Player: x, y" at the map's bottom left in
+  white small text, so `Map/Coords.lua` now finds that font string (text starting with the client's PLAYER word and
+  ":") and adds only "Cursor: x, y" to its right in its font; without it, BookFinder's line says both (bottom centre).
+  The gear beside "Quests: n/40" is a second game menu: "Show Quest Objectives" (the quest log's objective lines);
+  untouched, question to the owner. Continents in the map's picker: Eastern Kingdoms, Kalimdor, Zephras Isle (phase 12).

@@ -218,7 +218,16 @@ function Region:SetParent(p) self.parent = p end
 function Region:GetName() return self.name end
 function Region:GetObjectType() return self.kind end
 function Region:IsObjectType(t) return self.kind == t end
-function Region:GetChildren() return unpack(self.children) end
+function Region:GetChildren()
+	local list = {}
+	for _, c in ipairs(self.children) do if c.kind ~= "Texture" and c.kind ~= "FontString" and c.kind ~= "Line" then list[#list + 1] = c end end
+	return unpack(list)
+end
+function Region:GetRegions()
+	local list = {}
+	for _, c in ipairs(self.children) do if c.kind == "Texture" or c.kind == "FontString" or c.kind == "Line" then list[#list + 1] = c end end
+	return unpack(list)
+end
 function Region:EnableMouse(v) self.mouse = v end
 function Region:IsMouseOver() return false end
 function Region:GetEffectiveScale() return 1 end
@@ -683,3 +692,5 @@ function World.OpenShowButton()
 	WorldMapFrame.overlayFrames[2].generator(WorldMapFrame.overlayFrames[2], root)
 	return root
 end
+
+PLAYER = "Player"
