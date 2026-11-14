@@ -35,6 +35,11 @@ local function mapType(map)
 	return info and info.mapType
 end
 
+local function isWorldOrWider(map)
+	local t = mapType(map)
+	return t ~= nil and Enum and Enum.UIMapType and t <= Enum.UIMapType.World
+end
+
 local function isContinentOrWider(map)
 	local t = mapType(map)
 	return t ~= nil and Enum and Enum.UIMapType and t <= Enum.UIMapType.Continent
@@ -63,8 +68,19 @@ local LEVEL_OBJECTIVES = "PIN_FRAME_LEVEL_BOOKFINDER_OBJECTIVES"
 local LEVEL_GIVERS = "PIN_FRAME_LEVEL_BOOKFINDER_GIVERS"
 local levelsReady = false
 
+local function buildPin(pin)
+	pin:SetSize(16, 16)
+	pin.Glow = pin:CreateTexture(nil, "BACKGROUND")
+	pin.Glow:SetPoint("CENTER")
+	pin.Glow:SetAlpha(0.55)
+	pin.Icon = pin:CreateTexture(nil, "ARTWORK")
+	pin.Icon:SetAllPoints()
+	BF.PinPool:Wire(pin)
+end
+
 function Provider:OnAdded(map)
 	MapCanvasDataProviderMixin.OnAdded(self, map)
+	BF.PinPool:Register(map, TEMPLATE, BookFinderMapPinMixin, buildPin)
 	-- Our pins' own layers in the map's stack: objectives above the map's highlight, givers above them.
 	local manager = map.GetPinFrameLevelsManager and map:GetPinFrameLevelsManager()
 	if manager and manager.InsertFrameLevelAbove then
@@ -83,6 +99,9 @@ function Provider:RefreshAllData()
 	if not BF:Reached("login") or not BF:Get("quests.map") then return end
 	local map = self:GetMap():GetMapID()
 	if not map then return end
+	-- Never on the world map itself: it is no scaled picture of either continent, so world positions don't place on
+	-- it (pins would land in the sea). Continents and zones only, as Questie.
+	if isWorldOrWider(map) then return end
 	if BF:Get("icons.hideOnContinents") and isContinentOrWider(map) then return end
 	local hideUnexplored = BF:Get("icons.hideUnexplored")
 	local limit = BF:Get("icons.limitEnabled") and BF:Get("icons.limit") or math.huge
@@ -162,9 +181,10 @@ function BookFinderMapPinMixin:OnMouseLeave()
 	BF.PinTooltip:Hide()
 end
 
-function BookFinderMapPinMixin:OnMouseUp(button)
+function BookFinderMapPinMixin:OnMouseClickAction(button)
 	BF.PinTooltip:Click(self.pin, button, self.sourceMap, self)
 end
+BookFinderMapPinMixin.OnMouseUp = BookFinderMapPinMixin.OnMouseClickAction
 
 -- Keeping it current ----------------------------------------------------------------------------------------------
 
