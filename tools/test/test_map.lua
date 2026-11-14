@@ -94,4 +94,26 @@ return {
 		for _, child in ipairs(Minimap.children) do if child.shown and child.pin then after = after + 1 end end
 		expect(after < shown, ("fewer pins far away (%d -> %d)"):format(shown, after))
 	end,
+
+	["minimap: a rotating minimap turns with the player"] = function(BF)
+		World.maps = { [1429] = { size = 3000, mapID = 1429, name = "Elwynn Forest", mapType = 3 } }
+		World.player.map, World.player.x, World.player.y = 1429, 0.5, 0.5
+		Login()
+		-- One mark 60 yards north of the player.
+		BF.Marks.byMap = { [1429] = { k = { map = 1429, x = 0.5, y = 0.48, roles = { { role = "available", quest = 33 } } } } }
+		BF.Marks.version = BF.Marks.version + 1
+		Minimap.width, Minimap.height, Minimap.shown = 140, 140, true
+		local function placed()
+			BF.MinimapPins.Update()
+			for _, child in ipairs(Minimap.children) do
+				if child.shown and child.pin then return child.points[#child.points][4], child.points[#child.points][5] end
+			end
+		end
+		local x, y = placed()
+		expect(math.abs(x) < 0.01 and y > 0, ("north is up when not rotating (%s, %s)"):format(tostring(x), tostring(y)))
+		World.cvars.rotateMinimap = "1"
+		World.player.facing = math.pi / 2 -- facing west
+		x, y = placed()
+		expect(x > 0 and math.abs(y) < 0.01, ("facing west, north is to the right (%s, %s)"):format(tostring(x), tostring(y)))
+	end,
 }

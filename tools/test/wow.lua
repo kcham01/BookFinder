@@ -314,15 +314,16 @@ C_Map = strict("C_Map", {
 		return { x = World.player.x, y = World.player.y, GetXY = function(p) return p.x, p.y end }
 	end,
 	GetMapInfo = function(id) return World.maps and World.maps[id] or { mapID = id, name = "Map " .. id, mapType = 3, parentMapID = 1415 } end,
+	-- As the client: a world vector's x grows northwards and y westwards; a map's x grows east, its y south.
 	GetWorldPosFromMapPos = function(map, pos)
 		local m = World.maps and World.maps[map]
 		local s = m and m.size or 1000
-		return 0, { x = pos.x * s, y = pos.y * s, GetXY = function(p) return p.x, p.y end }
+		return 0, { x = (1 - pos.y) * s, y = (1 - pos.x) * s, GetXY = function(p) return p.x, p.y end }
 	end,
 	GetMapPosFromWorldPos = function(continent, pos, map)
 		local m = World.maps and World.maps[map]
 		local s = m and m.size or 1000
-		return map, { x = pos.x / s, y = pos.y / s, GetXY = function(p) return p.x, p.y end }
+		return map, { x = 1 - pos.y / s, y = 1 - pos.x / s, GetXY = function(p) return p.x, p.y end }
 	end,
 	GetMapChildrenInfo = function() return {} end,
 	CanSetUserWaypointOnMap = function() return true end,
@@ -540,3 +541,5 @@ GetMaxPlayerLevel = function() return 60 end
 C_UnitAuras = strict("C_UnitAuras", { GetAuraDataByIndex = function() return nil end })
 YES, NO = "Yes", "No"
 CreateAtlasMarkup = function(a) return "|A:" .. a .. "|a" end
+issecretvalue = function() return false end
+issecrettable = function() return false end
