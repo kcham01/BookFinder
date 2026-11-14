@@ -1,0 +1,24 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+	<!-- BookFinder's world map pin: an icon with a soft glow behind it. Its behaviour is BookFinderMapPinMixin
+	     (Map/WorldMap.lua); the map's canvas creates these through AcquirePin. -->
+	<Frame name="BookFinderMapPinTemplate" mixin="BookFinderMapPinMixin" virtual="true" enableMouse="true">
+		<Size x="16" y="16"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Glow" alpha="0.55">
+					<Anchors><Anchor point="CENTER"/></Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Icon" setAllPoints="true"/>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEnter method="OnMouseEnter"/>
+			<OnLeave method="OnMouseLeave"/>
+			<OnMouseUp method="OnMouseUp"/>
+		</Scripts>
+	</Frame>
+</Ui>

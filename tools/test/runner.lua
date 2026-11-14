@@ -10,7 +10,7 @@ local function readToc()
 	local files = {}
 	for line in io.lines("BookFinder/BookFinder.toc") do
 		line = line:gsub("\r", "")
-		if line ~= "" and not line:match("^#") then
+		if line ~= "" and not line:match("^#") and not line:lower():match("%.xml$") then
 			files[#files + 1] = "BookFinder/" .. line:gsub("\\", "/")
 		end
 	end

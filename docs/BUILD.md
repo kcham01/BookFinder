@@ -93,7 +93,7 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 ## Plan (phases; each ends with a commit and a log line below)
 
 1. ~~Data converter + generated data files + credits.~~ Done.
-2. Core: namespace, events, saved variables, settings store, slash command, offline harness.
+2. ~~Core: namespace, events, saved variables, settings store, offline harness.~~ Done (slash commands: phase 13).
 3. Quest engine: player's log and progress, completed quests, availability rules, objective spawns.
 4. World map + minimap pins (quest givers, turn-ins, objectives, townsfolk), icon tooltips, Shift-click hide.
 5. Unit/item/object tooltips, nameplate and target icons.
@@ -129,3 +129,16 @@ See the log. Current phase is the first unchecked one.
   Gotchas: plain Lua 5.1's xpcall passes no arguments, the client's does (wow.lua emulates); areas of instances
   often DO have a uiMap (their own dungeon map, e.g. 209 Shadowfang Keep -> 310), so EachSpawn gives both the
   instance-map point and the entrance points.
+- Phase 3 (quest engine) done: `Quests/Options.lua` (every quest setting; Questie's with no counterpart listed at its
+  foot), `Events.lua` (holidays, Darkmoon by rule), `Log.lua` (modern C_QuestLog first; zone-change false zeroes
+  ignored for 3 s), `Rules.lua` (Blocker() gives the reason; IsShown() adds the player's display settings),
+  `Objectives.lua` (log lines paired with data groups by type, in the data's order with its hints; item sources:
+  drops with rates, objects, vendors, containers one level), `Marks.lua` (pins per map: one per NPC spot whatever its
+  roles; objective packs merged; instance contents at the entrance; available layer built in slices: first full scan
+  ~110 ms in lua5.1, then ~10 ms), `Reward.lua` (the game's XP rule and buffs; money from the client).
+- Phase 4 (pins) mostly done: `Map/Icons.lua` (game art only: atlas only if C_Texture.GetAtlasInfo knows it, else a
+  file certain to exist), `Look.lua` (which role leads a pin), `Pins.xml` + `WorldMap.lua` (a MapCanvas data provider;
+  shows the map's own marks plus its children's), `Minimap.lua` (world-grid index, the game's minimap yard table,
+  rotation), `Quests/PinTooltip.lua` (Questie's layout; Shift for more; clicks), `Map/Waypoint.lua` (the game's pin).
+  Still to do in the map: patrol paths, townsfolk (with the Show dropdown, phase 8), coordinates, party objectives.
+  Decision: one pin per NPC spot carries all its roles; Shift-click offers to hide every quest offered there.
