@@ -198,11 +198,13 @@ function PinTooltip:Show(owner, pins, minimap)
 	end
 	tip:Show()
 	self.owner, self.pins, self.minimap = owner, pins, minimap
+	BF:Send("BF_PIN_ENTER", pins) -- patrol paths highlight the hovered NPCs'
 end
 
 function PinTooltip:Hide()
 	if tip:GetOwner() == self.owner then tip:Hide() end
 	self.owner = nil
+	BF:Send("BF_PIN_LEAVE")
 end
 
 -- Holding or letting go of Shift while hovering changes the tooltip at once.

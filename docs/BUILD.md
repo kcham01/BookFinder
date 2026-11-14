@@ -94,12 +94,13 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 
 1. ~~Data converter + generated data files + credits.~~ Done.
 2. ~~Core: namespace, events, saved variables, settings store, offline harness.~~ Done (slash commands: phase 13).
-3. Quest engine: player's log and progress, completed quests, availability rules, objective spawns.
-4. World map + minimap pins (quest givers, turn-ins, objectives, townsfolk), icon tooltips, Shift-click hide.
-5. Unit/item/object tooltips, nameplate and target icons.
-6. Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).
+3. ~~Quest engine: player's log and progress, completed quests, availability rules, objective spawns.~~ Done.
+4. ~~World map + minimap pins (quest givers, turn-ins, objectives, townsfolk), icon tooltips, Shift-click hide.~~ Done
+   (party members' objectives wait for phase 11).
+5. ~~Unit/item/object tooltips, nameplate and target icons.~~ Done (party lines wait for phase 11).
+6. ~~Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).~~ Done.
 7. Books: list (ours), detection, pins, Books tab, route (no trail), cards, minimap button.
-8. The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).
+8. ~~The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).~~ Done (its OpenMap entries appear as phase 12 builds them).
 9. Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.
 10. Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).
 11. Comms: questie + QuestieV1, BooksOnMapFE, OpenMapLoc, OpenMap pins.
@@ -156,3 +157,38 @@ See the log. Current phase is the first unchecked one.
   any item, so Questie's Pet Food vendors are empty on Forever too: left out rather than guessed. Meeting stones and
   moonwells come from object names; mailboxes from Questie's curated list (55, not the 149 objects named Mailbox).
   Faction: NPCs by friendlyTo, objects by factionTemplate (an enemy-group mask: 2 Alliance, 4 Horde).
+- (New session: the reference zips from the first build session's scratchpad are gone with its container. The data
+  is already generated and committed; re-running the converter, or checking behaviour against Questie, OpenMap or
+  Books on map, needs the owner to send them again. OpenMap is public on GitHub.)
+- Phase 5 (tooltips, nameplates) done: `Quests/Needs.lua` (which NPCs, objects and items the log still needs, indexed
+  once per log change; BF_NEEDS_CHANGED), `Quests/Tooltips.lua` (TooltipDataProcessor post-calls for Unit, Item,
+  Spell, Object; NPC: quest title, the log's own objective line, drop chance; the giver's "!" quests and "?" turn-ins
+  (`tooltips.npcQuests`); IDs; `BF.Tooltips:Register(kind, fn)` for other files' lines), `Quests/Nameplates.lua`
+  (objective icon at the nameplate's left and on the target frame; stands down in combat and in instances, as Questie
+  does on Forever). Books: "Library book - collected / missing (<set>)" on its item tooltip (`Books:SetName`).
+  Object tooltips: a world object's tooltip may carry no GUID, so its first line is matched by name against only the
+  objects the player's quests touch (log objectives, turn-in objects, quest-giving objects on the current map).
+  **Not verified in game**: whether Forever's Object tooltip data has a GUID; the target icon's anchor (CENTER on
+  TargetFrame's RIGHT, offset by the settings) and the nameplate anchor (CENTER on the plate's LEFT) are guesses
+  from Questie's defaults; object names match English only (no l10n data converted yet).
+- Phase 4 finished: `Map/Paths.lua` (patrol paths of every NPC the map marks: on the world map one canvas-sized pin
+  `BookFinderPathPinTemplate` holds Line regions in canvas units, its own frame level under the objectives; on the
+  minimap each segment is cut to the circle or square; hostile colour by friendlyTo; hovering pins sends
+  BF_PIN_ENTER(pins) / BF_PIN_LEAVE from PinTooltip and the paths of every NPC at that spot highlight).
+  `Map/Minimap.lua` now keeps its geometry in `MinimapPins.view` and calls `MinimapPins:AfterUpdate(fn)` layers;
+  `MinimapPins:Place(view, north, west)` turns a world offset into minimap pixels. `Map/Coords.lua`: "Player: x, y"
+  and "Cursor: x, y" at the bottom of the world map's scroll area, the player's on the minimap (off by default),
+  `coords.precision` decimals. **Not verified in game**: where the coordinate lines sit against Forever's map border;
+  path line thickness when zoomed (lines live in canvas units, so they thicken with zoom).
+- Phase 8 (Show dropdown) done: `Map/ShowMenu.lua`. BookFinder's rows go into the game's own map filter menu below
+  its entries, through `Menu.ModifyMenu("MENU_WORLD_MAP_TRACKING", fn)` (no hunting for the button: 2.2.x covered the
+  floor picker by mistake). `ShowMenu.entries` is the owner's merged list in one order: Questie's townsfolk, OpenMap's
+  extra townsfolk (stable masters, rare mobs), Available / Trivial / Objective, Profession Trainers ▸ (Known
+  Professions first), Vendor ▸, OpenMap's places, then the one section, Dungeons. **An entry shows only once its
+  setting is defined**, so the OpenMap entries (`map.boats`, `map.dungeons`, `map.friends`...) appear when phase 12 and
+  phase 11 define those keys: use exactly those keys, and add their icon kinds to `Map/Icons.lua` (missing kinds draw
+  no icon). Tick boxes keep the menu open (MenuResponse.Refresh); each row's icon is attached at its right
+  (AddInitializer + AttachTexture). Trivial Quest maps to `quests.lowLevel` ("all" / "hide"). "Questie icons" (OpenMap's
+  switch for Questie's icons on its map) is not an entry: in BookFinder those are the quest entries themselves.
+  **Not verified in game**: that Forever's map filter menu carries that tag; how the row width makes room for the icon.
+  Still open with the owner: the game's own "Low-Level Quests" entry next to Trivial Quest (needs a look in game).

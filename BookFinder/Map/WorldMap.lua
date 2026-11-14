@@ -29,6 +29,7 @@ local function sourcesOf(map)
 	sources[map] = list
 	return list
 end
+WorldMap.SourcesOf = sourcesOf
 
 local function mapType(map)
 	local info = C_Map.GetMapInfo(map)
