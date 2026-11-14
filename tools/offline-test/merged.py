@@ -168,7 +168,22 @@ INTEGRATION = r"""function(root)
     end
     local booksRows = 0
     for id in pairs(ids) do if id:match("^ext%.BookFinder%.") or id:match("^ext%.Books") then booksRows = booksRows + 1 end end
-    want(booksRows >= 1, "OpenMap's panel has no Books switches")
+    want(booksRows >= 5, "OpenMap's panel has " .. booksRows .. " Books and BookFinder switches (expected the books' five and the minimap button)")
+    want(not ids["ext.BookFinder.route"], "the books route is a switch in the map's menu too")
+    -- every switch in one place: the World map page leaves out what the map's menu holds, and Questie's dead options go
+    local ACR = LibStub("AceConfigRegistry-3.0")
+    local okO, opts = pcall(ACR.GetOptionsTable, ACR, "OpenMap", "dialog", "AceGUI-3.0")
+    local shownTwice = {}
+    if okO and opts then
+        for key, o in pairs(opts.args or {}) do
+            if ids[key] and not o.hidden then shownTwice[#shownTwice + 1] = key end
+        end
+    end
+    want(okO and opts and #shownTwice == 0, "switches both in the map's menu and on the World map page: " .. table.concat(shownTwice, ", "))
+    local fake = { items = { group = { type = "container", items = { lockTracker = {}, showQuestLevel = {} } } } }
+    BookFinder.FilterQuestieOptions("tracker", fake)
+    want(fake.items.group.items.lockTracker.visible == false and fake.items.group.items.showQuestLevel.visible == nil,
+        "Questie's dead tracker options aren't left out (or a live one is)")
     local r = ids.icons
     if r then local was = r[2]() and true or false r[3](not was) want((wmod.db.icons and true or false) == not was, "the dungeons switch didn't change OpenMap's setting") r[3](was) end
     -- One settings window: one category in the AddOns list, BookFinder, holding every part's pages
@@ -184,8 +199,8 @@ INTEGRATION = r"""function(root)
     local count = 0
     for _ in pairs(pages) do count = count + 1 end
     want(not pages["Journeys"] and not pages["Map icons"] and not pages["Interface"], "settings: Shortest Path's pages are still there")
-    want(count <= 4, "settings: BookFinder's window has " .. count .. " pages (expected at most 4)")
-    for _, page in ipairs({ "World map", "Library books" }) do
+    want(count <= 3 and not pages["Library books"], "settings: BookFinder's window has " .. count .. " pages (expected World map and Quests)")
+    for _, page in ipairs({ "World map" }) do
         want(pages[page], "settings: no " .. page .. " page in BookFinder's window")
     end
     want(BookFinder.OpenSettings("map") and BookFinder.OpenSettings("books") and BookFinder.OpenSettings(), "settings: a page can't be opened")
@@ -249,7 +264,7 @@ INTEGRATION = r"""function(root)
     want(wm and wm.db and wm.db.boats ~= false and wm.db.flight ~= false, "OpenMap's docks or flight masters are still off")
     local kinds = {}
     for _, k in ipairs(wm and wm.TOWNSFOLK or {}) do kinds[k.key] = true end
-    want(kinds.vendor and kinds.innkeeper and kinds.mailbox and kinds.spirit and kinds.rare, "OpenMap lost some of its townsfolk")
+    want(kinds.rare and not kinds.vendor and not kinds.mailbox, "OpenMap still draws townsfolk Questie draws (or lost its rare mobs)")
     want(rawget(_G, "ShortestPathForever") == nil and rawget(_G, "ForeverCore") == nil, "Shortest Path or ForeverCore is still loaded")
 
     -- One search: the panel's box finds books, places and Questie's quests, NPCs and items

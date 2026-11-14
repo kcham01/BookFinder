@@ -37,6 +37,13 @@ local KINDS = {
 	{ key = "rare", name = ns.L["Rare mobs"], rare = true, zoom = 3, hostile = true,
 		look = { atlas = "VignetteKillElite", texture = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8", size = 18 } },
 }
+-- BookFinder: Questie draws the townsfolk (map and minimap, every kind of trainer and vendor), and its switches are in
+-- this panel's Townsfolk section (Panel.lua); OpenMap keeps only what Questie doesn't draw, the rare mobs
+if BookFinder and BookFinder.Active and BookFinder.Active("Questie") then
+	for i = #KINDS, 1, -1 do
+		if not KINDS[i].rare then table.remove(KINDS, i) end
+	end
+end
 mod.TOWNSFOLK = KINDS
 
 local d = mod.defaults

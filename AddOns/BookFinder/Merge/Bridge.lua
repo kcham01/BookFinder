@@ -23,33 +23,26 @@ local function bookList()
 	if BOOKS.ToggleOptions then BOOKS.ToggleOptions() return true end
 	if SlashCmdList.BOOKSONMAP then SlashCmdList.BOOKSONMAP("") return true end
 end
+-- The minimap button's menu: where to go. Every switch is in the map's menu, one entry here.
 local function menu(_, rootMenu)
 	rootMenu:CreateTitle("BookFinder")
-	rootMenu:CreateButton(SETTINGS or "Settings", function() public.OpenSettings() end)
 	rootMenu:CreateButton(WORLD_MAP or "World Map", openMap)
+	if public.Active("Questie") then
+		rootMenu:CreateButton(QUEST_LOG or "Quest Log", function() if public.OpenQuestLog then public.OpenQuestLog() end end)
+	end
 	if public.Active("Books") then
-		rootMenu:CreateDivider()
 		rootMenu:CreateButton(BL("Library books"), bookList)
-		rootMenu:CreateButton((BL("Nearest:"):gsub("[:：]%s*$", "")), function() if BOOKS.GoToNearest then BOOKS.GoToNearest() end end)
-		rootMenu:CreateCheckbox(BL("Optimized route"), function() return BOOKS.db and BOOKS.db.routeOn and true or false end,
-			function() if BOOKS.ToggleRoute then BOOKS.ToggleRoute() end end)
+		rootMenu:CreateButton("Nearest book", function() if BOOKS.GoToNearest then BOOKS.GoToNearest() end end)
 	end
 	if public.Active("Questie") and _G.QuestieLoader then
-		rootMenu:CreateDivider()
-		rootMenu:CreateButton(QUESTS_LABEL or "Quests", function()
-			if not (public.OpenQuestLog and public.OpenQuestLog()) then public.OpenSettings("quests") end
-		end)
-		-- (Questie's own map menu: townsfolk, trainers and vendors to show, the quest icons, its windows. It opened from
-		-- Questie's map button, which BookFinder leaves out)
-		rootMenu:CreateButton("Townsfolk and quest icons", function()
-			local ok, qm = pcall(QuestieLoader.ImportModule, QuestieLoader, "QuestieMenu")
-			if ok and qm and qm.Show then C_Timer.After(0, function() qm:Show() end) end
-		end)
 		rootMenu:CreateButton("My Journey", function()
 			local ok, journey = pcall(QuestieLoader.ImportModule, QuestieLoader, "QuestieJourney")
 			if ok and journey and journey.ToggleJourneyWindow then journey:ToggleJourneyWindow() end
 		end)
 	end
+	rootMenu:CreateDivider()
+	rootMenu:CreateButton("Map menu", function() if public.OpenMapMenu then public.OpenMapMenu() end end)
+	rootMenu:CreateButton(SETTINGS or "Settings", function() public.OpenSettings() end)
 end
 
 local function openMenu(owner)
@@ -67,7 +60,7 @@ local function tooltip(tt)
 	end
 	tt:AddLine(" ")
 	tt:AddLine((WORLD_MAP or "World Map") .. ": " .. (KEY_BUTTON1 or "Left Button"), 0.5, 1, 0.5)
-	tt:AddLine((SETTINGS or "Settings") .. ", " .. BL("Books") .. ": " .. (KEY_BUTTON2 or "Right Button"), 0.5, 1, 0.5)
+	tt:AddLine("Menu: " .. (KEY_BUTTON2 or "Right Button"), 0.5, 1, 0.5)
 end
 
 -- /bookfinder [settings|map|books|near ...|status] ---------------------------------------------------------------
@@ -168,15 +161,11 @@ local function makeLauncher()
 	if icon then icon:Register("BookFinder", broker, minimapDB()) end
 end
 
--- Settings: the front page and the Library books page ------------------------------------------------------------
+-- Settings: the BookFinder page ------------------------------------------------------------
 local function proxy(page, key, varType, name, default, get, set)
 	if not (Settings and Settings.RegisterProxySetting) then return end
 	local ok, setting = pcall(Settings.RegisterProxySetting, page, "BookFinder_" .. key, varType, name, default, get, set)
 	return ok and setting or nil
-end
-local function checkbox(page, key, name, default, get, set, tip)
-	local setting = proxy(page, key, Settings.VarType.Boolean, name, default, get, set)
-	if setting then Settings.RegisterInitializer(page, Settings.CreateCheckboxInitializer(setting, nil, tip)) end
 end
 local function slider(page, key, name, default, min, max, step, get, set, tip)
 	local setting = proxy(page, key, Settings.VarType.Number, name, default, get, set)
@@ -190,42 +179,37 @@ end
 -- a Books label with its ": %d" left off ("Map icon size: %d" -> "Map icon size")
 local function label(text) return (BL(text):gsub("%s*[:：]%s*%%d", "")) end
 
--- the front page: what is BookFinder's own (the pages are in the tree beside it)
-local function frontPage(category)
-	checkbox(category, "minimapButton", BL("Show the minimap button"), true,
-		function() return not minimapDB().hide end, function(on) public.SetMinimapButtonShown(on) end)
+-- The settings window's BookFinder page: what no switch can be. Every switch is in the map's menu; this page says so
+-- and opens it, then holds the library books' sizes and language.
+local function header(page, text)
+	if Settings.CreateElementInitializer then
+		local ok, init = pcall(Settings.CreateElementInitializer, "SettingsListSectionHeaderTemplate", { name = text })
+		if ok and init then Settings.RegisterInitializer(page, init) end
+	end
+end
+local function button(page, name, text, onClick, tip)
+	if CreateSettingsButtonInitializer then
+		local ok, init = pcall(CreateSettingsButtonInitializer, name, text, onClick, tip, true)
+		if ok and init then Settings.RegisterInitializer(page, init) end
+	end
 end
 
-local function booksPage(category)
+local function frontPage(category)
+	header(category, "Switches")
+	button(category, "The map's menu", "Open", function() if public.OpenMapMenu then public.OpenMapMenu() end end,
+		"Every on/off switch for the map, the quest icons, the townsfolk, the library books and the minimap button.")
 	if not (public.Active("Books") and BOOKS.db) then return end
-	local page = Settings.RegisterVerticalLayoutSubcategory(category, BL("Library books"))
-	public.RegisterPage("books", page)
 	local db = BOOKS.db
-	local function refresh() if BOOKS.Refresh then BOOKS.Refresh() end end
 	local function refreshMinimap() if BOOKS.RefreshMinimapPins then BOOKS.RefreshMinimapPins() end end
-
-	checkbox(page, "booksOnMap", BL("Show on the map"), true,
-		function() return not db.hidden end, function(on) db.hidden = not on; refresh() end)
-	slider(page, "booksPinSize", label("Map icon size: %d"), BOOKS.DEFAULT_PIN_SIZE or 20, 10, 40, 1,
+	header(category, BL("Library books"))
+	slider(category, "booksPinSize", label("Map icon size: %d"), BOOKS.DEFAULT_PIN_SIZE or 20, 10, 40, 1,
 		function() return db.pinSize or BOOKS.DEFAULT_PIN_SIZE or 20 end,
 		function(v) db.pinSize = v; if BOOKS.RefreshMap then BOOKS.RefreshMap() end end)
-	checkbox(page, "booksOnMinimap", BL("Show books on the minimap"), true,
-		function() return not db.hideMinimapPins end, function(on) db.hideMinimapPins = not on or nil; refreshMinimap() end)
-	slider(page, "booksMinimapPinSize", label("Minimap icon size: %d"), BOOKS.DEFAULT_MINIMAP_PIN_SIZE or 14, 8, 30, 1,
+	slider(category, "booksMinimapPinSize", label("Minimap icon size: %d"), BOOKS.DEFAULT_MINIMAP_PIN_SIZE or 14, 8, 30, 1,
 		function() return db.minimapPinSize or BOOKS.DEFAULT_MINIMAP_PIN_SIZE or 14 end,
 		function(v) db.minimapPinSize = v; refreshMinimap() end)
-	checkbox(page, "booksRoute", BL("Optimized route"), false,
-		function() return db.routeOn and true or false end,
-		function(on) if (db.routeOn and true or false) ~= on and BOOKS.ToggleRoute then BOOKS.ToggleRoute(on) end end)
-	checkbox(page, "booksGroup", BL("Also show the books my group is missing"), true,
-		function() return not db.hideGroupBooks end, function(on) db.hideGroupBooks = not on or nil; refresh() end)
-	checkbox(page, "booksToasts", BL("Notify when a book is collected"), true,
-		function() return not db.noToasts end, function(on) db.noToasts = not on or nil end)
-	checkbox(page, "booksNearby", BL("Alert when a book is nearby"), true,
-		function() return not db.noNearby end, function(on) db.noNearby = not on or nil end)
-
 	-- the books' language (theirs only: the rest follows the game's), applied by a reload as Books always has
-	local lang = proxy(page, "booksLanguage", Settings.VarType.String, BL("Language"), "auto",
+	local lang = proxy(category, "booksLanguage", Settings.VarType.String, BL("Language"), "auto",
 		function() return db.lang or "auto" end,
 		function(value)
 			if (db.lang or "auto") == value then return end
@@ -237,8 +221,9 @@ local function booksPage(category)
 		local choices = Settings.CreateControlTextContainer()
 		choices:Add("auto", BL("Automatic (game language)"))
 		for _, l in ipairs(BOOKS.LANGS or {}) do choices:Add(l[1], l[3]) end
-		Settings.RegisterInitializer(page, Settings.CreateDropdownInitializer(lang, function() return choices:GetData() end))
+		Settings.RegisterInitializer(category, Settings.CreateDropdownInitializer(lang, function() return choices:GetData() end))
 	end
+	public.RegisterPage("books", category)
 end
 
 -- Load and login ---------------------------------------------------------------------------------------------
@@ -253,7 +238,6 @@ boot:SetScript("OnEvent", function(self, event, name)
 		local category = public.SettingsCategory()
 		if category then
 			pcall(frontPage, category)
-			pcall(booksPage, category)
 		end
 		return
 	end

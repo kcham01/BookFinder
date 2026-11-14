@@ -179,6 +179,8 @@ local function Actions()
 			tip = L["Show or hide the quest log beside the map, for more room for the map."],
 			run = ToggleQuestLog, lit = QuestLogShown }
 	end
+	-- (BookFinder: OpenMap's beta report and its changelog are OpenMap's own, not BookFinder's)
+	if ns.BUILT_IN then return list end
 	list[#list + 1] = { L["Report a problem"], id = "report", icon = Icon("INV_Misc_Note_01"),
 		tip = L["OpenMap is in beta: draw on the map where something looks wrong (a dungeon's map too) and tell us about it."],
 		run = function() mod:ToggleReport() end, lit = function() return mod.IsReporting and mod.IsReporting() end }
@@ -232,7 +234,7 @@ local function Rows()
 	-- Questie's quest icons: its own "Enable Map Icons" setting, switched as its options do
 	if questie then
 		local function profile() return _G.Questie and Questie.db and Questie.db.profile end
-		rows[#rows + 1] = row(L["Questie icons"], "questie", { texture = "Interface\\GossipFrame\\AvailableQuestIcon" },
+		rows[#rows + 1] = row(BookFinder and L["Quest icons"] or L["Questie icons"], "questie", { texture = "Interface\\GossipFrame\\AvailableQuestIcon" },
 			function() local p = profile() return p and p.enableMapIcons end,
 			function(v)
 				local p = profile()
@@ -272,12 +274,21 @@ local function Rows()
 		return row(label, "townsfolk." .. key, kinds[key] and kinds[key].look or Icon("INV_Misc_QuestionMark"),
 			function() return db.townsfolk[key] end, function(v) db.townsfolk[key] = v mod:RefreshTownsfolk() end)
 	end
-	if folkDB and client.townsfolk ~= false then
+	-- (BookFinder: the townsfolk are Questie's, each one switch here; trainers and vendors open its chooser)
+	local questieFolk = BookFinder and BookFinder.TownsfolkRows and BookFinder.TownsfolkRows()
+	if questieFolk and #questieFolk > 0 then
+		if rows[#rows] and not rows[#rows].id then rows[#rows] = { L["Townsfolk"] } else rows[#rows + 1] = { L["Townsfolk"] } end
+		for _, f in ipairs(questieFolk) do
+			rows[#rows + 1] = row(f.label, "questie." .. f.key, { texture = f.icon }, f.get, f.set)
+			rows[#rows].note = f.note
+		end
+		if kinds.rare then rows[#rows + 1] = folk(L["Rare mobs"], "rare") end
+	elseif folkDB and client.townsfolk ~= false then
 		for _, k in ipairs(mod.TOWNSFOLK or {}) do
 			if not k.rare and k.key ~= "spirit" then rows[#rows + 1] = folk(k.name, k.key) end
 		end
-		rows[#rows + 1] = folk(L["Spirit healers"], "spirit")
-		rows[#rows + 1] = folk(L["Rare mobs"], "rare")
+		if kinds.spirit then rows[#rows + 1] = folk(L["Spirit healers"], "spirit") end
+		if kinds.rare then rows[#rows + 1] = folk(L["Rare mobs"], "rare") end
 	end
 	-- the look
 	-- (darkened or hidden; neither ticked: shown as they are. Darkened takes the colour-matched zones' land

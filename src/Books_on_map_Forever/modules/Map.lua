@@ -470,11 +470,12 @@ local function hookOpenMap()
       get = function() return not ns.db.hidden end,
       set = function(on) ns.db.hidden = not on; ns.Refresh() end,
     })
-    pcall(api.RegisterMenuToggle, ADDON, {
+    -- (BookFinder: the route is started and stopped in the books tab, where its stops are: not a switch here too)
+    if not (BookFinder and BookFinder.OpenBooks) then pcall(api.RegisterMenuToggle, ADDON, {
       id = "route", label = L["Optimized route"], icon = "Interface\\Icons\\Ability_Tracking", section = section,
       get = function() return ns.db.routeOn and true or false end,
       set = function(on) ns.ToggleRoute(on and true or false) end,
-    })
+    }) end
   end
 end
 

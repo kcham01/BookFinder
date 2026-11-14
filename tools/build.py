@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 MERGE = os.path.join(ROOT, "merge")
 NAME = "BookFinder"
-VERSION = "2.0.2"
+VERSION = "2.1.0"
 
 OPENMAP_REPO = "https://github.com/openmap-world/openmap.git"
 OPENMAP_COMMIT = "91c84b3bf633f3ae4840309e4620d63b249f626e"
@@ -57,7 +57,7 @@ DROP = {
 # it. Not these: they'd clash with or say nothing about BookFinder
 # BookFinder's own files, in load order (Namespaces.lua first, before every part; the rest after them)
 MERGE_FILES = ["Namespaces.lua", "Retired.lua", "Menu.lua", "MapShowMenu.lua", "Waypoint.lua", "Tabs.lua", "BooksTab.lua", "Search.lua", "QuestLog.lua",
-               "Inspect.lua", "SelfTest.lua", "Bridge.lua"]
+               "Settings.lua", "Inspect.lua", "SelfTest.lua", "Bridge.lua"]
 DATA_META_SKIP = re.compile(r"^X-(BUILD-|Curse|Wago)")
 
 errors = []

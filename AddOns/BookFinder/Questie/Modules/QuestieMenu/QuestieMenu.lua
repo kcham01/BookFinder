@@ -465,6 +465,42 @@ function QuestieMenu.buildTownsfolkMenu()
     return townsfolkMenu
 end
 
+-- BookFinder: the townsfolk as switches for its one map menu (OpenMap's panel): { key, label, icon, get, set } in
+-- Questie's own order and filter, and the trainer and vendor choosers it opens from there
+function QuestieMenu.BookFinderTownsfolk()
+    local rows = {}
+    if not (Questie.db and Questie.db.profile) then return rows end
+    Questie.db.profile.townsfolkConfig = Questie.db.profile.townsfolkConfig or {}
+    for _, key in ipairs(_townsfolk_order) do
+        if Townsfolk.townsfolk[key] or Questie.db.char.townsfolk[key] then
+            rows[#rows + 1] = {
+                key = key, label = l10n(tostring(key)),
+                icon = _townsfolk_texturemap[key] or ("Interface\\Minimap\\tracking\\" .. strlower(key)),
+                get = function() return Questie.db.profile.townsfolkConfig[key] and true or false end,
+                set = function(on)
+                    if (Questie.db.profile.townsfolkConfig[key] and true or false) ~= (on and true or false) then
+                        Questie.db.profile.townsfolkConfig[key] = on and true or nil
+                        toggle(key)
+                    end
+                end,
+            }
+        end
+    end
+    return rows
+end
+function QuestieMenu.BookFinderVendorsShown()
+    for key in pairs(Questie.db.char.vendorList or {}) do
+        if Questie.db.profile.townsfolkConfig[key] then return true end
+    end
+    return false
+end
+function QuestieMenu.BookFinderTrainersShown()
+    for key in pairs(Townsfolk.professionTrainers or {}) do
+        if Questie.db.profile.townsfolkConfig[key] then return true end
+    end
+    return false
+end
+
 function QuestieMenu:Show(hideDelay)
     if not Questie.db.profile.townsfolkConfig then
         Questie.db.profile.townsfolkConfig = {}

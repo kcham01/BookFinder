@@ -367,6 +367,8 @@ function QuestieOptionsEngine:Initialize()
     local tabs = {}
     for key, tabFile in pairs(self.tabs) do
         local data = tabFile:Initialize()
+        -- BookFinder: options that do nothing inside it, or that another place already holds, are left out
+        if BookFinder and BookFinder.FilterQuestieOptions then pcall(BookFinder.FilterQuestieOptions, key, data) end
         if data.visible ~= false then
             table.insert(tabs, {key = key, data = data})
         end

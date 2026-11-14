@@ -180,9 +180,33 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
   low-level quests three ways, coordinates three ways, the World map settings page repeating OpenMap's panel, the book
   switches three ways, two map pins, two searches; dead switches on Questie's Tracker and General pages.
 
+## Said after the Atlas
+- "Make it beautiful. Polish it. Pro grade, better than a team of Blizzard devs. Not slapped together. Every feature,
+  word, window, icon. Redundancy gone, aesthetics pro grade, usability fluid." Don't call something good just because
+  it is already built.
+
+## Done in 2.1.0 (for you to test)
+- **One place for every setting.** Every on/off switch is in the map's menu (the OpenMap button). The settings
+  window keeps only sliders, choices, sounds, fonts and profiles.
+  - World map page: only the fine-tuning (brightness, colour, darkening, zoom depth, map size, icon size, minimap
+    detail strengths, fades, frame-rate cap), with a button to open the map's menu.
+  - BookFinder page: the button to the map's menu, then the books' icon sizes and language. The Library books page
+    is gone (its switches are in the map's menu).
+- **Townsfolk once**: Questie's (map and minimap, every trainer and vendor) are switches in the map's menu's Townsfolk
+  section; "Profession trainers…" and "Vendors…" open Questie's chooser. OpenMap's own townsfolk step aside (it keeps
+  rare mobs). Your old OpenMap townsfolk choices carry over once.
+- **Questie's dead and doubled options are gone**: its map, minimap and compartment buttons; map coordinates (the
+  map's own are in the menu); townsfolk buttons; "Enable Map Icons" (it is "Quest icons" in the map's menu); and the
+  tracker's window options (enable, reset, lock, sizer, hide/minimize in combat or instances, sticky frames, TomTom
+  key, growth, height, width, header, background).
+- **The books**: their switches (on the map, on the minimap, your group's, collected notice, nearby alert) are in the
+  map's menu under Library books. The route is started and stopped in the books tab only.
+- **The minimap menu** is where to go: World Map, Quest Log, Library books, Nearest book, My Journey, then Map menu
+  and Settings. No switches in it.
+- **OpenMap's What's new and Report a problem are gone** (they were OpenMap's own changelog and bug reports).
+
 ## Still to do
-- **Remove the duplicates the Atlas shows**, one place for each switch.
-- **Frames that don't line up**: send screenshots of the ones you mean.
+- **Frames that don't line up**: send screenshots of the ones you mean; they need eyes on the game.
 - **Every setting into OpenMap's panel**, redundancy removed (you asked for this; next).
 - **The look**: the mock-ups (map panel, settings) wait for your markup; the journey card in them no longer applies.
 
