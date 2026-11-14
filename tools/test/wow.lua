@@ -26,7 +26,7 @@ local unpack = unpack
 -- Missing API: fail loudly with the name -------------------------------------------------------------------------
 
 -- BookFinder's saved variables read as nil until the test (or the add-on) sets them, as on a first login.
-local savedVariables = { BookFinderDB = true, BookFinderCharDB = true,
+local savedVariables = { BookFinderDB = true, BookFinderCharDB = true, NineSliceUtil = true,
 	-- Old global API that WoW: Forever no longer has: reads as nil there, as here.
 	GetItemCount = true, GetFactionInfoByID = true }
 setmetatable(_G, {
@@ -333,6 +333,8 @@ C_Map = strict("C_Map", {
 		return map, { x = 1 - pos.y / s, y = 1 - pos.x / s, GetXY = function(p) return p.x, p.y end }
 	end,
 	GetMapChildrenInfo = function() return {} end,
+	GetAreaInfo = function(area) return "Area " .. area end,
+	GetMapInfoAtPosition = function() return nil end,
 	CanSetUserWaypointOnMap = function() return true end,
 	SetUserWaypoint = function(point) World.waypoint = point end,
 	GetUserWaypoint = function() return World.waypoint end,
@@ -601,3 +603,9 @@ do
 	WorldMapFrame.overlayFrames = { floor, show }
 	WorldMapFrame.showButton = show
 end
+SearchBoxTemplate_OnTextChanged = function() end
+ITEM_QUALITY_COLORS = {}
+ACCEPT, CANCEL, SEARCH = "Accept", "Cancel", "Search"
+FACTION_ALLIANCE, FACTION_HORDE = "Alliance", "Horde"
+ToggleWorldMap = function() WorldMapFrame:Show() end
+C_Item.GetItemInfo = function() return nil end

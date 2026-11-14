@@ -108,6 +108,16 @@ local function addPin(pin, shift, seen)
 		if r.role ~= "objective" and r.role ~= "townsfolk" then hasDetail = true end
 	end
 
+	-- Shown on the map from Advanced Search: who, and how to take it off.
+	for _, r in ipairs(pin.roles) do
+		if r.role == "manual" and not seen["m" .. tostring(pin.source and pin.source.id)] then
+			seen["m" .. tostring(pin.source and pin.source.id)] = true
+			line(sourceName(pin) or "", GREEN)
+			if r.label then line(r.label, WHITE) end
+			line(L["Shown on the map: remove it in Advanced Search"], GREY)
+		end
+	end
+
 	-- Townsfolk: the NPC (or object), what they are.
 	if #folk > 0 and #givers == 0 then
 		local name = sourceName(pin) or ""

@@ -34,8 +34,13 @@ Quests\Rules.lua
 Quests\Objectives.lua
 Quests\Marks.lua
 Quests\Reward.lua
+Quests\Sounds.lua
+Quests\Journey.lua
+Quests\QuestTip.lua
+Quests\Search.lua
 
 UI\Dropdown.lua
+UI\Widgets.lua
 
 Map\Icons.lua
 Map\Look.lua
@@ -53,3 +58,9 @@ Books\Map.lua
 Books\Route.lua
 Books\Alerts.lua
 Map\ShowMenu.lua
+
+UI\MapActions.lua
+UI\Panel.lua
+UI\Pages.lua
+UI\JourneyPages.lua
+Core\Commands.lua
