@@ -371,3 +371,11 @@ See the log. Current phase is the first unchecked one.
   zones, PinTooltip's tooltip and clicks), books (BookMap's), the player's map pins (UserPins' card and clicks),
   friends and guild who share their place. Not yet on it: patrol paths, townsfolk sizes beyond the setting, the
   minimap (it keeps its own pins), coordinates of the cursor on the canvas.
+- Phase 12, step 3: the canvas tells the zone under the cursor (the smallest zone rectangle holding the point) with its
+  level range from the game (C_Map.GetMapLevels, coloured for the player) and the cursor's coordinates, bottom right;
+  a click that does not drag zooms into that zone; dungeon and raid maps (and caves) stay the game's own map.
+  `Map/Dungeons.lua`: entrances from BF.Data.dungeons on the canvas, the level range under each ("Level ranges"),
+  hover: name, levels, "Click to open its map"; click opens the dungeon's own map. "Dungeons and raids" and "Level
+  ranges" now exist, so they appear in the Show dropdown's Dungeons section.
+  Lesson (a real bug the tests caught): `local a, b = x and f()` keeps only f's first value. Use `if x then a, b = f()`.
+  Checked the whole addon for the pattern: no other case.

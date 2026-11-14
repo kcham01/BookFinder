@@ -372,6 +372,7 @@ C_Map = strict("C_Map", {
 		local a = World.art and World.art[map]
 		return a and { { layerWidth = a.layerWidth, layerHeight = a.layerHeight, tileWidth = a.tileWidth, tileHeight = a.tileHeight } }
 	end,
+	GetMapLevels = function(map) local m = World.maps and World.maps[map] if m and m.levels then return m.levels[1], m.levels[2] end end,
 	GetMapArtLayerTextures = function(map) local a = World.art and World.art[map] return a and a.files end,
 	GetAreaInfo = function(area) return "Area " .. area end,
 	CanSetUserWaypointOnMap = function() return true end,

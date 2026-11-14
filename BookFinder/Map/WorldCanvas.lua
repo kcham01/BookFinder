@@ -32,6 +32,8 @@ local function continentOf(map)
 		if not info then return nil end
 		if info.mapType == Enum.UIMapType.Continent then return map end
 		if info.mapType < Enum.UIMapType.Continent then return nil end
+		-- A dungeon's (or a cave's) own map stays the game's: its floors are not part of the continent.
+		if seen == 0 and info.mapType > Enum.UIMapType.Zone then return nil end
 		map = info.parentMapID
 		seen = seen + 1
 	end
@@ -95,6 +97,8 @@ local function iconButton()
 		b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 		b.Icon = b:CreateTexture(nil, "ARTWORK")
 		b.Icon:SetAllPoints()
+		b.Label = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		b.Label:SetPoint("TOP", b, "BOTTOM", 0, -1)
 		b:SetScript("OnEnter", function(self) if self.spec.onEnter then self.spec.onEnter(self) end end)
 		b:SetScript("OnLeave", function(self)
 			if self.spec.onLeave then self.spec.onLeave(self) else GameTooltip:Hide() end
@@ -124,6 +128,7 @@ function Canvas:Redraw()
 		end
 		if spec.tint then b.Icon:SetVertexColor(spec.tint[1], spec.tint[2], spec.tint[3], 1) end
 		b:SetSize(spec.size or 20, spec.size or 20)
+		b.Label:SetText(spec.label or "")
 		b:ClearAllPoints()
 		b:SetPoint("CENTER", frame, "TOPLEFT", px, -py)
 	end
@@ -187,12 +192,42 @@ function Canvas:Pan(dx, dy) -- in pixels
 	layout()
 end
 
+--- The zone under a world point: the smallest zone map of the continent whose rectangle holds it (and its 0..1 point).
+function Canvas:ZoneAt(east, north)
+	local best, bestArea, bx, by
+	for _, z in ipairs(Stitch:Zones(continent or 0)) do
+		local x, y = Stitch:ToMap(z, east, north)
+		if x and x >= 0 and x <= 1 and y >= 0 and y <= 1 then
+			local _, l, t, r, b = Stitch.Corners(z)
+			local area = math.abs((r - l) * (t - b))
+			if not bestArea or area < bestArea then best, bestArea, bx, by = z, area, x, y end
+		end
+	end
+	return best, bx, by
+end
+
 -- The view's cursor point (pixels from its top left, y down).
 local function cursor()
 	local x, y = GetCursorPosition()
 	local s = frame:GetEffectiveScale()
 	local left, top = frame:GetLeft() or 0, frame:GetTop() or 0
 	return x / s - left, top - y / s
+end
+
+--- The line at the bottom of the canvas: "Elwynn Forest (1-10)  45.2, 63.1" for the zone under the cursor.
+function Canvas:HoverText()
+	if not frame:IsMouseOver() then return "" end
+	local zone, x, y = Canvas:ZoneAt(Canvas:WorldAt(cursor()))
+	if not zone then return "" end
+	local text = BF.Zones:MapName(zone) or ""
+	local low, high
+	if C_Map.GetMapLevels then low, high = C_Map.GetMapLevels(zone) end
+	if low and high and low > 0 then
+		local c = GetQuestDifficultyColor and GetQuestDifficultyColor(low)
+		local levels = low == high and tostring(low) or (low .. "-" .. high)
+		text = text .. (c and ("  |cff%02x%02x%02x(%s)|r"):format(c.r * 255, c.g * 255, c.b * 255, levels) or ("  (" .. levels .. ")"))
+	end
+	return text .. "   " .. BF.Coords:Format(x, y)
 end
 
 -- Showing --------------------------------------------------------------------------------------------------------------
@@ -236,14 +271,28 @@ local function makeFrame()
 	overlay = CreateFrame("Frame", nil, frame)
 	overlay:SetAllPoints(frame)
 	overlay:SetFrameLevel(frame:GetFrameLevel() + 200) -- above every zone's art
+	Canvas.overlay = overlay
 	frame:SetScript("OnMouseWheel", function(_, delta)
 		local px, py = cursor()
 		Canvas:ZoomAt(delta > 0 and 1.25 or 0.8, px, py)
+	end)
+	-- The zone under the cursor: its name, its levels (coloured for the player), the cursor's place on it.
+	frame.label = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	frame.label:SetPoint("BOTTOMRIGHT", -8, 8)
+	frame:SetScript("OnUpdate", nil)
+	frame.hover = 0
+	local hoverFrame = CreateFrame("Frame", nil, frame)
+	hoverFrame:SetScript("OnUpdate", function(_, e)
+		frame.hover = frame.hover + e
+		if frame.hover < 0.1 then return end
+		frame.hover = 0
+		frame.label:SetText(Canvas:HoverText())
 	end)
 	frame:SetScript("OnMouseDown", function(self, button)
 		if button == "LeftButton" then
 			local x, y = GetCursorPosition()
 			self.dragFrom = { x, y }
+			self.downAt = { x, y }
 			self:SetScript("OnUpdate", function()
 				local nx, ny = GetCursorPosition()
 				local s = self:GetEffectiveScale()
@@ -255,7 +304,18 @@ local function makeFrame()
 			Canvas:ZoomAt(0.5, px, py)
 		end
 	end)
-	frame:SetScript("OnMouseUp", function(self) self:SetScript("OnUpdate", nil) end)
+	frame:SetScript("OnMouseUp", function(self, button)
+		self:SetScript("OnUpdate", nil)
+		-- A click that did not drag: into the zone under the cursor.
+		if button == "LeftButton" and self.downAt then
+			local x, y = GetCursorPosition()
+			if math.abs(x - self.downAt[1]) + math.abs(y - self.downAt[2]) < 4 then
+				local zone = Canvas:ZoneAt(Canvas:WorldAt(cursor()))
+				if zone then Canvas:Fit(zone) end
+			end
+		end
+		self.downAt = nil
+	end)
 	frame:Hide()
 	Canvas.frame = frame
 end
