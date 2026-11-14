@@ -236,6 +236,13 @@ function Canvas:ZoomAt(factor, px, py)
 	layout()
 end
 
+--- Centres the view on a world point at a zoom (pixels per yard; kept within the canvas's limits).
+function Canvas:CentreOn(east, north, atZoom)
+	centre.east, centre.north = east, north
+	zoom = math.max(minZoom, math.min(MAX_ZOOM, atZoom or zoom))
+	layout()
+end
+
 function Canvas:Pan(dx, dy) -- in pixels
 	centre.east = centre.east - dx / zoom
 	centre.north = centre.north + dy / zoom

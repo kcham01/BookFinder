@@ -153,4 +153,19 @@ return {
 		expect(near(pieces[2].u, 44 / 64), "44 pixels of a 64-pixel file")
 		expect(near(pieces[1].v, 200 / 256), "200 of 256 down")
 	end,
+
+	["find a place: zones and dungeons by name; choosing one goes there"] = function(BF)
+		setup()
+		World.children[947] = { { mapID = 1415, name = "Eastern Kingdoms" } }
+		World.children[1415] = { { mapID = 1429, name = "Elwynn Forest" } }
+		BF:Set("map.seamless", true)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(1415)
+		local results = BF.FindPlace:Search("elwy")
+		equal(results[1] and results[1].name, "Elwynn Forest", "the zone")
+		equal(results[1].kind, "Zone", "as a zone")
+		BF.FindPlace:Go(results[1])
+		equal(WorldMapFrame:GetMapID(), 1429, "the map went there")
+		equal(#BF.FindPlace:Search("e"), 0, "one letter: nothing yet")
+	end,
 }

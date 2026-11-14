@@ -61,6 +61,7 @@ Map\Stitch.lua
 Map\WorldCanvas.lua
 Map\CanvasLayers.lua
 Map\Dungeons.lua
+Map\FindPlace.lua
 
 Comms\Wire.lua
 Comms\QuestieSerial.lua
