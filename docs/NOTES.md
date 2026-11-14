@@ -156,6 +156,10 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **The quest log's gear menu: "we can ditch it too."** Gone; its one switch stays as it was (ticked), so the quest
   log keeps its objective lines.
 
+- **On OpenMap's map: "We could probably use it as a starting point, make it even better looking. One feature I
+  really love from OpenMap is being able to zoom all the way to minimap detail."** (Zooming the world map in past the
+  painted map's detail, where the game's own minimap art takes over: OpenMap's "Minimap detail".)
+
 ## Questions (only what I can't tell from your notes)
 
 - None open.
