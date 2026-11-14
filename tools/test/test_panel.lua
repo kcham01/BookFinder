@@ -146,7 +146,7 @@ return {
 		expect(BF.Panel.frame.shown, "opened")
 	end,
 
-	["a modern client: the stepper slider and the game's dropdown"] = function(BF)
+	["a modern client: the stepper slider; choices in the one dropdown"] = function(BF)
 		World.knownTemplates = { MinimalSliderWithSteppersTemplate = true, WowStyle1DropdownTemplate = true,
 			PortraitFrameTemplate = true }
 		setup()
@@ -158,12 +158,11 @@ return {
 		s.slider:SetValue(9.6)
 		equal(BF:Get("quests.lowLevelOffset"), 10, "moved, snapped")
 		local d = control(BF, "quests.lowLevel")
-		equal(d.button.template, "WowStyle1DropdownTemplate", "the game's dropdown")
-		local root = World.NewMenuDescription()
-		root.CreateRadio = root.CreateCheckbox
-		d.button.generator(d.button, root)
-		equal(root.rows[2].text, "Show all", "its choices, in words")
-		root.rows[2].setSelected()
+		d.button.scripts.OnClick(d.button)
+		local row = BookFinderDropdown1.rows[2]
+		equal(row.item.text, "Show all", "its choices, in words, in BookFinder's dropdown")
+		row.scripts.OnClick(row)
+		expect(not BookFinderDropdown1.shown, "a choice closes it")
 		equal(BF:Get("quests.lowLevel"), "all", "chosen")
 	end,
 

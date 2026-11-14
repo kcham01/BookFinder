@@ -234,3 +234,10 @@ See the log. Current phase is the first unchecked one.
   Map's "On the map" with the map). Moved: the arrow and compass to Map > More ("Arrow and compass"), coordinates to
   Map > Look ("Coordinates"); books on one page with Settings / Filters headings (Books on map's window's sections).
   **Not verified in game**: every template name above on Forever; the side tab art's offsets; the map button's spot.
+- **One dropdown** (DESIGN rule 2; the owner "really likes Questie's dropdown"): `UI/Dropdown.lua`, the classic
+  tooltip-box dropdown (tooltip backdrop, the game's small font, UI-DropDownRadioChecks tick boxes and radio dots,
+  icon at the right, gold title rows, dividers, submenus to the right on hover, switches keep it open, Escape and a
+  click elsewhere close it). Every BookFinder menu is it: the map's Show button now opens it on press (OnMouseDown
+  replaced; the game's menu generator is also given BookFinder's items, in case a client opens it another way), the
+  panel's choices, the profile menus. The client's Menu API is used only by the tag fallback.
+  `ShowMenu:Items()` is the menu as BF.Dropdown items.

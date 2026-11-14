@@ -1,5 +1,5 @@
 -- Widgets: the few controls the settings panel is made of, each from the game's own templates (tick box, slider,
--- dropdown, colour swatch, heading). Each control is bound to one setting and refreshes from it.
+-- choice, colour swatch, heading). A choice opens BookFinder's one dropdown (UI/Dropdown.lua). Each control is bound to one setting and refreshes from it.
 --
 -- Templates differ between clients: Template({...}) picks the first one this client knows (C_XMLUtil), so the panel
 -- uses the newest look where it exists and an older one elsewhere.
@@ -170,19 +170,14 @@ function Widgets:Dropdown(parent, def, width)
 	f.label:SetText(labelOf(def))
 	local choices = Widgets:Choices(def)
 
-	local function generator(_, root)
+	local function items()
+		local list = {}
 		for _, c in ipairs(choices) do
-			local radio = root:CreateRadio(c[2], function() return BF:Get(def.key) == c[1] end,
-				function() BF:Set(def.key, c[1]) end, c[1])
-			if c.icon and radio.AddInitializer then
-				radio:AddInitializer(function(button)
-					local t = button:AttachTexture()
-					t:SetSize(16, 16)
-					t:SetPoint("RIGHT")
-					BF.Icons:Apply(t, c.icon)
-				end)
-			end
+			list[#list + 1] = { text = c[2], radio = true, icon = c.icon,
+				checked = function() return BF:Get(def.key) == c[1] end,
+				func = function() BF:Set(def.key, c[1]) end }
 		end
+		return list
 	end
 
 	local function current()
@@ -191,20 +186,14 @@ function Widgets:Dropdown(parent, def, width)
 		return tostring(v)
 	end
 
-	local modern = Widgets:Template({ "WowStyle1DropdownTemplate" })
-	local button
-	if modern then
-		button = CreateFrame("DropdownButton", nil, f, modern)
-		button:SetupMenu(generator)
-		function f:ShowValue() if button.GenerateMenu then button:GenerateMenu() end end
-	else
-		-- A plain button of the game's that opens the same menu.
-		button = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-		button:SetScript("OnClick", function(self)
-			if MenuUtil and MenuUtil.CreateContextMenu then MenuUtil.CreateContextMenu(self, generator) end
-		end)
-		function f:ShowValue() button:SetText(current()) end
-	end
+	-- The face: a game button showing the choice; pressing it opens BookFinder's one dropdown (UI/Dropdown.lua).
+	local button = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+	button:SetScript("OnClick", function(self) BF.Dropdown:Toggle(self, items) end)
+	button.arrow = button:CreateTexture(nil, "OVERLAY")
+	button.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+	button.arrow:SetSize(18, 18)
+	button.arrow:SetPoint("RIGHT", -4, 0)
+	function f:ShowValue() button:SetText(current()) end
 	button:SetPoint("BOTTOMLEFT", 0, 2)
 	button:SetSize(math.min(width - 4, 220), 24)
 	f.button = button

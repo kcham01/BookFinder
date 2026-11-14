@@ -73,9 +73,10 @@ local function menuRow(parent, y, label, buttonText, names, pick)
 	b:SetPoint("TOPLEFT", 240, -y + 4)
 	b:SetText(buttonText())
 	b:SetScript("OnClick", function(self)
-		if not MenuUtil or not MenuUtil.CreateContextMenu then return end
-		MenuUtil.CreateContextMenu(self, function(_, root)
-			for _, name in ipairs(names()) do root:CreateButton(name, function() pick(name) end) end
+		BF.Dropdown:Toggle(self, function()
+			local items = {}
+			for _, name in ipairs(names()) do items[#items + 1] = { text = name, func = function() pick(name) end } end
+			return items
 		end)
 	end)
 	b.refresh = function() b:SetText(buttonText()) b:SetEnabled(#names() > 0) end

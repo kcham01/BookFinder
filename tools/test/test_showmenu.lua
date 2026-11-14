@@ -1,4 +1,4 @@
--- The map's Show dropdown: BookFinder's entries in the game's map filter menu.
+-- The map's Show dropdown: the map's Show button opens BookFinder's dropdown, holding only BookFinder's entries.
 
 local TAG = "MENU_WORLD_MAP_TRACKING"
 
@@ -7,117 +7,141 @@ local function setup()
 	Login()
 end
 
-local function labels(rows)
+-- Presses the Show button; returns the dropdown's shown rows' items.
+local function press()
+	local button = WorldMapFrame.overlayFrames[2]
+	button.scripts.OnMouseDown(button)
+	local items = {}
+	for _, row in ipairs(BookFinderDropdown1.rows) do if row.shown then items[#items + 1] = row.item end end
+	return items, button
+end
+
+local function labels(items)
 	local list = {}
-	for _, r in ipairs(rows) do list[#list + 1] = (r.kind == "divider" and "---") or r.text end
+	for _, it in ipairs(items) do list[#list + 1] = it.divider and "---" or it.text end
 	return list
 end
 
-local function row(rows, text)
-	for _, r in ipairs(rows) do if r.text == text then return r end end
+local function find(items, text)
+	for _, it in ipairs(items) do if it.text == text then return it end end
+end
+
+local function rowOf(text)
+	for _, row in ipairs(BookFinderDropdown1.rows) do if row.shown and row.item.text == text then return row end end
 end
 
 return {
-	["the game's own entries are gone; Questie's order, one flat list"] = function()
+	["the Show button opens BookFinder's dropdown: Questie's order, none of the game's entries"] = function()
 		setup()
-		local root = World.OpenShowButton()
-		local l = labels(root.rows)
-		equal(l[1], "Show:", "the menu's heading")
-		equal(l[2], "Repair", "Questie's first, nothing of the game's above it")
-		equal(l[3], "Innkeeper", "then Innkeeper")
-		for _, game in ipairs({ "Quest Objectives", "Show Quest Levels", "Quest Difficulty Color", "Low-Level Quests", "Tracked Items" }) do
-			expect(not row(root.rows, game), "the game's entry gone: " .. game)
-		end
+		local items = press()
+		expect(BookFinderDropdown1.shown, "BookFinder's dropdown open")
+		local l = labels(items)
+		equal(l[1], "Show:", "its heading")
+		equal(l[2], "Repair", "Questie's first")
 		local want = { "Repair", "Innkeeper", "Mailbox", "Class Trainer", "Weapon Master", "Auctioneer", "Banker",
 			"Flight Master", "Battlemaster", "Barber", "Spirit Healer", "Moonwell", "Meeting Stones", "Stable Master",
 			"Rare mobs", "Available Quest", "Trivial Quest", "Objective", "Profession Trainers", "Vendor" }
 		local i = 1
 		for _, text in ipairs(l) do if text == want[i] then i = i + 1 end end
 		equal(i, #want + 1, "every entry in order (stopped at " .. tostring(want[i]) .. ")")
+		for _, game in ipairs({ "Quest Objectives", "Show Quest Levels", "Quest Difficulty Color", "Low-Level Quests", "Tracked Items" }) do
+			expect(not find(items, game), "the game's entry gone: " .. game)
+		end
 	end,
 
-	["each item once, and only for this character"] = function()
+	["each item once, only for this character, nothing for what is not built"] = function()
 		setup()
 		local seen = {}
-		for _, r in ipairs(World.OpenShowButton().rows) do
-			if r.text then
-				expect(not seen[r.text], "twice: " .. r.text)
-				seen[r.text] = true
+		for _, it in ipairs(press()) do
+			if it.text then
+				expect(not seen[it.text], "twice: " .. it.text)
+				seen[it.text] = true
 			end
 		end
 		expect(not seen["Portal Trainer"], "a warrior sees no portal trainers")
 		expect(not seen["Advanced Search"] and not seen["My Journey"], "journey windows stay out")
-	end,
-
-	["nothing for what is not built yet"] = function()
-		setup()
-		local seen = {}
-		for _, r in ipairs(World.OpenShowButton().rows) do if r.text then seen[r.text] = true end end
 		expect(not seen["Boats"], "no boats yet")
-		-- Dungeon quests exist already: the Dungeons section shows, with its heading.
 		expect(seen["Dungeons"] and seen["Dungeon quests"], "the Dungeons section")
 	end,
 
 	["a tick box follows and changes its setting, the menu stays open"] = function(BF)
 		setup()
-		local root = World.OpenShowButton()
-		local r = row(root.rows, "Mailbox")
-		equal(r.isSelected(), true, "mailboxes on by default")
-		r.setSelected()
+		press()
+		local row = rowOf("Mailbox")
+		equal(row.check.texCoord and row.check.texCoord[1], 0, "ticked (mailboxes on by default)")
+		row.scripts.OnClick(row)
 		equal(BF:Get("townsfolk.mailbox"), false, "off")
-		equal(r.response, MenuResponse.Refresh, "stays open")
+		expect(BookFinderDropdown1.shown, "stays open")
+		equal(row.check.texCoord[1], 0.5, "unticked")
 	end,
 
 	["Trivial Quest switches the low-level quests"] = function(BF)
 		setup()
-		local r = row(World.OpenShowButton().rows, "Trivial Quest")
-		equal(r.isSelected(), false, "hidden by default")
-		r.setSelected()
+		press()
+		local row = rowOf("Trivial Quest")
+		row.scripts.OnClick(row)
 		equal(BF:Get("quests.lowLevel"), "all", "shown")
-		r.setSelected()
+		row.scripts.OnClick(row)
 		equal(BF:Get("quests.lowLevel"), "hide", "hidden again")
 	end,
 
-	["submenus: professions with Known Professions first, vendors"] = function()
+	["submenus open beside their row: professions, vendors"] = function()
 		setup()
-		local root = World.OpenShowButton()
-		local p = row(root.rows, "Profession Trainers")
-		equal(p.kind, "button", "a submenu")
-		equal(p.rows[1].text, "Known Professions", "first")
-		expect(#p.rows > 5, "the professions")
-		local v = row(root.rows, "Vendor")
-		expect(row(v.rows, "Food") and row(v.rows, "Ammo"), "food and ammo")
-		expect(not row(v.rows, "Poisons"), "poisons for rogues only")
+		press()
+		local row = rowOf("Profession Trainers")
+		row.scripts.OnEnter(row)
+		expect(BookFinderDropdown2.shown, "the submenu")
+		equal(BookFinderDropdown2.rows[1].item.text, "Known Professions", "first")
+		rowOf("Vendor").scripts.OnEnter(rowOf("Vendor"))
+		local vendors = {}
+		for _, r in ipairs(BookFinderDropdown2.rows) do if r.shown then vendors[r.item.text] = true end end
+		expect(vendors.Food and vendors.Ammo and not vendors.Poisons, "food and ammo; poisons for rogues only")
 	end,
 
 	["each row carries its icon at the right"] = function()
 		setup()
-		local r = row(World.OpenShowButton().rows, "Innkeeper")
-		local textures = World.InitRow(r)
-		equal(#textures, 1, "one icon")
-		equal(textures[1].texture, "Interface\\Minimap\\Tracking\\Innkeeper", "the innkeeper's")
-		equal(textures[1].points[1][1], "RIGHT", "at the right")
+		press()
+		local row = rowOf("Innkeeper")
+		expect(row.icon.shown, "an icon")
+		equal(row.icon.texture, "Interface\\Minimap\\Tracking\\Innkeeper", "the innkeeper's")
+		equal(row.icon.points[#row.icon.points][1], "RIGHT", "at the right")
+	end,
+
+	["pressing again closes it; so does a click elsewhere"] = function()
+		setup()
+		local _, button = press()
+		button.scripts.OnMouseDown(button)
+		expect(not BookFinderDropdown1.shown, "closed by the button")
+		press()
+		Fire("GLOBAL_MOUSE_DOWN", "LeftButton")
+		expect(not BookFinderDropdown1.shown, "closed by a click elsewhere")
 	end,
 
 	["the Show button, not the floor picker; the reset badge hidden"] = function(BF)
 		setup()
 		equal(BF.ShowMenu.button, WorldMapFrame.overlayFrames[2], "the tracking options button")
-		expect(WorldMapFrame.overlayFrames[1].generator == nil, "the floor picker untouched")
+		expect(WorldMapFrame.overlayFrames[1].scripts.OnMouseDown == nil, "the floor picker untouched")
 		local reset = WorldMapFrame.overlayFrames[2].ResetButton
 		expect(not reset.shown, "no reset badge")
 		reset:Show()
 		expect(not reset.shown, "and it stays away")
 	end,
 
+	["the game's own menu, if opened, holds only BookFinder's items"] = function()
+		setup()
+		local root = World.OpenShowButton()
+		equal(root.rows[1].text, "Show:", "heading")
+		equal(root.rows[2].text, "Repair", "BookFinder's first")
+	end,
+
 	["no Show button to be found: the menu changed by its tag"] = function()
 		WorldMapTrackingOptionsButtonMixin = { OnLoad = function() end } -- a client where no overlay frame is the Show button
 		setup()
 		local root = World.OpenMenu(TAG)
-		local l = labels(root.rows)
-		equal(l[1], "Repair", "the game's rows emptied, ours in")
+		equal(root.rows[1].text, "Repair", "the game's rows emptied, ours in")
 	end,
 
-	["the quest log's gear menu is gone, and stays gone"] = function(BF)
+	["the quest log's gear menu is gone, and stays gone"] = function()
 		setup()
 		local gear = QuestMapFrame.QuestsFrame.SettingsDropdown
 		expect(not gear.shown, "hidden")
@@ -126,7 +150,7 @@ return {
 		expect(QuestMapFrame.QuestsFrame.SearchBox.shown, "the search box stays")
 	end,
 
-	["the gear found without its usual name"] = function(BF)
+	["the gear found without its usual name"] = function()
 		local q = QuestMapFrame.QuestsFrame
 		q.FilterSettings, q.SettingsDropdown = q.SettingsDropdown, nil
 		setup()

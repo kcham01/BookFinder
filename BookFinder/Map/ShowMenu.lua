@@ -1,8 +1,8 @@
 -- The map's Show dropdown: every map item of Questie and OpenMap, each once, as one flat list in Questie's layout
 -- (tick box, name, icon at the right), with only Dungeons in a section of its own (docs/NOTES.md, section 1).
 --
--- It takes over the game's own map filter menu (the world map's Show button) through the client's menu system
--- (Menu.ModifyMenu on the menu's tag): the game's own entries are taken out ("the game's stuff in the drop down should
+-- It takes over the game's own map filter menu (the world map's Show button): pressing the button opens BookFinder's
+-- dropdown (UI/Dropdown.lua, the classic tooltip-box dropdown, DESIGN rule 2): the game's own entries are taken out ("the game's stuff in the drop down should
 -- be removed": the owner, docs/NOTES.md) and BookFinder's are the menu. Advanced Search, Quests by Zone and by
 -- Faction, My Journey and the settings are not in it.
 --
@@ -117,52 +117,76 @@ function ShowMenu:VendorEntries()
 	return list
 end
 
--- Building the menu (the client's Menu API) --------------------------------------------------------------------
-
-local ICON_SIZE = 16
+-- The menu's items (BF.Dropdown's form) ------------------------------------------------------------------------
 
 local function iconOf(entry)
 	if type(entry.icon) == "function" then return entry.icon() end
 	return entry.icon
 end
 
--- The icon at the right of a row, in the game's own art.
-local function withIcon(description, entry)
-	local kind = iconOf(entry)
-	if not kind or not Icons.kinds[kind] or not description.AddInitializer then return end
-	description:AddInitializer(function(button)
-		local t = button:AttachTexture()
-		t:SetSize(ICON_SIZE, ICON_SIZE)
-		t:SetPoint("RIGHT")
-		Icons:Apply(t, kind)
-		if button.fontString then
-			-- Room for the icon: the row grows rather than the text running under it.
-			button.fontString:SetPoint("RIGHT", t, "LEFT", -4, 0)
+local function switchItem(entry)
+	return {
+		text = entry.translated and entry.label or L[entry.label],
+		icon = iconOf(entry),
+		checked = function() return ShowMenu:IsChecked(entry) end,
+		func = function() ShowMenu:Toggle(entry) end,
+	}
+end
+
+local function submenuItems(kind)
+	local list = {}
+	local rows = kind == "professions" and ShowMenu:ProfessionEntries() or ShowMenu:VendorEntries()
+	for _, row in ipairs(rows) do list[#list + 1] = switchItem(row) end
+	return list
+end
+
+--- The whole menu: the "Show:" heading, then every entry that shows, Dungeons under its own heading.
+function ShowMenu:Items()
+	local items = { { text = L["Show:"], title = true } }
+	local pendingSection
+	for _, entry in ipairs(ShowMenu.entries) do
+		if entry.section then
+			pendingSection = entry.section
+		elseif ShowMenu:Shows(entry) then
+			if pendingSection then
+				-- A section heading only over entries that show.
+				items[#items + 1] = { divider = true }
+				items[#items + 1] = { text = L[pendingSection], title = true }
+				pendingSection = nil
+			end
+			if entry.submenu then
+				local kind = entry.submenu
+				items[#items + 1] = { text = L[entry.label], icon = iconOf(entry), submenu = function() return submenuItems(kind) end }
+			else
+				items[#items + 1] = switchItem(entry)
+			end
 		end
-		return ICON_SIZE + 4
-	end)
+	end
+	return items
 end
 
-local function keepOpen(description)
-	if description.SetResponse and MenuResponse then description:SetResponse(MenuResponse.Refresh) end
-end
+-- The fallback: the client's own menu system, used only where the Show button cannot be found (the menu is then
+-- changed by its tag: the game's rows emptied, BookFinder's items written in the client's menu calls).
 
-local function addCheckbox(parent, entry)
-	local label = entry.translated and entry.label or L[entry.label]
-	local cb = parent:CreateCheckbox(label,
-		function() return ShowMenu:IsChecked(entry) end,
-		function() ShowMenu:Toggle(entry) end)
-	keepOpen(cb)
-	withIcon(cb, entry)
-	return cb
-end
-
-local function addSubmenu(parent, entry)
-	local button = parent:CreateButton(L[entry.label])
-	withIcon(button, entry)
-	local rows = entry.submenu == "professions" and ShowMenu:ProfessionEntries() or ShowMenu:VendorEntries()
-	for _, row in ipairs(rows) do addCheckbox(button, row) end
-	return button
+local function toMenu(parent, items)
+	for _, item in ipairs(items) do
+		if item.divider then parent:CreateDivider()
+		elseif item.title then parent:CreateTitle(item.text)
+		elseif item.submenu then toMenu(parent:CreateButton(item.text), item.submenu())
+		else
+			local cb = parent:CreateCheckbox(item.text, item.checked, item.func)
+			if cb.SetResponse and MenuResponse then cb:SetResponse(MenuResponse.Refresh) end
+			if item.icon and Icons.kinds[item.icon] and cb.AddInitializer then
+				local kind = item.icon
+				cb:AddInitializer(function(button)
+					local t = button:AttachTexture()
+					t:SetSize(16, 16)
+					t:SetPoint("RIGHT")
+					Icons:Apply(t, kind)
+				end)
+			end
+		end
+	end
 end
 
 -- The game's own entries go. The client keeps a description's rows in elementDescriptions; where it does not (another
@@ -175,31 +199,18 @@ local function removeGameEntries(root)
 	return true
 end
 
---- Makes a menu description (the game's map filter menu) BookFinder's: the game's entries out, BookFinder's in.
---- fresh: a menu of BookFinder's own (nothing of the game's in it to take out).
-function ShowMenu:Fill(root, fresh)
-	if not fresh and not removeGameEntries(root) then root:CreateDivider() end
-	local pendingSection
-	for _, entry in ipairs(ShowMenu.entries) do
-		if entry.section then
-			pendingSection = entry.section
-		elseif ShowMenu:Shows(entry) then
-			if pendingSection then
-				-- A section heading only over entries that show.
-				root:CreateDivider()
-				root:CreateTitle(L[pendingSection])
-				pendingSection = nil
-			end
-			if entry.submenu then addSubmenu(root, entry) else addCheckbox(root, entry) end
-		end
-	end
+function ShowMenu:Fill(root)
+	if not removeGameEntries(root) then root:CreateDivider() end
+	local items = ShowMenu:Items()
+	table.remove(items, 1) -- the client's menu has its own heading
+	toMenu(root, items)
 end
 
 -- The button --------------------------------------------------------------------------------------------------
 --
 -- The map's Show button is the world map's tracking options button: one of the map's overlay frames, made from the
 -- game's WorldMapTrackingOptionsButtonMixin (told apart from the floor picker, the same kind of button, by that).
--- Its menu is replaced whole, so the game's entries are never built. Forever's entries (seen in game): Quest
+-- Pressing it opens BookFinder's dropdown instead of the game's menu, so the game's entries are never built. Forever's entries (seen in game): Quest
 -- Objectives, Show Quest Levels, Quest Difficulty Color, Low-Level Quests, Tracked Items; the owner keeps them all off,
 -- and with no switch left they stay off. The button's reset badge (the red cross, which puts the game's entries back
 -- to their defaults) goes with them.
@@ -273,10 +284,15 @@ BF:At("login", function()
 	local button = ShowMenu:FindButton()
 	if button then
 		ShowMenu.button = button
+		-- The button opens its menu when pressed: that press now opens BookFinder's dropdown. The game's menu is also
+		-- given BookFinder's items, so even a client that opens it some other way shows only BookFinder's switches.
+		button:SetScript("OnMouseDown", function(self)
+			BF.Dropdown:Toggle(self, function() return ShowMenu:Items() end)
+		end)
 		button:SetupMenu(function(_, root)
 			if root.SetTag then root:SetTag("MENU_BOOKFINDER_SHOW") end
-			if root.CreateTitle then root:CreateTitle(L["Show:"]) end
-			ShowMenu:Fill(root, true)
+			local items = ShowMenu:Items()
+			toMenu(root, items)
 		end)
 		hideReset(button)
 	elseif Menu and Menu.ModifyMenu then
