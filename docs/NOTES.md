@@ -84,6 +84,11 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **Other people's files**: "nobody elses files should be going onto my github btw. they are there for u to review."
   Files you send (addon zips, documents, screenshots) are for review only and are never committed.
 
+- **Nobody's code**: "i mean noones code should be stolen at all i only send u addon zips so u can look at the code
+  not literally use them in a effort to steal in lazyness lol". BookFinder must be its own code. Other addons are
+  references to learn from, not parts to ship. (Until now BookFinder has been built from their code: Questie,
+  QuestieDB, OpenMap and Books on map are in `src/` and in every build.)
+
 ## Questions (only what I can't tell from your notes)
 
 - QuestieTrace is in Questie's zip and in its dropdown (image1). Should it be part of BookFinder?
