@@ -1,6 +1,7 @@
 # Notes (your words, as given)
 
-Note-taking mode: everything you say goes here as you say it. Nothing is built or changed until you say so.
+Everything you say goes here as you say it. **The build has started** ("start the build"); its working notes are
+`docs/BUILD.md`.
 Your document and its pictures (image1 to image8 below) are kept on the session's machine for review only, never in
 the repository.
 
@@ -127,6 +128,13 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   Questie's **NPC patrol paths**. **Books' route trail goes** (the dots and spark between route stops); the route itself
   stays, guided by the map pin, arrow and compass.
 - **"Once you have everything confirmed let me know when you're ready to build."**
+
+- **"Start the build. Be sure to keep notes for yourself, a Claude agent computer. You know how you understand things
+  best, so as you're building leave yourself useful notes."** Building from scratch; my working notes are
+  `docs/BUILD.md`.
+
+- **"I want you to remember my standards of quality. The better it is the first time, the less work you have to do.
+  Your path to success will not be found in a shortcut."** (Also at the top of `docs/BUILD.md`'s ground rules.)
 
 ## Questions (only what I can't tell from your notes)
 

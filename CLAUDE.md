@@ -28,8 +28,8 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
    `BooksOnMapFE` group sharing). Match their addon-message protocols exactly.
 5. **Nothing lost**: every feature of the three addons is present. Know them from a player's side, down to every
    tooltip, icon, message, click and setting (`docs/study/`).
-6. **Note-taking mode until told otherwise**: record what the owner says in `docs/NOTES.md`; build nothing until they
-   say so. Ask short questions only where the notes don't answer.
+6. **Building now** (the owner said "start the build"). Still record what the owner says in `docs/NOTES.md`. The
+   build's own working notes, plan and log are in `docs/BUILD.md`: read it before touching code, update it as you go.
 7. **Native, not bloated**: the game's own look and art, no clutter, no features nobody asked for.
 8. **Report honestly**: say what was tested and what wasn't; nothing has run in game until the owner says it did.
 
