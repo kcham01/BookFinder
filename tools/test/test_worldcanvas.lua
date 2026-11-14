@@ -140,4 +140,17 @@ return {
 		expect(found.Stormwind and not found.Stormwind.Icon.color or found.Stormwind.Icon.color[1] == 1, "learned: bright")
 		equal(found["Far Away"].Icon.color[1], 0.5, "not learned: grey")
 	end,
+
+	["explored areas: placed from the layer's pixels; a last piece uses part of its file"] = function(BF)
+		setup()
+		World.explored = { [1429] = { { offsetX = 100, offsetY = 50, textureWidth = 300, textureHeight = 200,
+			numTexturesWide = 2, numTexturesTall = 1, fileDataIDs = { 7001, 7002 } } } }
+		local pieces = BF.Stitch:Explored(1429)
+		equal(#pieces, 2, "two pieces")
+		local _, left, top, right, bottom = BF.Stitch.Corners(1429)
+		expect(near(pieces[1].left, left + (right - left) * 100 / 1002), "from its offset")
+		expect(near(pieces[2].left, left + (right - left) * 356 / 1002), "the second 256 pixels on")
+		expect(near(pieces[2].u, 44 / 64), "44 pixels of a 64-pixel file")
+		expect(near(pieces[1].v, 200 / 256), "200 of 256 down")
+	end,
 }

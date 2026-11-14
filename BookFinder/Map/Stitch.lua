@@ -76,6 +76,40 @@ function Stitch:Zones(continent)
 	return maps
 end
 
+--- The explored areas of a map, placed in the world: { {file, left, top, right, bottom, u, v}, ... } where u, v are the
+--- part of the texture file the piece uses (the game's exploration pictures come in 256-pixel pieces; a last, smaller
+--- piece sits in a file of the next power of two). Not cached: exploration grows.
+function Stitch:Explored(map)
+	local instance, left, top, right, bottom = corners(map)
+	local layers = instance and C_Map.GetMapArtLayers and C_Map.GetMapArtLayers(map)
+	local layer = layers and layers[1]
+	local list = {}
+	if not layer or not C_MapExplorationInfo or not C_MapExplorationInfo.GetExploredMapTextures then return list end
+	local overlays = C_MapExplorationInfo.GetExploredMapTextures(map) or {}
+	local w, h = right - left, bottom - top
+	local function at(px, py) return left + w * px / layer.layerWidth, top + h * py / layer.layerHeight end
+	for _, o in ipairs(overlays) do
+		if not o.isShownByMouseOver then
+			local i = 0
+			for row = 1, o.numTexturesTall do
+				local ph = row < o.numTexturesTall and 256 or (o.textureHeight % 256 == 0 and 256 or o.textureHeight % 256)
+				for col = 1, o.numTexturesWide do
+					i = i + 1
+					local pw = col < o.numTexturesWide and 256 or (o.textureWidth % 256 == 0 and 256 or o.textureWidth % 256)
+					local fw, fh = 16, 16
+					while fw < pw do fw = fw * 2 end
+					while fh < ph do fh = fh * 2 end
+					local px, py = o.offsetX + (col - 1) * 256, o.offsetY + (row - 1) * 256
+					local l, t = at(px, py)
+					local r, b = at(px + pw, py + ph)
+					list[#list + 1] = { file = o.fileDataIDs[i], left = l, top = t, right = r, bottom = b, u = pw / fw, v = ph / fh }
+				end
+			end
+		end
+	end
+	return list
+end
+
 --- A world point (east, north yards) as a map's 0..1 point.
 function Stitch:ToMap(map, east, north)
 	local instance, left, top, right, bottom = corners(map)
