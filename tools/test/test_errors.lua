@@ -1,11 +1,12 @@
 return {
-	["errors: caught, counted, kept, ready to copy"] = function(BF)
+	["errors: caught, counted, kept, ready to copy (old builds' list dropped)"] = function(BF)
+		BookFinderDB = { errors = { { message = "old 1.8.0 error", count = 3, first = 1794592356 } } }
 		Login()
 		BF:Listen("BF_BOOM", function() error("kaboom") end)
 		BF:Send("BF_BOOM")
 		BF:Send("BF_BOOM")
 		World.errors = {} -- (the test's own record of errors: these were on purpose)
-		local kept = BookFinderDB.errors
+		local kept = BookFinderDB.errorLog
 		equal(#kept, 1, "one kind of error")
 		equal(kept[1].count, 2, "counted twice")
 		expect(kept[1].message:find("kaboom", 1, true), "the message")
@@ -13,5 +14,6 @@ return {
 		expect(BookFinderErrors:IsShown(), "window")
 		expect(BookFinderErrors.report:find("kaboom", 1, true), "in the report")
 		expect(BookFinderErrors.report:find("interface 16001", 1, true), "the game's version in the report")
+		expect(not BookFinderErrors.report:find("old 1.8.0 error", 1, true), "the old build's list is gone")
 	end,
 }
