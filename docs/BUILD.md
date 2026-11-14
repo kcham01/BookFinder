@@ -156,3 +156,17 @@ See the log. Current phase is the first unchecked one.
   any item, so Questie's Pet Food vendors are empty on Forever too: left out rather than guessed. Meeting stones and
   moonwells come from object names; mailboxes from Questie's curated list (55, not the 149 objects named Mailbox).
   Faction: NPCs by friendlyTo, objects by factionTemplate (an enemy-group mask: 2 Alliance, 4 Horde).
+- **Panel (the owner's layout, rebuilt after "doesn't look like what I asked")**: `UI/Widgets.lua` (OpenMap's look
+  from the game's art: NineSlice "ButtonFrameTemplateNoPortrait" + UI-Background-Rock darkened, bronze rules/edges
+  0.66,0.49,0.28, lit 1,0.82,0.3, checkbox-minimal, UI-HUD-ActionBar-IconFrame, raid-star stars, MinimalTabTemplate,
+  MinimalSliderWithSteppersTemplate), `UI/Panel.lua` (side tabs down the right: OpenMap, Quests, Books, Journey; top
+  tabs = pages; settings placed by the layout table, test fails if one is left out; tiles + "Find a place" on the
+  OpenMap tab; stars = favourites, state saved, **the favourites bar on the map is not built yet**), `UI/Pages.lua`
+  (Profiles, Rewards), `UI/JourneyPages.lua` (My Journey, Quests by Zone, Quests by Faction, Advanced Search with
+  details, Show on Map, Map pin, Hide), `Quests/Journey.lua`, `Quests/Search.lua` (+ manual map layer, /bf tomap),
+  `Quests/QuestTip.lua`, `Quests/Sounds.lua`, `UI/MapActions.lua`, `Core/Commands.lua` (/bf, /bookfinder).
+- Forever API gotcha: **GetItemCount and GetFactionInfoByID do not exist** (C_Item.GetItemCount,
+  C_Reputation.GetFactionDataByID). The stand-ins now read those globals as nil, like the client.
+- The owner's first in-game test ran a build that is NOT this repository (it had Journey/Quill/Stitch/WorldCanvas
+  modules we never wrote): another session or an old copy. Always tell the owner to install this branch's
+  `BookFinder/` folder, replacing the old one whole.

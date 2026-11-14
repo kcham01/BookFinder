@@ -26,7 +26,7 @@ local function completeKind(quest)
 	return "complete"
 end
 
-local rank = { complete = 3, available = 2, itemStart = 2, objective = 1, townsfolk = 0.5 }
+local rank = { complete = 3, available = 2, itemStart = 2, objective = 1, manual = 0.8, townsfolk = 0.5 }
 
 --- The role that decides the pin's icon.
 function Look:Lead(pin)
@@ -46,6 +46,7 @@ function Look:Kind(pin)
 	local lead = Look:Lead(pin)
 	if not lead then return "available", "available", true end
 	if lead.role == "townsfolk" then return lead.kind.icon, "townsfolk", false end
+	if lead.role == "manual" then return "event", "event", true end
 	if lead.role == "complete" then return completeKind(lead.quest), "available", true end
 	if lead.role == "available" or lead.role == "itemStart" then return availableKind(lead.quest), "available", true end
 	local icon = lead.objective and lead.objective.icon or Objectives.SLAY
