@@ -31,12 +31,12 @@ local function source()
 end
 
 return {
-	["/bf opens it: Map, Quests, Books down the side (Journey waits for its windows)"] = function(BF)
+	["/bf opens it: Map, Quests, Books, Journey down the side"] = function(BF)
 		setup()
 		SlashCmdList.BOOKFINDER("")
 		local frame = BF.Panel.frame
 		expect(frame and frame.shown, "shown")
-		equal(labels(frame.sideTabs, "section"), "Map, Quests, Books", "the side tabs")
+		equal(labels(frame.sideTabs, "section"), "Map, Quests, Books, Journey", "the side tabs")
 		expect(UISpecialFrames[1] == "BookFinderPanel", "Escape closes it")
 		SlashCmdList.BOOKFINDER("")
 		expect(not frame.shown, "toggled shut")

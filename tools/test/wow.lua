@@ -365,6 +365,7 @@ C_Map = strict("C_Map", {
 		return map, { x = 1 - pos.y / s, y = 1 - pos.x / s, GetXY = function(p) return p.x, p.y end }
 	end,
 	GetMapChildrenInfo = function() return {} end,
+	GetAreaInfo = function(area) return "Area " .. area end,
 	CanSetUserWaypointOnMap = function() return true end,
 	SetUserWaypoint = function(point) World.waypoint = point end,
 	GetUserWaypoint = function() return World.waypoint end,
