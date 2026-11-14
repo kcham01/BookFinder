@@ -41,6 +41,7 @@ Map\Look.lua
 Quests\PinTooltip.lua
 Quests\Tooltips.lua
 Quests\Nameplates.lua
+Quests\List.lua
 Map\Waypoint.lua
 Map\Pins.xml
 Map\WorldMap.lua
