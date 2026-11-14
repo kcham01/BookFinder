@@ -92,7 +92,7 @@ bit = {
 }
 debugprofilestop = function() return os.clock() * 1000 end
 GetTime = function() return World.time end
-time = function() return 1700000000 + math.floor(World.time) end
+time = function(t) if t then return os.time(t) end return 1700000000 + math.floor(World.time) end
 date = os.date
 
 local errors = {}
@@ -326,6 +326,12 @@ C_Map = strict("C_Map", {
 	HasUserWaypoint = function() return World.waypoint ~= nil end,
 	ClearUserWaypoint = function() World.waypoint = nil end,
 })
+C_DateAndTime = strict("C_DateAndTime", {
+	GetCurrentCalendarTime = function()
+		local d = World.date or { year = 2026, month = 11, monthDay = 14, hour = 12, minute = 0 }
+		return d
+	end,
+})
 UiMapPoint = { CreateFromCoordinates = function(map, x, y) return { uiMapID = map, position = { x = x, y = y } } end }
 CreateVector2D = function(x, y) return { x = x, y = y, GetXY = function(p) return p.x, p.y end } end
 
@@ -337,7 +343,38 @@ C_QuestLog = strict("C_QuestLog", {
 		return {}
 	end,
 	IsOnQuest = function(id) for _, q in ipairs(World.questLog) do if q.questID == id then return true end end return false end,
+	-- Forever's modern quest log: one header line ("Zone") before each quest's zone, as the client lists them.
+	GetNumQuestLogEntries = function() return #World.QuestLogLines(), #World.questLog end,
+	GetInfo = function(index) return World.QuestLogLines()[index] end,
+	IsComplete = function(id)
+		for _, q in ipairs(World.questLog) do if q.questID == id then return q.isComplete == 1 end end
+		return false
+	end,
+	IsFailed = function(id)
+		for _, q in ipairs(World.questLog) do if q.questID == id then return q.isComplete == -1 end end
+		return false
+	end,
+	GetLogIndexForQuestID = function(id)
+		for i, l in ipairs(World.QuestLogLines()) do if l.questID == id then return i end end
+	end,
+	GetQuestWatchType = function() return nil end,
+	AddQuestWatch = function() end,
+	RemoveQuestWatch = function() end,
+	GetTimeAllowed = function() return nil end,
 })
+
+function World.QuestLogLines()
+	local lines, header = {}, nil
+	for _, q in ipairs(World.questLog) do
+		local zone = q.zone or "Elwynn Forest"
+		if zone ~= header then
+			header = zone
+			lines[#lines + 1] = { title = zone, isHeader = true }
+		end
+		lines[#lines + 1] = { title = q.title, level = q.level, questID = q.questID, isHeader = false, frequency = 1 }
+	end
+	return lines
+end
 GetQuestsCompleted = function() local t = {} for id in pairs(World.completed) do t[id] = true end return t end
 GetNumQuestLogEntries = function() return #World.questLog, #World.questLog end
 GetQuestLogTitle = function(i)
@@ -363,6 +400,13 @@ GetFactionInfoByID = function(id)
 	return "Faction " .. id, "", 4, 0, 42000, v
 end
 IsSpellKnown = function() return false end
+C_Spell = strict("C_Spell", { GetSpellName = function(id) return World.spellNames and World.spellNames[id] or nil end })
+C_SkillInfo = strict("C_SkillInfo", {
+	GetSkillLineInfoByID = function(id)
+		for _, s in ipairs(World.skills) do if s.id == id then return { name = s.name, rank = s.rank, max = s.max } end end
+		return nil
+	end,
+})
 GetSpellInfo = function(id) return World.spellNames and World.spellNames[id] or nil end
 
 C_ChatInfo = strict("C_ChatInfo", {

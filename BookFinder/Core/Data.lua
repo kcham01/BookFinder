@@ -51,10 +51,18 @@ local function decode(kind, id)
 	return chunk()
 end
 
+-- Rows switched in at run time, whole (tables), by a named layer: the Darkmoon Faire's NPCs where the faire is now.
+local runtime = { quests = {}, npcs = {}, objects = {}, items = {} } -- [kind][layer] = { [id] = row }
+
 local function getter(kind)
 	local cache = caches[kind]
+	local layers = runtime[kind]
 	return function(_, id)
 		if not id then return nil end
+		for _, rows in pairs(layers) do
+			local row = rows[id]
+			if row then return row end
+		end
 		local row = cache[id]
 		if row == nil then
 			row = decode(kind, id) or false
@@ -62,6 +70,15 @@ local function getter(kind)
 		end
 		return row or nil
 	end
+end
+
+--- Puts whole rows over the data's rows of one kind under a layer name; nil takes that layer away.
+function BF:SetRuntimeRows(kind, layer, rows)
+	runtime[kind][layer] = rows
+end
+
+function BF:SetNpcRows(layer, rows)
+	BF:SetRuntimeRows("npcs", layer, rows)
 end
 
 BF.Quest = getter("quests")
