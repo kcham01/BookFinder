@@ -18,19 +18,19 @@ local Zones, Icons = BF.Zones, BF.Icons
 local pi, abs, exp, floor = math.pi, math.abs, math.exp, math.floor
 local TWO_PI = 2 * pi
 
--- Settings (the Map tab's Guide page) -----------------------------------------------------------------------------
+-- Settings (the Map tab's More page) ------------------------------------------------------------------------------
 
 local S = BF.Settings
-local P = "Map/Guide"
-S:Define("guide.arrow", { default = true, page = P, label = "Arrow to the map pin" })
-S:Define("guide.compass", { default = true, page = P, label = "Compass at the top of the screen" })
-S:Define("guide.arrowScale", { default = 1, min = 0.5, max = 2, step = 0.05, page = P, label = "Arrow size" })
-S:Define("guide.compassWidth", { default = 420, min = 200, max = 900, step = 10, page = P, label = "Compass width" })
-S:Define("guide.compassScale", { default = 1, min = 0.5, max = 2, step = 0.05, page = P, label = "Compass size" })
-S:Define("guide.compassBand", { default = false, page = P, label = "Dark band behind the compass" })
-S:Define("guide.metres", { default = false, page = P, label = "Distances in metres" })
-S:Define("guide.arrival", { default = 10, min = 5, max = 50, step = 1, page = P, label = "Arrived within (yards)" })
-S:Define("guide.arrivalSound", { default = true, page = P, label = "Sound on arrival" })
+local P, G = "Map/More", "Arrow and compass"
+S:Define("guide.arrow", { default = true, page = P, group = G, label = "Arrow to the map pin" })
+S:Define("guide.compass", { default = true, page = P, group = G, label = "Compass at the top of the screen" })
+S:Define("guide.arrowScale", { default = 1, min = 0.5, max = 2, step = 0.05, page = P, group = G, label = "Arrow size" })
+S:Define("guide.compassWidth", { default = 420, min = 200, max = 900, step = 10, page = P, group = G, label = "Compass width" })
+S:Define("guide.compassScale", { default = 1, min = 0.5, max = 2, step = 0.05, page = P, group = G, label = "Compass size" })
+S:Define("guide.compassBand", { default = false, page = P, group = G, label = "Dark band behind the compass" })
+S:Define("guide.metres", { default = false, page = P, group = G, label = "Distances in metres" })
+S:Define("guide.arrival", { default = 10, min = 5, max = 50, step = 1, page = P, group = G, label = "Arrived within (yards)" })
+S:Define("guide.arrivalSound", { default = true, page = P, group = G, label = "Sound on arrival" })
 
 -- Where the player is, and the pin -------------------------------------------------------------------------------
 

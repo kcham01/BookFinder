@@ -27,6 +27,7 @@ Core\Data.lua
 Core\Zones.lua
 Core\Player.lua
 
+Quests\Sounds.lua
 Quests\Options.lua
 Quests\Events.lua
 Quests\Log.lua
@@ -41,6 +42,10 @@ Map\Look.lua
 Quests\PinTooltip.lua
 Quests\Tooltips.lua
 Quests\Nameplates.lua
+Quests\List.lua
+Quests\Auto.lua
+Quests\Announce.lua
+Quests\Links.lua
 Map\Waypoint.lua
 Map\Pins.xml
 Map\WorldMap.lua
@@ -50,9 +55,37 @@ Map\Coords.lua
 Map\Guide.lua
 Map\Townsfolk.lua
 Map\ShowMenu.lua
+Map\UserPins.lua
+Map\People.lua
+Map\Stitch.lua
+Map\WorldCanvas.lua
+Map\CanvasLayers.lua
+Map\Dungeons.lua
+Map\FindPlace.lua
+Map\Quill.lua
+
+Comms\Wire.lua
+Comms\QuestieSerial.lua
+Comms\Questie.lua
+Comms\Party.lua
 
 Books\List.lua
 Books\Books.lua
 Books\Map.lua
 Books\Route.lua
 Books\Alerts.lua
+Books\Tab.lua
+
+UI\Dropdown.lua
+UI\Widgets.lua
+UI\Rows.lua
+UI\Panel.lua
+UI\Profiles.lua
+UI\MapTabs.lua
+
+Journey\Journey.lua
+Journey\ByZone.lua
+Journey\Search.lua
+
+UI\MinimapButton.lua
+UI\Commands.lua

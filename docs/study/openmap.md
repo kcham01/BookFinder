@@ -167,3 +167,32 @@ minimap button ("Click: the map and its menu", "Right-click: the options window"
 
 Account (OpenMapDB): every switch and slider, pins, drawings, notes, favourites, the menu's place and size, the
 window's size, flight data learned. Per character (OpenMapCharDB): its own choices (unexplored areas per character).
+
+## The protocols in detail (read from OpenMap's public code, v0.8.9)
+
+**Places, prefix `OpenMapLoc`** (only with "Share where you are" on; off by default):
+- Who gets it: the guild (`GUILD`), and each online friend known to use OpenMap: a character friend by `WHISPER`, a
+  Battle.net friend playing this same game, same faction, by `BNSendGameData` (a friend who is also in the guild has
+  it from the guild message).
+- `L1<tab>uiMapID<tab>x<tab>y<tab>CLASS<tab>level`: x, y on that map with four decimals (`%.4f`), CLASS the class file
+  name (MAGE). Checked every 2 s: sent when 10 s have passed and the player moved (more than 0.002 on the map) or the
+  map changed, else every 60 s. Never from inside an instance (dungeon, raid, battleground) or without a position:
+  then `L0` once ("stopped sharing"), as when sharing is turned off.
+- `H1` (hello) goes to each friend who comes online; a friend answers `H1` with their latest `L1` if they share, else
+  `H2`. Either marks the sender as an OpenMap user. Messages go one every 0.5 s, the newest per destination replacing
+  a waiting one.
+- Receiving: only `GUILD` and `WHISPER` (and Battle.net); a whisper is taken only from a friend; the player's own are
+  ignored. A place is dropped 150 s after the last word, or at `L0`. A place must be on a map OpenMap draws and in 0..1.
+
+**Map pins, prefix `OpenMap`**:
+- A pin: map (uiMapID), x, y (0..1), note (at most 160 characters), colour 1 Gold, 2 Red, 3 Green, 4 Blue, 5 Purple.
+- `P1<tab>uiMapID<tab>x<tab>y<tab>colour<tab>note`, x and y with four decimals, the whole at most 255 bytes (the note
+  cut short at a whole UTF-8 character). Sent one every 0.3 s to `PARTY`/`RAID` (group), `GUILD`, or `WHISPER` to the
+  target.
+- Receiving (only with "Pins others share with you" on, the default): from anyone but the player; pins from one sender
+  are gathered until 1.5 s after the last (at most 100), then the player is asked: "<name> shared <n> map pin(s) with
+  you:" with the first three ("<zone>: <note>", "... and <n> more"), **Add them** / **Ignore**. From the party or
+  raid with "Auto-add group's pins" on: added without asking ("Added <n> map pin(s) from <name>."). A pin at the same
+  place (within 0.0005) with the same note as one the player has is not added twice.
+- Codes: `OMPINS1:` then each pin as `map,x,y,colour,note` (x, y `%.4f`; in the note `%`, `,` and `;` written `%XX`),
+  pins joined by `;`. Import reads the first such code in the pasted text, up to 500 pins.
