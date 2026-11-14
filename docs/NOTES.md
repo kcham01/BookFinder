@@ -123,6 +123,9 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   arrow and compass at the top of the screen, guiding you to the map pin (`docs/study/arrow-and-compass.md`). No
   route lines drawn on the map. (This brings back the arrow and compass that 2.0.0 removed with Shortest Path; still no
   journeys or routing.)
+- **Lines on the map** (asked which of the three addons' lines stay): keep OpenMap's **boat and zeppelin routes** and
+  Questie's **NPC patrol paths**. **Books' route trail goes** (the dots and spark between route stops); the route itself
+  stays, guided by the map pin, arrow and compass.
 - **"Once you have everything confirmed let me know when you're ready to build."**
 
 ## Questions (only what I can't tell from your notes)
