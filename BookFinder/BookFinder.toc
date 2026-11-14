@@ -10,6 +10,7 @@
 
 Core\Init.lua
 Core\Locale.lua
+Core\Errors.lua
 
 Data\Enums.lua
 Data\Zones.lua
