@@ -21,6 +21,13 @@
 			<OnMouseUp method="OnMouseUp"/>
 		</Scripts>
 	</Frame>
+	<!-- The patrol paths of the NPCs a map marks: one pin over the whole canvas holding the lines (BookFinderPathPinMixin,
+	     Map/Paths.lua). It never takes the mouse. -->
+	<Frame name="BookFinderPathPinTemplate" mixin="BookFinderPathPinMixin" virtual="true" enableMouse="false">
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
 	<!-- A library book: the book's own icon, a route step number when the route is on. BookFinderBookPinMixin
 	     (Books/Map.lua). -->
 	<Frame name="BookFinderBookPinTemplate" mixin="BookFinderBookPinMixin" virtual="true" enableMouse="true">

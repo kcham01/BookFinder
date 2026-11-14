@@ -45,6 +45,8 @@ Map\Waypoint.lua
 Map\Pins.xml
 Map\WorldMap.lua
 Map\Minimap.lua
+Map\Paths.lua
+Map\Coords.lua
 Map\Guide.lua
 Map\Townsfolk.lua
 

@@ -95,7 +95,8 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 1. ~~Data converter + generated data files + credits.~~ Done.
 2. ~~Core: namespace, events, saved variables, settings store, offline harness.~~ Done (slash commands: phase 13).
 3. ~~Quest engine: player's log and progress, completed quests, availability rules, objective spawns.~~ Done.
-4. World map + minimap pins (quest givers, turn-ins, objectives, townsfolk), icon tooltips, Shift-click hide.
+4. ~~World map + minimap pins (quest givers, turn-ins, objectives, townsfolk), icon tooltips, Shift-click hide.~~ Done
+   (party members' objectives wait for phase 11).
 5. ~~Unit/item/object tooltips, nameplate and target icons.~~ Done (party lines wait for phase 11).
 6. ~~Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).~~ Done.
 7. Books: list (ours), detection, pins, Books tab, route (no trail), cards, minimap button.
@@ -170,3 +171,12 @@ See the log. Current phase is the first unchecked one.
   **Not verified in game**: whether Forever's Object tooltip data has a GUID; the target icon's anchor (CENTER on
   TargetFrame's RIGHT, offset by the settings) and the nameplate anchor (CENTER on the plate's LEFT) are guesses
   from Questie's defaults; object names match English only (no l10n data converted yet).
+- Phase 4 finished: `Map/Paths.lua` (patrol paths of every NPC the map marks: on the world map one canvas-sized pin
+  `BookFinderPathPinTemplate` holds Line regions in canvas units, its own frame level under the objectives; on the
+  minimap each segment is cut to the circle or square; hostile colour by friendlyTo; hovering pins sends
+  BF_PIN_ENTER(pins) / BF_PIN_LEAVE from PinTooltip and the paths of every NPC at that spot highlight).
+  `Map/Minimap.lua` now keeps its geometry in `MinimapPins.view` and calls `MinimapPins:AfterUpdate(fn)` layers;
+  `MinimapPins:Place(view, north, west)` turns a world offset into minimap pixels. `Map/Coords.lua`: "Player: x, y"
+  and "Cursor: x, y" at the bottom of the world map's scroll area, the player's on the minimap (off by default),
+  `coords.precision` decimals. **Not verified in game**: where the coordinate lines sit against Forever's map border;
+  path line thickness when zoomed (lines live in canvas units, so they thicken with zoom).

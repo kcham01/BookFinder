@@ -120,15 +120,33 @@ end
 
 -- Placing -------------------------------------------------------------------------------------------------------
 
-local function update()
+-- Layers drawn after the pins each update: fn(view), view nil when nothing is drawn (MinimapPins:AfterUpdate).
+local after = {}
+MinimapPins.view = {}
+
+function MinimapPins:AfterUpdate(fn)
+	after[#after + 1] = fn
+end
+
+--- A world offset from the player (yards north and west) as minimap pixels right and up, and whether it is inside.
+function MinimapPins:Place(view, north, west)
+	local right, up = -west, north
+	if view.rotate then right, up = right * view.cs + up * view.sn, -right * view.sn + up * view.cs end
+	local inside
+	if view.square then inside = abs(right) <= view.radius and abs(up) <= view.radius
+	else inside = right * right + up * up <= view.radius * view.radius end
+	return right * view.pixelsPerYard, up * view.pixelsPerYard, inside
+end
+
+local function draw()
 	if not BF:Get("quests.minimap") or not Minimap:IsVisible() then
 		releaseAll()
-		return
+		return false
 	end
 	local instance, px, py = Zones:PlayerWorld()
 	if not instance then
 		releaseAll()
-		return
+		return false
 	end
 	if index.instance ~= instance or index.version ~= Marks.version then rebuildIndex(instance) end
 
@@ -147,6 +165,10 @@ local function update()
 	local overAlpha = BF:Get("icons.fadeOverPlayerAlpha")
 
 	releaseAll()
+	-- The same geometry for other layers drawn on the minimap (patrol paths): MinimapPins.view.
+	local view = MinimapPins.view
+	view.instance, view.px, view.py, view.radius, view.pixelsPerYard = instance, px, py, radius, pixelsPerYard
+	view.rotate, view.cs, view.sn, view.square = rotate, cs, sn, square
 	local reach = radius
 	local c0x, c1x = floor((px - reach) / CELL), floor((px + reach) / CELL)
 	local c0y, c1y = floor((py - reach) / CELL), floor((py + reach) / CELL)
@@ -183,6 +205,12 @@ local function update()
 			end
 		end
 	end
+	return true
+end
+
+local function update()
+	local drawn = draw()
+	for _, fn in ipairs(after) do BF.safecall(fn, drawn and MinimapPins.view or nil) end
 end
 MinimapPins.Update = update
 
