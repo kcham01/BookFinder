@@ -145,7 +145,9 @@ end
 function BookFinderBookPinMixin:OnMouseClickAction(button)
 	BookMap:Click(self.book, self.place, button)
 end
-BookFinderBookPinMixin.OnMouseUp = BookFinderBookPinMixin.OnMouseClickAction
+-- (the canvas calls OnMouseUp, then OnMouseClickAction when released over the pin: the click is the latter)
+function BookFinderBookPinMixin:OnMouseUp() end
+function BookFinderBookPinMixin:OnMouseDown() end
 
 local function refreshWorldMap()
 	if WorldMapFrame and WorldMapFrame:IsShown() then Provider:RefreshAllData() end

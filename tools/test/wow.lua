@@ -485,6 +485,7 @@ MapCanvasDataProviderMixin = {
 	RefreshAllData = function() end,
 }
 MapCanvasPinMixin = {
+	DisableInheritedMotionScriptsWarning = function() return false end,
 	SetScalingLimits = function() end,
 	SetPosition = function(self, x, y) self.normalizedX, self.normalizedY = x, y end,
 	UseFrameLevelType = function() end,
@@ -509,7 +510,16 @@ local function newCanvas()
 	function map:AcquirePin(template, ...)
 		local pool = self.pinPools[template]
 		assert(pool, "MapCanvas: no pool and no XML template for " .. tostring(template))
-		local pin = pool:Acquire()
+		local pin, new = pool:Acquire()
+		if new then
+			-- As the client: a new pin must not have OnEnter/OnLeave scripts; the canvas sets its own, which call
+			-- the pin's OnMouseEnter / OnMouseLeave, and OnMouseUp + OnMouseClickAction for clicks.
+			assert(pin:GetScript("OnEnter") == nil, "Blizzard_MapCanvas.lua:309: assertion failed! (OnEnter)")
+			assert(pin:GetScript("OnLeave") == nil, "Blizzard_MapCanvas.lua:309: assertion failed! (OnLeave)")
+			pin:SetScript("OnEnter", function(p) p:OnMouseEnter() end)
+			pin:SetScript("OnLeave", function(p) p:OnMouseLeave() end)
+			pin:SetScript("OnMouseUp", function(p, button) p:OnMouseUp(button, true) p:OnMouseClickAction(button) end)
+		end
 		pin:OnAcquired(...)
 		return pin
 	end

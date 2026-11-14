@@ -184,7 +184,9 @@ end
 function BookFinderMapPinMixin:OnMouseClickAction(button)
 	BF.PinTooltip:Click(self.pin, button, self.sourceMap, self)
 end
-BookFinderMapPinMixin.OnMouseUp = BookFinderMapPinMixin.OnMouseClickAction
+-- (the canvas calls OnMouseUp, then OnMouseClickAction when released over the pin: the click is the latter)
+function BookFinderMapPinMixin:OnMouseUp() end
+function BookFinderMapPinMixin:OnMouseDown() end
 
 -- Keeping it current ----------------------------------------------------------------------------------------------
 
