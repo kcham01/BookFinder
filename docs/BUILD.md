@@ -105,7 +105,8 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
    Done (its action tiles, place search and favourite stars come with the map, phase 12).
 10. ~~Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).~~ Done
     (also the Books tab and the map window's tabs).
-11. Comms: questie + QuestieV1, BooksOnMapFE, OpenMapLoc, OpenMap pins.
+11. Comms: ~~questie + QuestieV1~~ (done), ~~BooksOnMapFE~~ (done in phase 7), OpenMapLoc, OpenMap pins (with the
+    map's people and pins, phase 12).
 12. OpenMap's map: stitched world from the game's map art, dungeons, pins and card, quill, notes, people.
 13. Automation, announcements, sounds, chat links, commands; polish pass.
 
@@ -278,3 +279,21 @@ See the log. Current phase is the first unchecked one.
   PinTooltip know the role), Set the map pin, Clear the map. `Search.REASONS`: Rules:Blocker's keys in plain words.
   Not done from Questie's Journey: importing another character's journey (pending: the study does not say how it
   behaves; ask the owner or read Questie again).
+- The owner sent Questie 12.9.0 (with QuestieDB 1.1.1) and Books on map 2.3.0 again (same versions as the study);
+  unpacked in this session's scratchpad only. The protocol is now written down byte by byte in
+  `docs/study/questie-protocol.md`, so it survives the zips going away.
+- Phase 11, Questie's side: `Comms/Wire.lua` (AceComm's framing: pieces 1/2/3, escape 4, joined per prefix + channel
+  + sender; a bandwidth queue by priority; LibDeflate's addon-channel escape 0 -> 1,2 and 1 -> 1,3),
+  `Comms/QuestieSerial.lua` (Questie's value format and its "1short" and "b89" streams), `Comms/Questie.lua` (msgIds
+  1, 2, 10, 11, 12, 13, 14 and QuestieV1 visibility, sent when Questie sends them; BookFinder gives version "1.0.0" so
+  no Questie user is told to update and replies come as the v1 list; both lists are read), `Comms/Party.lua` (party
+  members' objectives on the map where the player has nothing of their own for them, per QuestieV1 visibility, groups
+  of 5 or fewer; their progress, and nearby players' as "Nearby", on NPC tooltips). `Objectives:ForData(questID)`:
+  a quest's objectives from the data alone. `party.objectives` is live.
+  **Checked against Questie's own code** (tools/check/): the serializer writes the same bytes as Questie's for every
+  sample (updates, removes, requests, v1 lists with hashed repeated strings, v2 lists, big numbers, floats, the
+  1short escape bytes, a b89 yell) and each reads the other's; the escape matches LibDeflate on 500 random strings.
+  Found while checking: Questie cannot read its own yells (it writes their strings raw in the b89 stream but reads
+  them encoded, so the keys come out wrong); BookFinder reads them right.
+  **Not verified in game**: the game's CBOR/compression on Forever (QuestieV1 is skipped if C_EncodingUtil is
+  missing); a live party with a Questie user.

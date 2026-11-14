@@ -155,7 +155,8 @@ local function addPin(pin, shift, seen)
 			if not seen["t" .. r.quest] then
 				seen["t" .. r.quest] = true
 				line(" ")
-				double(plainTitle(r.quest), "(" .. L["Active"] .. ")", WHITE, YELLOW)
+				-- A party member's objective names them instead of "(Active)".
+				double(plainTitle(r.quest), "(" .. (r.party or L["Active"]) .. ")", WHITE, YELLOW)
 			end
 			local rec = r.objective or {}
 			local names = {}

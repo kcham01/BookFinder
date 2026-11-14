@@ -52,6 +52,11 @@ Map\Guide.lua
 Map\Townsfolk.lua
 Map\ShowMenu.lua
 
+Comms\Wire.lua
+Comms\QuestieSerial.lua
+Comms\Questie.lua
+Comms\Party.lua
+
 Books\List.lua
 Books\Books.lua
 Books\Map.lua

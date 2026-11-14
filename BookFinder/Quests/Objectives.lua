@@ -213,6 +213,28 @@ function Objectives:For(questID)
 	return list
 end
 
+--- A quest's objectives from the data alone (a quest in a party member's log, not in the player's): each
+--- { index, kind, name, icon, id, sources }, in the order the game lists them (reputation left out).
+local dataCache = {}
+function Objectives:ForData(questID)
+	local cached = dataCache[questID]
+	if cached then return cached end
+	local list = {}
+	for _, d in ipairs(dataObjectives(questID)) do
+		if d.kind ~= "reputation" then
+			local entry = d.entry
+			local own = type(entry) == "table" and entry[d.kind == "killCredit" and 4 or 3]
+			list[#list + 1] = {
+				index = #list + 1, kind = d.kind, name = nameFor(d.kind, entry), sources = sourcesFor(d.kind, entry),
+				icon = (type(own) == "number" and iconTypes[own]) or iconFor[d.kind],
+				id = type(entry) == "table" and (d.kind == "killCredit" and entry[2] or entry[1]) or nil,
+			}
+		end
+	end
+	dataCache[questID] = list
+	return list
+end
+
 --- Spawns of one source: the NPC's or object's spawn list ({area = {{x, y}...}}), or nil.
 function Objectives:Spawns(source)
 	if source.type == "npc" then

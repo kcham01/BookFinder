@@ -45,7 +45,7 @@ return {
 	["Quests' pages along the top; pages of things not built yet are left out"] = function(BF)
 		setup()
 		BF.Panel:Show("quests")
-		equal(labels(BF.Panel.frame.topTabs, "page"), "Map, Look, Tooltips, Quest list, Advanced", "the top tabs")
+		equal(labels(BF.Panel.frame.topTabs, "page"), "Map, Look, Tooltips, Quest list, Automation, Advanced", "the top tabs")
 		BF.Panel:Show("map")
 		equal(labels(BF.Panel.frame.topTabs, "page"), "Look, More, Profiles", "the map's (On the map comes with the map)")
 	end,

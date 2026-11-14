@@ -9,7 +9,7 @@ local S = BF.Settings
 -- until the code that reads them exists. Take a key off this list in the same change that builds its feature
 -- (tools/test/test_panel.lua checks both ways).
 local PENDING_PREFIXES = { "auto.", "announce.", "sounds.", "dbm." }
-local PENDING = { ["list.playButtons"] = true, ["party.objectives"] = true, ["quests.frameIcons"] = true, ["icons.clusterSpawns"] = true }
+local PENDING = { ["list.playButtons"] = true, ["quests.frameIcons"] = true, ["icons.clusterSpawns"] = true }
 
 local function pending(key)
 	if PENDING[key] then return true end
