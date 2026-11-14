@@ -136,6 +136,19 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **"I want you to remember my standards of quality. The better it is the first time, the less work you have to do.
   Your path to success will not be found in a shortcut."** (Also at the top of `docs/BUILD.md`'s ground rules.)
 
+- **First in-game test of 3.0.0-dev (screenshots, kept outside the repository):** an error every frame,
+  `Books/Books.lua:62: attempt to call a nil value` (`GetItemCount` is gone on WoW: Forever; fixed: `C_Item`).
+  **"Things don't look like or work like what I said. The settings pane doesn't look like the one I asked for, and the
+  Journey, search and Quests by Zone don't look like I said."**
+  - What was asked (section 2 above): the settings window **is OpenMap's panel in look** (image3: its metal frame,
+    bronze edges, "Find a place" search, action tiles with stars, two-column tick lists with icons and stars,
+    sliders under them), with **a column of tabs down its right side like Questie's** (image4): OpenMap, Quests,
+    Books, Journey. Inside each, **its pages as tabs along the top** like On the map / Look / More (image6).
+  - **Journey, Quests by Zone, Quests by Faction and Advanced Search are pages of the Journey tab** inside that same
+    panel (image5), not a window of their own.
+  - The screenshots show a plain dark window with tabs along the top and icon tabs at the right, Journey as its own
+    window: not that.
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)
