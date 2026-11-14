@@ -93,6 +93,10 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   written fresh, fully original (option 1: quest help is only what the game itself provides). Their code is out of
   the branch; taking it out of GitHub's history too needs a force-push, which waits on your go-ahead.
 
+- **"Nothing should be lost from the 3 addons. All features better be present."** Every feature of Questie, OpenMap
+  and Books on map is in the new BookFinder, written as BookFinder's own code. Open: where Questie's quest, NPC, object
+  and item data comes from (asked in chat).
+
 ## Questions (only what I can't tell from your notes)
 
 - QuestieTrace is in Questie's zip and in its dropdown (image1). Should it be part of BookFinder?
