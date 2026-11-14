@@ -28,15 +28,16 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
    `BooksOnMapFE` group sharing). Match their addon-message protocols exactly.
 5. **Nothing lost**: every feature of the three addons is present. Know them from a player's side, down to every
    tooltip, icon, message, click and setting (`docs/study/`).
-6. **Note-taking mode until told otherwise**: record what the owner says in `docs/NOTES.md`; build nothing until they
-   say so. Ask short questions only where the notes don't answer.
+6. **Building now** (the owner said "start the build"). Still record what the owner says in `docs/NOTES.md`. The
+   build's own working notes, plan and log are in `docs/BUILD.md`: read it before touching code, update it as you go.
 7. **Native, not bloated**: the game's own look and art, no clutter, no features nobody asked for.
 8. **Report honestly**: say what was tested and what wasn't; nothing has run in game until the owner says it did.
 
 ## Where things stand
 
-- The repository was cleared of every other addon's code (commit "Remove every other addon's code"). Their code is
-  still in older history and on `main`; rewriting GitHub's history waits on the owner's go-ahead (a force-push).
+- The repository holds no other addon's code, and none of the owner's review files, anywhere in its history: GitHub's
+  history was rewritten (every branch; `main` matches this branch). Copies survive only behind the old pull requests
+  #1 to #12; removing those needs the repository recreated.
 - **Study (first pass done)**: `docs/study/` holds, per addon, how it works from a player's side (in our words):
   `books-on-map.md` (2.3.0), `openmap.md` (v0.8.9), `questie.md` (12.9.0 with QuestieDB 1.1.1), each ending with the
   protocols BookFinder must speak. Waiting on the owner's review.
@@ -54,6 +55,9 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
   Inside each, its pages as tabs along the top, like OpenMap's On the map / Look / More. (A new panel of BookFinder's
   own, laid out that way; not OpenMap's code.)
 - **Books tab** beside the quest log stays, showing the books.
+- **Arrow and compass** at the top of the screen guide you to the map pin you drop (Shortest Path's idea, BookFinder's
+  own code: `docs/study/arrow-and-compass.md`). **No route lines on the map**: the owner hated them; Books' route trail is out too. Kept: OpenMap's boat and zeppelin
+  routes, Questie's NPC patrol paths.
 
 ## Working here
 

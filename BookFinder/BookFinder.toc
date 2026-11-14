@@ -1,0 +1,52 @@
+## Interface: 16001
+## Title: BookFinder
+## Notes: Quests, the world map and the library books of WoW: Forever, in one.
+## Author: BookFinder
+## Version: 3.0.0-dev
+## SavedVariables: BookFinderDB
+## SavedVariablesPerCharacter: BookFinderCharDB
+## IconTexture: Interface\Icons\INV_Misc_Book_09
+## X-License: GPL-3.0 (data from QuestieDB: see Data\CREDITS.md)
+
+Core\Init.lua
+Core\Locale.lua
+
+Data\Enums.lua
+Data\Zones.lua
+Data\Drops.lua
+Data\Quests.lua
+Data\Npcs.lua
+Data\Objects.lua
+Data\Items.lua
+Data\Overrides.lua
+Data\Lists.lua
+Data\TownsfolkItems.lua
+
+Core\Settings.lua
+Core\Data.lua
+Core\Zones.lua
+Core\Player.lua
+
+Quests\Options.lua
+Quests\Events.lua
+Quests\Log.lua
+Quests\Rules.lua
+Quests\Objectives.lua
+Quests\Marks.lua
+Quests\Reward.lua
+
+Map\Icons.lua
+Map\Look.lua
+Quests\PinTooltip.lua
+Map\Waypoint.lua
+Map\Pins.xml
+Map\WorldMap.lua
+Map\Minimap.lua
+Map\Guide.lua
+Map\Townsfolk.lua
+
+Books\List.lua
+Books\Books.lua
+Books\Map.lua
+Books\Route.lua
+Books\Alerts.lua
