@@ -251,6 +251,7 @@ end
 function Region:CreateAnimationGroup() return newRegion("AnimationGroup", nil, self) end
 function Region:CreateAnimation(kind) return newRegion(kind or "Animation", nil, self) end
 function Region:SetTexture(t) self.texture = t end
+function Region:SetTexCoord(...) self.texCoord = { ... } end
 function Region:GetTexture() return self.texture end
 function Region:SetAtlas(a) self.atlas = a end
 function Region:GetAtlas() return self.atlas end
@@ -691,6 +692,7 @@ local function menuButton(mixin)
 	b.OnLoad = mixin.OnLoad
 	function b:SetupMenu(fn) self.generator = fn end
 	b.ResetButton = CreateFrame("Button", nil, b)
+	b.scripts.OnMouseDown = nil
 	return b
 end
 WorldMapFrame.overlayFrames = { menuButton(WorldMapFloorNavigationFrameMixin), menuButton(WorldMapTrackingOptionsButtonMixin) }
