@@ -334,3 +334,24 @@ See the log. Current phase is the first unchecked one.
   Left of phase 12: the stitched world map from the game's art, zone blending, unexplored areas, up-close minimap
   detail, dungeon entrances / maps / bosses, boats and zeppelins, flight masters and routes, zone levels, the quill,
   map notes, the panel's place search and action tiles, favourites.
+
+## Next: phase 12, the map (start here in a new session)
+
+- The owner chose **"Own code, OpenMap as guide"** (docs/NOTES.md): BookFinder writes its own stitched map; OpenMap
+  (public, MIT, https://github.com/openmap-world/openmap: clone into the scratchpad, never into the repository) is read
+  only to see how it behaves and looks, and BookFinder should look even better.
+- The owner's favourite feature: **zooming all the way down to minimap detail** (past the painted map's pixels, the
+  game's own minimap art mixes in: real trees, rocks, buildings). Build this early. OpenMap does it in
+  `OpenMap/Map/Close.lua` (minimap tiles over the painted map, softened and warmed toward the parchment, from about zoom
+  20, taking over by zoom 30-48; a city's own minimap over the underground cities; caves surfacing as you zoom in).
+- Open question to settle first: **where the minimap tiles come from**. The game has no call that finds them by place;
+  OpenMap uses a table of the tiles' file IDs (`ns.MapMinimap`, in its Data folder). Rule 3 says the map is built from
+  the game's own art by BookFinder, not OpenMap's prepared data, so BookFinder needs its own way to learn the tiles'
+  file IDs (for example from the game's own files with a converter of ours, as tools/data does for QuestieDB), or the
+  owner must agree to an exception for that table. Ask before using OpenMap's table.
+- Suggested order: (1) the stitched world canvas from the game's own map art (C_Map.GetMapArtLayers and
+  GetMapArtLayerTextures per zone, placed by the zones' world rectangles that Core/Zones.lua already has), zoom and pan;
+  (2) minimap detail up close; (3) dungeon entrances and maps; (4) boats, zeppelins, flight masters and routes;
+  (5) unexplored areas, zone levels, the quill, map notes, place search, the panel's action tiles and favourites.
+  The marks, pins, paths, books and people providers already draw on the game's map canvas; the new canvas should host
+  the same providers.

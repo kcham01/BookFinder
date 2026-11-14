@@ -159,6 +159,8 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **On OpenMap's map: "We could probably use it as a starting point, make it even better looking. One feature I
   really love from OpenMap is being able to zoom all the way to minimap detail."** (Zooming the world map in past the
   painted map's detail, where the game's own minimap art takes over: OpenMap's "Minimap detail".)
+  - Asked what "starting point" means: **"Own code, OpenMap as guide"**. BookFinder writes its own map; OpenMap is the
+    reference for how it behaves and looks, and BookFinder goes further. The rule stands: no one else's code.
 
 ## Questions (only what I can't tell from your notes)
 
