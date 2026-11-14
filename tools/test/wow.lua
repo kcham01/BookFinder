@@ -155,7 +155,9 @@ local Region = {}
 Region.__index = function(self, k)
 	local v = Region[k]
 	if v ~= nil then return v end
-	-- Any other method is accepted and recorded, so layout code runs; tests assert on what matters.
+	-- Any other method (the game's are Capitalised) is accepted and recorded, so layout code runs; tests assert on
+	-- what matters. Lower-case names are fields: nil until set.
+	if type(k) ~= "string" or not k:match("^%u") then return nil end
 	return function(frame, ...)
 		frame.calls = frame.calls or {}
 		frame.calls[#frame.calls + 1] = { k, ... }
@@ -191,7 +193,10 @@ function Region:Show() self.shown = true if self.scripts.OnShow then self.script
 function Region:Hide() self.shown = false if self.scripts.OnHide then self.scripts.OnHide(self) end end
 function Region:SetShown(v) if v then self:Show() else self:Hide() end end
 function Region:IsShown() return self.shown end
-function Region:IsVisible() return self.shown and (not self.parent or not self.parent.IsVisible or self.parent:IsVisible()) end
+function Region:IsVisible()
+	local parent = rawget(self, "parent")
+	return self.shown and (not parent or parent:IsVisible())
+end
 function Region:SetSize(w, h) self.width, self.height = w, h end
 function Region:SetWidth(w) self.width = w end
 function Region:SetHeight(h) self.height = h end
@@ -443,3 +448,95 @@ GetQuestDifficultyColor = function(level)
 	if -diff <= (World.greenRange or 8) then return { r = 0.25, g = 0.75, b = 0.25 } end
 	return { r = 0.5, g = 0.5, b = 0.5 }
 end
+
+-- Mixins and the map canvas ----------------------------------------------------------------------------------------
+
+function Mixin(object, ...)
+	for i = 1, select("#", ...) do
+		for k, v in pairs((select(i, ...))) do object[k] = v end
+	end
+	return object
+end
+function CreateFromMixins(...) return Mixin({}, ...) end
+
+Enum = { UIMapType = { Cosmic = 0, World = 1, Continent = 2, Zone = 3, Dungeon = 4, Micro = 5, Orphan = 6 } }
+
+MapCanvasDataProviderMixin = {
+	OnAdded = function(self, map) self.owningMap = map end,
+	GetMap = function(self) return self.owningMap end,
+	RemoveAllData = function() end,
+	RefreshAllData = function() end,
+}
+MapCanvasPinMixin = {
+	SetScalingLimits = function() end,
+	SetPosition = function(self, x, y) self.normalizedX, self.normalizedY = x, y end,
+	UseFrameLevelType = function() end,
+	GetMap = function(self) return self.owningMap end,
+}
+
+-- XML templates the add-on defines, as the harness knows them (template name -> mixin global name).
+World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin" }
+
+local function newCanvas()
+	local map = CreateFrame("Frame", "WorldMapFrame", UIParent)
+	map.shown = false
+	map.mapID = World.player.map
+	map.providers, map.pins = {}, {}
+	function map:AddDataProvider(p) self.providers[#self.providers + 1] = p; p:OnAdded(self) end
+	function map:GetMapID() return self.mapID end
+	function map:SetMapID(id) self.mapID = id; for _, p in ipairs(self.providers) do p:RefreshAllData() end end
+	function map:AcquirePin(template, ...)
+		local mixin = _G[World.templates[template]]
+		local pin = CreateFrame("Frame", nil, self)
+		Mixin(pin, mixin)
+		pin.owningMap, pin.template = self, template
+		pin.Icon, pin.Glow = pin:CreateTexture(), pin:CreateTexture()
+		if pin.OnLoad then pin:OnLoad() end
+		pin:OnAcquired(...)
+		self.pins[#self.pins + 1] = pin
+		return pin
+	end
+	function map:RemoveAllPinsByTemplate(template)
+		for i = #self.pins, 1, -1 do
+			if self.pins[i].template == template then
+				if self.pins[i].OnReleased then self.pins[i]:OnReleased() end
+				table.remove(self.pins, i)
+			end
+		end
+	end
+	function map:EnumeratePinsByTemplate(template)
+		local i = 0
+		return function()
+			repeat i = i + 1 until not self.pins[i] or self.pins[i].template == template
+			return self.pins[i]
+		end
+	end
+	function map:GetPinFrameLevelsManager()
+		return { InsertFrameLevelAbove = function() end }
+	end
+	return map
+end
+WorldMapFrame = newCanvas()
+
+function Minimap:GetZoom() return 0 end
+World.cvars.minimapZoom, World.cvars.minimapInsideZoom, World.cvars.rotateMinimap = "0", "3", "0"
+GetMinimapShape = function() return "ROUND" end
+GetCursorPosition = function() return 0, 0 end
+IsShiftKeyDown = function() return World.shift == true end
+IsControlKeyDown = function() return World.ctrl == true end
+IsAltKeyDown = function() return false end
+IsModifierKeyDown = function() return World.shift == true or World.ctrl == true end
+ChatEdit_GetActiveWindow = function() return nil end
+C_SuperTrack = strict("C_SuperTrack", {
+	SetSuperTrackedUserWaypoint = function(v) World.superTracked = v end,
+	IsSuperTrackingUserWaypoint = function() return World.superTracked == true end,
+})
+C_Texture = strict("C_Texture", { GetAtlasInfo = function(name) return World.atlases and World.atlases[name] or nil end })
+C_MapExplorationInfo = strict("C_MapExplorationInfo", { GetExploredAreaIDsAtPosition = function() return { 1 } end })
+GetQuestLogRewardMoney = function() return 0 end
+GetCoinTextureString = function(c) return c .. "c" end
+BreakUpLargeNumbers = function(n) return tostring(n) end
+GetMaxPlayerLevel = function() return 60 end
+C_UnitAuras = strict("C_UnitAuras", { GetAuraDataByIndex = function() return nil end })
+YES, NO = "Yes", "No"
+CreateAtlasMarkup = function(a) return "|A:" .. a .. "|a" end
