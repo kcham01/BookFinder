@@ -120,8 +120,4 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 
 ## Questions (only what I can't tell from your notes)
 
-- QuestieTrace is in Questie's zip and in its dropdown (image1). Should it be part of BookFinder?
-- In the Books tab (right side), is image7 and image8's content what goes there: progress, settings, filters, sets,
-  rewards?
-- The settings window I built in 2.2.0 (BookFinder's own dialog box): replace it with OpenMap's panel as you
-  describe?
+- None open. (QuestieTrace, the Books tab and the settings window were answered above.)
