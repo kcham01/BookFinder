@@ -56,7 +56,7 @@ Your document is kept whole in `docs/notes/map-items-and-settings.docx`, its pic
 |---|---|---|
 | Questie | 12.8.0 | 12.9.0 |
 | QuestieDB | 1.1.0 | 1.1.1 |
-| QuestieTrace | not in BookFinder | 1.11.0 (in the Questie zip) |
+| QuestieTrace | not in BookFinder | 1.11.0 (in the Questie zip): ignored, stays out |
 | Books on map Forever | 2.2.6 | 2.3.0 (38 books, a 38-book reward) |
 | OpenMap | v0.8.7 (commit 91c84b3) | latest at https://github.com/openmap-world/openmap (your picture shows v0.8.8) |
 
@@ -73,6 +73,14 @@ Kept unpacked, untouched, outside the build. Not merged yet.
    Faction, Advanced Search: image5). Inside each, the part's own pages become sub-tabs along the top like
    On the map / Look / More (image6).
 3. **Before starting**: update to the versions above.
+
+## Answers
+
+- **QuestieTrace**: "no ignore trace." It stays out of BookFinder and out of the dropdown.
+- **Settings window**: "yes replace yours with open maps as i laid out in the document." BookFinder's 2.2.0 settings
+  window goes; OpenMap's panel becomes the one settings window, as section 2 describes.
+- **Books tab**: you asked what I meant (explained in chat: the book-icon tab under the "!" Quests tab on the map's
+  right edge, showing Library books, Collect, Rewards and the sets). Waiting on what you want there.
 
 ## Questions (only what I can't tell from your notes)
 
