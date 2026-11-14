@@ -97,6 +97,11 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   and Books on map is in the new BookFinder, written as BookFinder's own code. Open: where Questie's quest, NPC, object
   and item data comes from (asked in chat).
 
+- **Quest data: "2"** (asked: does Questie not use open-source data?). BookFinder's quest, NPC, object and item
+  knowledge is QuestieDB's data file, credited, under its GPL-3 licence (so BookFinder is GPL-3 too). Only the data:
+  every line of BookFinder's code is new. Reason: it is the one source with WoW: Forever's own content (the server
+  projects' open data has none of it).
+
 ## Questions (only what I can't tell from your notes)
 
 - QuestieTrace is in Questie's zip and in its dropdown (image1). Should it be part of BookFinder?
