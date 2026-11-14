@@ -590,7 +590,10 @@ C_SuperTrack = strict("C_SuperTrack", {
 	IsSuperTrackingUserWaypoint = function() return World.superTracked == true end,
 })
 C_Texture = strict("C_Texture", { GetAtlasInfo = function(name) return World.atlases and World.atlases[name] or nil end })
-C_MapExplorationInfo = strict("C_MapExplorationInfo", { GetExploredAreaIDsAtPosition = function() return { 1 } end })
+C_MapExplorationInfo = strict("C_MapExplorationInfo", {
+	GetExploredAreaIDsAtPosition = function() return { 1 } end,
+	GetExploredMapTextures = function(map) return World.explored and World.explored[map] or {} end,
+})
 GetQuestLogRewardMoney = function() return 0 end
 GetCoinTextureString = function(c) return c .. "c" end
 BreakUpLargeNumbers = function(n) return tostring(n) end

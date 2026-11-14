@@ -56,7 +56,34 @@ local function drawMap(parent, map, level)
 		tex:SetPoint("TOPLEFT", parent, "TOPLEFT", t.left, t.top)
 		tex:SetSize(t.right - t.left, t.top - t.bottom)
 	end
+	-- The explored areas over the base art (a classic map leaves unexplored land blank and paints each explored
+	-- area on top), in a frame of their own so they can be drawn again as the player explores.
+	f.explored = CreateFrame("Frame", nil, f)
+	f.explored:SetAllPoints(parent)
+	f.explored:SetFrameLevel(level)
+	f.map = map
+	Canvas.DrawExplored(f)
 	return f
+end
+
+--- (Re)draws a map's explored areas into its frame.
+function Canvas.DrawExplored(f)
+	f.exploredTex = f.exploredTex or {}
+	for _, t in ipairs(f.exploredTex) do t:Hide() end
+	local parent = f.explored:GetParent():GetParent()
+	for i, piece in ipairs(Stitch:Explored(f.map)) do
+		local tex = f.exploredTex[i]
+		if not tex then
+			tex = f.explored:CreateTexture(nil, "OVERLAY")
+			f.exploredTex[i] = tex
+		end
+		tex:SetTexture(piece.file)
+		tex:SetTexCoord(0, piece.u, 0, piece.v)
+		tex:ClearAllPoints()
+		tex:SetPoint("TOPLEFT", parent, "TOPLEFT", piece.left, piece.top)
+		tex:SetSize(piece.right - piece.left, piece.top - piece.bottom)
+		tex:Show()
+	end
 end
 
 local function build(cont)
@@ -347,6 +374,10 @@ BF:At("login", function()
 	if not WorldMapFrame then return end
 	makeFrame()
 	hooksecurefunc(WorldMapFrame, "SetMapID", sync)
+	-- New ground explored: the zones of the continents drawn so far paint it.
+	BF:On("MAP_EXPLORATION_UPDATED", function()
+		for _, l in pairs(layers) do for _, f in ipairs(l.frames) do Canvas.DrawExplored(f) end end
+	end)
 	WorldMapFrame:HookScript("OnShow", sync)
 	BF:Listen("BF_SETTING_CHANGED", function(_, key) if key == "map.seamless" then sync() end end)
 end, 78)

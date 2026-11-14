@@ -396,3 +396,9 @@ See the log. Current phase is the first unchecked one.
   (Unreachable) as on other clients. Flight routes and times between two masters (OpenMap's click one, then another)
   are not built: OpenMap's flight times are its own data; the game's own (C_TaxiMap) give routes only at a flight
   master.
+- Phase 12, step 5: explored areas on the seamless map. `Stitch:Explored(map)` places the game's exploration pictures
+  (C_MapExplorationInfo.GetExploredMapTextures: offsets in the art layer's pixels, 256-pixel pieces, a last smaller
+  piece in a power-of-two file, as the game's own map draws them; mouse-over highlights left out) in world yards; each
+  zone's frame draws them over its base art and draws them again on MAP_EXPLORATION_UPDATED. **Not verified in game**:
+  how Forever's base art looks where nothing is explored (blank parchment, as classic maps, or painted); OpenMap's
+  "darken unexplored" can only darken what is not under an explored picture, since the game lists explored ones only.
