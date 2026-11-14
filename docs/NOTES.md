@@ -149,6 +149,20 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   - The screenshots show a plain dark window with tabs along the top and icon tabs at the right, Journey as its own
     window: not that.
 
+- **"Just use the Questie icons the way it uses them. I want to see the bags on collect quests, the question mark on
+  complete. I didn't give you those files for no reason. Not stealing doesn't mean lazy replace."** BookFinder uses
+  Questie's icon files (its quest, objective and townsfolk icons), shipped in BookFinder, credited, and drawn the way
+  Questie draws them. (An exception to "no other addon's files", granted for the icons. Questie's name and logo stay
+  out, as its licence asks.)
+- **"The map is not zooming in and out, dragging or showing minimap detail. This isn't what I asked for. I was very
+  specific that I wanted this to be better than the native UI, with all features."** The map must be OpenMap's map in
+  full (`docs/study/openmap.md`): wheel zoom toward the cursor, drag to pan, click into zones, the stitched world,
+  the minimap's detail up close, and everything else there. BookFinder's own code, from the game's map art.
+
+- **"You were supposed to improve on their features. The map should look better than OpenMap's."** Not a copy of
+  OpenMap's map: OpenMap's every feature, done better (smoother, cleaner, more useful), the best-looking map of the
+  three.
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)

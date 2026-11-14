@@ -46,7 +46,7 @@ return {
 		local marker
 		for _, c in ipairs(plate.children) do marker = c end
 		expect(marker and marker.shown, "marker on the Kobold Vermin")
-		equal(marker.icon.texture, "Interface\\COMMON\\Indicator-Red", "the slay marker")
+		equal(marker.icon.texture, "Interface\\AddOns\\BookFinder\\Media\\Questie\\slay", "Questie's slay icon")
 		local plate2 = CreateFrame("Frame", nil, UIParent)
 		World.plates.nameplate2 = plate2
 		World.units.nameplate2 = "Creature-0-1-2-3-99999-0000"

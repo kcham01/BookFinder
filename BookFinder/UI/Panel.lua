@@ -83,7 +83,7 @@ Panel.tabs = {
 			end, sliders = { "icons.scale.available", "icons.scale.event", "icons.scale.slay", "icons.scale.loot",
 				"icons.scale.object", "icons.minimapFadeDistance", "icons.fadeAlpha", "icons.fadeOverPlayerDistance",
 				"icons.fadeOverPlayerAlpha", "paths.width", "paths.opacity" },
-				choices = { "icons.slay", "icons.loot", "icons.object", "icons.event", "icons.talk", "icons.interact" },
+				choices = { "icons.theme", "icons.slay", "icons.loot", "icons.object", "icons.event", "icons.talk", "icons.interact" },
 				colors = { "paths.color", "paths.hostileColor", "paths.highlightColor" } },
 			{ key = "tooltips", label = "Tooltips", sections = function()
 				return {
