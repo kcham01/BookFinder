@@ -21,7 +21,7 @@ end
 local function pinsWithRole(map, role, quest)
 	local found = {}
 	for _, pin in ipairs(map.pins) do
-		for _, r in ipairs(pin.pin.roles) do
+		for _, r in ipairs(pin.template == "BookFinderMapPinTemplate" and pin.pin.roles or {}) do
 			if r.role == role and r.quest == quest then found[#found + 1] = pin end
 		end
 	end
@@ -45,7 +45,9 @@ return {
 		WorldMapFrame:Show()
 		WorldMapFrame:SetMapID(1429)
 		BF:Set("quests.map", false)
-		equal(#WorldMapFrame.pins, 0, "no pins")
+		local quests = 0
+		for _, p in ipairs(WorldMapFrame.pins) do if p.template == "BookFinderMapPinTemplate" then quests = quests + 1 end end
+		equal(quests, 0, "no quest pins")
 	end,
 
 	["tooltip: the NPC in green, the quest and its reward, the hide hint"] = function(BF)

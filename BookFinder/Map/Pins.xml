@@ -21,4 +21,25 @@
 			<OnMouseUp method="OnMouseUp"/>
 		</Scripts>
 	</Frame>
+	<!-- A library book: the book's own icon, a route step number when the route is on. BookFinderBookPinMixin
+	     (Books/Map.lua). -->
+	<Frame name="BookFinderBookPinTemplate" mixin="BookFinderBookPinMixin" virtual="true" enableMouse="true">
+		<Size x="20" y="20"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Icon" setAllPoints="true"/>
+			</Layer>
+			<Layer level="OVERLAY">
+				<FontString parentKey="Step" inherits="NumberFontNormalSmall">
+					<Anchors><Anchor point="BOTTOMRIGHT" x="3" y="-3"/></Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEnter method="OnMouseEnter"/>
+			<OnLeave method="OnMouseLeave"/>
+			<OnMouseUp method="OnMouseUp"/>
+		</Scripts>
+	</Frame>
 </Ui>

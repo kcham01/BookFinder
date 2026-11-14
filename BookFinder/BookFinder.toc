@@ -42,3 +42,9 @@ Map\Pins.xml
 Map\WorldMap.lua
 Map\Minimap.lua
 Map\Guide.lua
+
+Books\List.lua
+Books\Books.lua
+Books\Map.lua
+Books\Route.lua
+Books\Alerts.lua
