@@ -118,6 +118,13 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **"Start the study."** First pass done: `docs/study/books-on-map.md`, `openmap.md`, `questie.md`. "Make sure you
   update the directive so any other agents know what's going on": `CLAUDE.md` at the repository's root.
 
+- **"We also kinda want the stuff that Shortest Path added as far as the little arrow and compass at the top that
+  tells you where you go when you drop a pin. Remember that I hated the lines on the map."** BookFinder gets its own
+  arrow and compass at the top of the screen, guiding you to the map pin (`docs/study/arrow-and-compass.md`). No
+  route lines drawn on the map. (This brings back the arrow and compass that 2.0.0 removed with Shortest Path; still no
+  journeys or routing.)
+- **"Once you have everything confirmed let me know when you're ready to build."**
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)
