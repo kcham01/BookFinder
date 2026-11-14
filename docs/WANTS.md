@@ -173,7 +173,15 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
   Levels, Quest Difficulty Color, Low-Level Quests, Tracked Items), each doing what it did. If it can't be read, the
   game's own menu opens as before.
 
+## Asked after 2.0.2
+- **Show the full addon**, every menu, settings page and dropdown as it would look in game, labelled without long
+  explanations, to prove the whole is seen and to make it better. Drawn as one page (the "BookFinder 2.0 Atlas"),
+  from the code. Duplicates it shows: townsfolk twice (OpenMap panel and Questie's menu), quest icons four ways,
+  low-level quests three ways, coordinates three ways, the World map settings page repeating OpenMap's panel, the book
+  switches three ways, two map pins, two searches; dead switches on Questie's Tracker and General pages.
+
 ## Still to do
+- **Remove the duplicates the Atlas shows**, one place for each switch.
 - **Frames that don't line up**: send screenshots of the ones you mean.
 - **Every setting into OpenMap's panel**, redundancy removed (you asked for this; next).
 - **The look**: the mock-ups (map panel, settings) wait for your markup; the journey card in them no longer applies.

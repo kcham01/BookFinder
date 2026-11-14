@@ -1,20 +1,18 @@
--- BookFinder: the library books, as a tab of the world map's quest log.
+-- BookFinder: the BookFinder tab beside the world map's quest log: the one search, and the library books.
 --
--- The books' own window (Books on map's options window, with its Rewards and Group side panels) becomes this one tab,
--- drawn with the same kit as Shortest Path's Nearby services tab beside it: the quest log's parchment and border,
--- its search box, its collapsible list headers and the Who list's large rows. Nothing here does a job another part
--- already does: going to a book is Shortest Path's journey, the route is Books' own, the settings are the settings
--- window's Library books page.
+-- Books on map's own window (with its Rewards and Group side panels) becomes this one tab, drawn with the quest log's
+-- parchment and border, its search box, its collapsible list headers and the Who list's large rows.
 --
+--   Search      two letters or more: quests, NPCs, objects, items, places and books (Search.lua) in the list's place
 --   Header      the book glyph, "Library books", how many you have and what the next reward needs
---   Collect     the nearest book by travel time; the optimised route (start it, or its next stop and Stop)
+--   Collect     the nearest book; the optimised route (start it, or its next stop and Stop)
 --   Rewards     each reward tier, unlocked or how many books to go, with its items (their own tooltips and links)
---   Sets        First set, Level 35, 45 and 60: every book with its place and travel time, nearest first;
+--   Sets        First set, Level 35, 45 and 60: every book with its place and distance, nearest first;
 --               collected books greyed and ticked at the bottom
 --   Group       who in your group shares their books, and how far along they are
 --
--- Click a book: Shortest Path takes you there. Shift-click: collected, or not. Right-click: each of its places, the
--- map there, collected. The gear beside the search box holds the list's filters, the bulk marks and the settings.
+-- Click a book: the game's map pin on it. Shift-click: collected, or not. Right-click: each of its places, the map
+-- there, collected. The gear beside the search box holds the list's filters, the bulk marks and the settings.
 local ADDON, root = ...
 local public = root.public
 local BOOKS = root.Books
@@ -24,7 +22,7 @@ end
 
 local L = setmetatable({}, { __index = function(_, k) return (BOOKS.L and BOOKS.L[k]) or k end })
 
--- Shortest Path's quest-log geometry (UI/ServicesPanel.lua), so the two tabs read as one design ------------------
+-- the quest log's geometry (from Shortest Path's ServicesPanel, which it matched before 2.0) ------------------
 local TAB_KEY = "bookfinder.books"
 local TOP_BAR = 29
 local PAD = 6
@@ -71,7 +69,7 @@ local TIERS = BOOKS.REWARD_TIERS or {
 		{ 277254, "Truthseeker's Bow" }, { 277258, "Crest of Elucidation" }, { 277260, "Researcher's Night Light" } } },
 }
 
--- Art: Shortest Path's helpers (UI/Art.lua), the same calls, kept here so the tab stands without it ---------------
+-- Art: helpers for the client's quest-log art ---------------
 local Art = {}
 local infos = {}
 function Art.Info(atlas)
@@ -544,7 +542,7 @@ local function collectSection()
 					tt:AddDoubleLine(("%d. %s"):format(i, step.book.name), step.loc[4] or "", 1, 1, 1, 0.6, 0.6, 0.6)
 				end
 				tt:AddLine(" ")
-				tt:AddLine(guided and L["Shortest Path is guiding this route."] or L["Click: Shortest Path guides the route"], 0.5, 1, 0.5)
+				tt:AddLine(guided and L["The map pin is on this book."] or L["Click: put the map pin on it"], 0.5, 1, 0.5)
 				tt:AddLine(L["Shift-click: start again from the nearest book"], 0.5, 1, 0.5)
 			end,
 			onClick = function()
@@ -572,7 +570,7 @@ local function collectSection()
 			detail = (L["All %d missing books, lowest level first"]):format(missing),
 			tooltip = function(tt)
 				tt:AddLine(L["Optimized route"], 1, 0.82, 0)
-				tt:AddLine(L["Every book you still need, set by set, in the order that takes the least travel. Shortest Path guides each stop."], 1, 1, 1, true)
+				tt:AddLine(L["Every book you still need, set by set, in the order that takes the least travel. The map pin moves to each one."], 1, 1, 1, true)
 			end,
 			onClick = function() if BOOKS.ToggleRoute then BOOKS.ToggleRoute(true, true) end end,
 		}
