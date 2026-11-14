@@ -91,8 +91,8 @@ end)
 
 -- Professions --------------------------------------------------------------------------------------------------
 --
--- The client lists skills by localized name; quests ask by skill ID. A spell that each profession teaches gives the
--- localized name (GetSpellInfo), so the match works in every client language.
+-- Quests ask by skill ID. Forever answers by ID (C_SkillInfo.GetSkillLineInfoByID); older clients list skills by
+-- localized name only, matched through a spell each profession teaches (its name is localized by the client).
 
 local skillSpells = {
 	[171] = 2259, -- Alchemy
@@ -119,7 +119,8 @@ Player.skills = {} -- [skillID] = rank
 
 local function skillName(id)
 	local spell = skillSpells[id]
-	local name = spell and GetSpellInfo and GetSpellInfo(spell)
+	local name = spell and ((C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(spell))
+		or (GetSpellInfo and GetSpellInfo(spell)))
 	return name or skillEnglish[id]
 end
 
@@ -128,7 +129,21 @@ function Player:SkillName(id)
 	return skillName(id)
 end
 
+-- Forever reads a skill by its ID (C_SkillInfo); older clients only list skill lines by localized name.
+local byID = C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID
+
 local function loadSkills()
+	local skills = Player.skills
+	wipe(skills)
+	if byID then
+		for id in pairs(skillEnglish) do
+			local ok, info = pcall(byID, id)
+			if ok and type(info) == "table" and type(info.rank) == "number" and info.rank > 0 then
+				skills[id] = info.rank
+			end
+		end
+		return
+	end
 	if not next(Player.skillIdByName) then
 		for id in pairs(skillEnglish) do
 			local name = skillName(id)
@@ -136,8 +151,6 @@ local function loadSkills()
 			Player.skillIdByName[skillEnglish[id]] = id
 		end
 	end
-	local skills = Player.skills
-	wipe(skills)
 	for i = 1, GetNumSkillLines() do
 		local name, isHeader, _, rank = GetSkillLineInfo(i)
 		local id = name and not isHeader and Player.skillIdByName[name]

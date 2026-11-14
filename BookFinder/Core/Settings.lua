@@ -60,6 +60,13 @@ function BF:Get(key)
 	return def.default
 end
 
+-- Colours are tables {r, g, b, a}: equal when every part is.
+local function same(a, b)
+	if type(a) ~= "table" or type(b) ~= "table" then return a == b end
+	for i = 1, math.max(#a, #b) do if a[i] ~= b[i] then return false end end
+	return true
+end
+
 local function clamp(def, value)
 	if type(value) == "number" then
 		if def.min and value < def.min then value = def.min end
@@ -72,12 +79,17 @@ end
 function BF:Set(key, value)
 	local def = check(key)
 	assert(type(value) == type(def.default), ("setting %s takes a %s"):format(key, type(def.default)))
+	if def.choices then
+		local known = false
+		for _, c in ipairs(def.choices) do if c == value then known = true end end
+		assert(known, ("setting %s has no choice %s"):format(key, tostring(value)))
+	end
 	value = clamp(def, value)
 	local old = BF:Get(key)
 	if profile then
-		if value == def.default then profile[key] = nil else profile[key] = value end
+		if same(value, def.default) then profile[key] = nil else profile[key] = value end
 	end
-	if old ~= value then BF:Send("BF_SETTING_CHANGED", key, value, old) end
+	if not same(old, value) then BF:Send("BF_SETTING_CHANGED", key, value, old) end
 end
 
 function BF:Toggle(key)

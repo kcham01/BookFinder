@@ -25,3 +25,7 @@ Core\Settings.lua
 Core\Data.lua
 Core\Zones.lua
 Core\Player.lua
+
+Quests\Options.lua
+Quests\Events.lua
+Quests\Log.lua

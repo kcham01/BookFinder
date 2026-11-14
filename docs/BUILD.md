@@ -77,6 +77,19 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 - Extras worth converting (data): `support/Forever/QuestXP/*` (quest XP), `DropTables/*` (drop rates),
   `Zones/dungeons.lua`, `subZoneToParentZone.lua`, `FactionTemplates`.
 
+## The WoW: Forever client (facts learned; trust these over Classic habits)
+
+- Interface **16001**. A **modern client** (retail-era engine and UI) running classic content: `C_QuestLog.GetInfo` /
+  `GetNumQuestLogEntries` (modern quest log API), `QuestMapFrame` (the quest log inside the world map, its tabs),
+  `ObjectiveTrackerFrame`, `MapCanvas` data providers and pin mixins on `WorldMapFrame`, `C_SuperTrack`, user
+  waypoints (`C_Map.SetUserWaypoint`), the `Settings` panel API, `Menu`/`MenuUtil`, `C_Spell.GetSpellName`,
+  `C_SkillInfo.GetSkillLineInfoByID(id) -> {name, rank}`, `C_TaxiMap`, `C_MapExplorationInfo`, `C_GameRules`.
+- **Secret values** exist (the newest client's restriction): unit names/GUIDs and tooltip data can be secret
+  (`issecretvalue(v)`, `issecrettable(t)`). Never branch on, compare, or index with a value that may be secret:
+  check first, and give up quietly. Questie turns nameplate icons and XP lookups off **in instances** and **in
+  combat** on Forever for this reason; do the same.
+- Character names are two words ("Firstname Lastname"); `UnitName` can return the surname as the realm.
+
 ## Plan (phases; each ends with a commit and a log line below)
 
 1. ~~Data converter + generated data files + credits.~~ Done.
