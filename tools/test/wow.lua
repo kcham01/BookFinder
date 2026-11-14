@@ -319,6 +319,7 @@ UnitName = function(unit) if unit == "player" then return World.player.name, nil
 UnitFullName = function(unit) if unit == "player" then return World.player.name, World.player.realm end end
 -- Other units (a target, a nameplate's mob): World.units[token] = { guid =, dead =, player = }.
 World.units = {}
+World.watched = {}
 UnitGUID = function(unit)
 	if unit == "player" then return World.player.guid end
 	return World.units[unit] and World.units[unit].guid
@@ -401,9 +402,9 @@ C_QuestLog = strict("C_QuestLog", {
 	GetLogIndexForQuestID = function(id)
 		for i, l in ipairs(World.QuestLogLines()) do if l.questID == id then return i end end
 	end,
-	GetQuestWatchType = function() return nil end,
-	AddQuestWatch = function() end,
-	RemoveQuestWatch = function() end,
+	GetQuestWatchType = function(id) return World.watched and World.watched[id] and 0 or nil end,
+	AddQuestWatch = function(id) World.watched = World.watched or {}; World.watched[id] = true end,
+	RemoveQuestWatch = function(id) if World.watched then World.watched[id] = nil end end,
 	GetTimeAllowed = function() return nil end,
 })
 
@@ -738,3 +739,29 @@ function ColorPickerFrame:GetColorRGB() return World.pickedColor[1], World.picke
 function ColorPickerFrame:GetColorAlpha() return World.pickedColor[4] end
 
 ACCEPT, CANCEL = "Accept", "Cancel"
+
+-- The quest list's client parts: fonts, the quest panel's list frame, the on-screen tracker, quest links.
+local function fontObject(name, size)
+	local f = { name = name, size = size }
+	function f:GetFont() return "Fonts\\FRIZQT__.TTF", self.size, "" end
+	function f:SetFont(file, size, flags) self.size = size end
+	function f:CopyFontObject(other) self.size = other.size end
+	_G[name] = f
+	return f
+end
+fontObject("GameFontNormalLarge", 16); fontObject("GameFontNormal", 12); fontObject("GameFontHighlight", 12)
+CreateFont = function(name) return fontObject(name, 12) end
+QuestScrollFrame.Contents = CreateFrame("Frame", nil, QuestScrollFrame)
+QuestScrollFrame.ScrollBar = CreateFrame("Frame", nil, QuestScrollFrame)
+QuestScrollFrame.SearchBox = QuestMapFrame.QuestsFrame.SearchBox
+function QuestScrollFrame.SearchBox:GetText() return self.text or "" end
+ObjectiveTrackerFrame = CreateFrame("Frame", "ObjectiveTrackerFrame", UIParent)
+QUEST_WATCH_QUEST_READY = "Ready for turn-in"
+CLOSE = "Close"
+GetQuestLogSpecialItemInfo = function(index) return World.questItems and World.questItems[index] end
+GetQuestLogCompletionText = function() return World.completionText end
+SecondsToTime = function(s) return s .. " sec" end
+GetQuestLink = function(id) return "|Hquest:" .. id .. "|h[" .. id .. "]|h" end
+ChatEdit_InsertLink = function(link) World.insertedLink = link end
+QuestMapFrame_OpenToQuestDetails = function(id) World.openedQuest = id end
+ToggleWorldMap = function() WorldMapFrame:Show() end

@@ -241,3 +241,15 @@ See the log. Current phase is the first unchecked one.
   replaced; the game's menu generator is also given BookFinder's items, in case a client opens it another way), the
   panel's choices, the profile menus. The client's Menu API is used only by the tag fallback.
   `ShowMenu:Items()` is the menu as BF.Dropdown items.
+- Phase 10, part 1: the quest list (`Quests/List.lua`). A scroll frame of BookFinder's own on QuestScrollFrame's
+  spot, as its child (it shows and hides with the game's quest panel); the game's rows (QuestScrollFrame.Contents)
+  and scroll bar kept hidden; the game's search box narrows the list; the on-screen tracker (ObjectiveTrackerFrame,
+  else QuestWatchFrame) kept hidden ("nothing on screen"; waits out combat). Zones fold; quest title with level in
+  difficulty colour; "- <objective text>" in the chosen colour style; "- Ready for turn-in" (the game's
+  QUEST_WATCH_QUEST_READY) plus the completion text; failed; timers; the quest's usable item as a secure button (made
+  and placed out of combat only); a tick to track; focus (others dim; follows the game's focused quest when chosen);
+  clicks by list.click*; right-click: Focus, Track, Show on map, Set the map pin, Minimize, the quest's web page (an
+  edit box to copy, the client cannot write the clipboard). The list's settings are live (off the pending list),
+  except `list.playButtons` (VoiceOver's play buttons need that addon's interface: pending).
+  **Not verified in game**: QuestScrollFrame and its Contents / ScrollBar / SearchBox names on Forever; the row look
+  next to the game's own headers; scrolling a list holding secure item buttons in combat.
