@@ -173,9 +173,16 @@ end
 
 --- The player's reputation with a faction, in points from the bottom of Neutral (as quests count it), or nil.
 function Player:Reputation(factionID)
-	local name, _, _, _, _, value = GetFactionInfoByID(factionID)
-	if not name then return nil end
-	return value
+	-- WoW: Forever: C_Reputation.GetFactionDataByID; older clients: GetFactionInfoByID.
+	if C_Reputation and C_Reputation.GetFactionDataByID then
+		local data = C_Reputation.GetFactionDataByID(factionID)
+		return data and data.name and data.currentStanding or nil
+	end
+	if GetFactionInfoByID then
+		local name, _, _, _, _, value = GetFactionInfoByID(factionID)
+		if name then return value end
+	end
+	return nil
 end
 
 BF:On("UPDATE_FACTION", function()

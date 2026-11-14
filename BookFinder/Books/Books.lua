@@ -55,10 +55,17 @@ end
 
 -- Collected ------------------------------------------------------------------------------------------------------
 
+-- Items in the bags and the bank (WoW: Forever has only C_Item.GetItemCount; older clients the global).
+local function itemCount(item)
+	if C_Item and C_Item.GetItemCount then return C_Item.GetItemCount(item, true) or 0 end
+	if GetItemCount then return GetItemCount(item, true) or 0 end
+	return 0
+end
+
 --- How the player has it: "handedIn", "carried" (bags or bank), "ticked" (by hand), or nil (still missing).
 function Books:How(book)
 	if BF.Player:HasCompleted(book.quest) then return "handedIn" end
-	if GetItemCount(book.item, true) > 0 then return "carried" end
+	if itemCount(book.item) > 0 then return "carried" end
 	if state().ticked and state().ticked[book.key] then return "ticked" end
 	return nil
 end

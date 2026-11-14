@@ -35,6 +35,8 @@ Quests\Objectives.lua
 Quests\Marks.lua
 Quests\Reward.lua
 
+UI\Dropdown.lua
+
 Map\Icons.lua
 Map\Look.lua
 Quests\PinTooltip.lua
@@ -50,3 +52,4 @@ Books\Books.lua
 Books\Map.lua
 Books\Route.lua
 Books\Alerts.lua
+Map\ShowMenu.lua
