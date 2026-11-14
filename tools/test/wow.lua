@@ -99,12 +99,15 @@ date = os.date
 
 local errors = {}
 World.errors = errors
-geterrorhandler = function()
-	return function(err)
-		errors[#errors + 1] = tostring(err) .. "\n" .. debug.traceback()
-		return err
-	end
+local handler = function(err)
+	errors[#errors + 1] = tostring(err) .. "\n" .. debug.traceback()
+	return err
 end
+geterrorhandler = function() return handler end
+seterrorhandler = function(fn) handler = fn end
+debugstack = function() return debug.traceback() end
+debuglocals = function() return "" end
+GetBuildInfo = function() return "1.60.1", "70291", "Nov 2026", 16001 end
 
 -- Timers ---------------------------------------------------------------------------------------------------------
 
@@ -254,6 +257,8 @@ function Region:Enable() self.enabled = true end
 function Region:Disable() self.enabled = false end
 function Region:IsEnabled() return self.enabled ~= false end
 function Region:SetEnabled(v) self.enabled = v end
+function Region:HighlightText() end
+function Region:ClearFocus() end
 
 CreateFrame = function(kind, name, parent, template)
 	local f = newRegion(kind, name, parent)
