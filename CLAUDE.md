@@ -35,8 +35,9 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
 
 ## Where things stand
 
-- The repository was cleared of every other addon's code (commit "Remove every other addon's code"). Their code is
-  still in older history and on `main`; rewriting GitHub's history waits on the owner's go-ahead (a force-push).
+- The repository holds no other addon's code, and none of the owner's review files, anywhere in its history: GitHub's
+  history was rewritten (every branch; `main` matches this branch). Copies survive only behind the old pull requests
+  #1 to #12; removing those needs the repository recreated.
 - **Study (first pass done)**: `docs/study/` holds, per addon, how it works from a player's side (in our words):
   `books-on-map.md` (2.3.0), `openmap.md` (v0.8.9), `questie.md` (12.9.0 with QuestieDB 1.1.1), each ending with the
   protocols BookFinder must speak. Waiting on the owner's review.
