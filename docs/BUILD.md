@@ -16,6 +16,8 @@ after every working session. Owner-facing history stays in `docs/WANTS.md` / `do
 - **Data is the one exception**: QuestieDB's data, converted by our own tool (`tools/data/`) into BookFinder's own
   files under `BookFinder/Data/`, credited in `BookFinder/Data/CREDITS.md`, GPL-3. Never commit the reference zips.
 - **Talk to the other addons** byte for byte (study docs end with each protocol).
+- **No other addon's art either**: Questie's licence excludes its name and logo, and its icon textures are its own
+  files. Map icons come from the game's own textures and atlases (quest "!"/"?", minimap tracking icons, etc.).
 - **Native look**: the game's own art and fonts (atlases, `GameFontNormal`, `UIPanelButtonTemplate` etc.), no
   custom art unless the game has none.
 - **No route lines on the map** (Books trail out). OpenMap boat/zeppelin route lines and Questie NPC patrol paths stay.
@@ -77,7 +79,7 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 
 ## Plan (phases; each ends with a commit and a log line below)
 
-1. Data converter + generated data files + credits.            
+1. ~~Data converter + generated data files + credits.~~ Done.
 2. Core: namespace, events, saved variables, settings store, slash command, offline harness.
 3. Quest engine: player's log and progress, completed quests, availability rules, objective spawns.
 4. World map + minimap pins (quest givers, turn-ins, objectives, townsfolk), icon tooltips, Shift-click hide.
@@ -98,3 +100,11 @@ See the log. Current phase is the first unchecked one.
 ## Log (newest last)
 
 - Build started. Data format decoded (above). lua5.1 + python cbor2 installed in the session.
+- Phase 1 done. `tools/data/convert.py` (+ `dynamic.lua`) -> `BookFinder/Data/*.lua`, 10 MB, rows as Lua strings
+  decoded on demand (all files load in 0.2 s, 14 MB, in lua5.1). Row layouts: `tools/data/SCHEMA.md`.
+  Gotchas met: Lua tables whose keys run 1..n arrive from CBOR/JSON as **lists** (index 0 = key 1), and that includes
+  spawn lists for area 1 (Dun Morogh) and whole scalar rows; `int_keys()` handles both. Dynamic corrections factor
+  into: everyone (folded into rows), per faction (126 quests, 9 NPCs, 9 objects, 5 items), per faction+class
+  (4 quests each). Drop rates: correction > Wowhead > server. English names only (QuestieDB's l10n overlay not
+  converted yet: TODO for other client languages).
+  Re-run: `python3 -I tools/data/convert.py <QuestieDB folder>` (needs `pip install cbor2`, `lua5.1`).
