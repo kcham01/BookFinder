@@ -402,3 +402,10 @@ See the log. Current phase is the first unchecked one.
   zone's frame draws them over its base art and draws them again on MAP_EXPLORATION_UPDATED. **Not verified in game**:
   how Forever's base art looks where nothing is explored (blank parchment, as classic maps, or painted); OpenMap's
   "darken unexplored" can only darken what is not under an explored picture, since the game lists explored ones only.
+- Phase 12, step 6: Find a place (`Map/FindPlace.lua`): a search box at the seamless map's top left; two letters or
+  more list continents, zones (C_Map.GetMapChildrenInfo from the world, 947), raids, dungeons (BF.Data.dungeons, at
+  their entrance) and the flight masters of the continent in view, by kind, in the one dropdown; Enter takes the
+  first; choosing opens a continent or zone, or centres the canvas on a dungeon or flight master (`Canvas:CentreOn`).
+  Left of phase 12 (see "Next"): minimap detail (waiting on the owner's `/bf probe`), zone border blending (needs a
+  screenshot of the seams), boats and zeppelins (no game data for them: BookFinder's own list, checked in game),
+  the quill and map notes, the panel's action tiles and favourites.
