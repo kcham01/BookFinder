@@ -379,3 +379,12 @@ See the log. Current phase is the first unchecked one.
   ranges" now exist, so they appear in the Show dropdown's Dungeons section.
   Lesson (a real bug the tests caught): `local a, b = x and f()` keeps only f's first value. Use `if x then a, b = f()`.
   Checked the whole addon for the pattern: no other case.
+- Minimap detail's art: the owner chose **"BookFinder builds its own"** (no OpenMap list). First check, before asking
+  for game files: `/bf probe` asks the game whether it finds minimap pictures by name (World\Minimaps\<map>\mapX_Y,
+  three spellings, Azeroth and Kalimdor) and keeps the answer in SavedVariables (BookFinderDB.global.probe.minimap).
+  - If the game knows the names: no list at all. A tile covers 533 1/3 yards; its grid numbers come from the world
+    position (tile x = floor(32 - north / 533.33), tile y = floor(32 - west / 533.33), to check against one known
+    tile). Build minimap detail straight from that, mixed over the zone art as the canvas zooms in.
+  - If not: a converter of BookFinder's own (tools/), reading each continent's WDT file from the game (its MAID chunk
+    lists each map tile's minimap texture file ID). The owner exports the WDT files (for example with wow.export) and
+    sends them; Zephras Isle's internal map name is needed too.

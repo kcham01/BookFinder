@@ -165,6 +165,9 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **"Make the whole map."** Phase 12 in full: the stitched map, minimap detail, dungeons, boats and flights, the quill
   and the rest (docs/BUILD.md, "Next").
 
+- **Minimap detail's art: "BookFinder builds its own"** (asked: its own list from the game's files, or OpenMap's list
+  credited). No OpenMap data; BookFinder finds the game's minimap pictures itself.
+
 ## Questions (only what I can't tell from your notes)
 
 - None open.

@@ -94,6 +94,24 @@ local handlers = {
 	end,
 	minimap = function() BF:Toggle("minimap.button") end,
 	version = function() BF:Print("%s", BF.version or "?") end,
+	-- Whether the game finds its minimap pictures by name (the seamless map's minimap detail depends on it): tries a few
+	-- names, says which the game knows, and keeps the answer for the owner's SavedVariables.
+	probe = function()
+		local tex = UIParent:CreateTexture()
+		local found = {}
+		for _, map in ipairs({ "Azeroth", "Kalimdor", "azeroth", "kalimdor" }) do
+			for _, form in ipairs({ "World\\Minimaps\\%s\\map%d_%d", "World\\Minimaps\\%s\\map%d_%d.blp",
+				"world/minimaps/%s/map%d_%d.blp" }) do
+				local path = form:format(map, 32, 48)
+				tex:SetTexture(path)
+				local id = tex.GetTextureFileID and tex:GetTextureFileID()
+				found[#found + 1] = { path, id or false }
+				BF:Print("%s -> %s", path, id and tostring(id) or L["not found"])
+			end
+		end
+		BF:AccountState("probe").minimap = found
+		BF:Print(L["Kept in SavedVariables/BookFinder.lua: please send it."])
+	end,
 }
 
 function Commands:Run(input)
