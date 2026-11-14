@@ -158,6 +158,15 @@ local function steps()
 		wait(0.2)
 	end
 
+	-- The map's own Show dropdown, drawn in Questie's style
+	check("the map's Show menu is drawn in Questie's style", function()
+		local M = public.MapShowMenu
+		if not M then return false, "no module" end
+		M.Install()
+		local n = M.Count()
+		return M.Cover() ~= nil and n > 0, ("button %s, %d entries read"):format(M.Find() and "found" or "not found", n)
+	end)
+
 	-- The map pin: a click's waypoint is the game's own, and a spot it can't take says so
 	check("a map pin goes on Orgrimmar", function()
 		local ok = public.Waypoint(1454, 50, 50, "Orgrimmar")

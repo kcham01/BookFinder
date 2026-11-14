@@ -164,6 +164,15 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
   trainers and townsfolk to show, the quest icon switches, its windows). It used to open from Questie's map button,
   which BookFinder leaves out.
 
+## Said about 2.0.1
+- "Our drop down" meant **the world map's own Show dropdown** (the native one in the map): it should look like
+  Questie's. (2.0.1 had restyled BookFinder's own menus instead; they stay in Questie's style too.)
+
+## Done in 2.0.2 (for you to test)
+- The map's Show dropdown is drawn in Questie's style, with the game's own entries (Quest Objectives, Show Quest
+  Levels, Quest Difficulty Color, Low-Level Quests, Tracked Items), each doing what it did. If it can't be read, the
+  game's own menu opens as before.
+
 ## Still to do
 - **Frames that don't line up**: send screenshots of the ones you mean.
 - **Every setting into OpenMap's panel**, redundancy removed (you asked for this; next).

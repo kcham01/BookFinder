@@ -159,6 +159,14 @@ function public.Inspect()
 		local a = QuestMapFrame.ContentsAnchor
 		store.frames["QuestMapFrame.ContentsAnchor"] = { width = a:GetWidth(), height = a:GetHeight() }
 	end
+	-- the map's overlay buttons (MapShowMenu.lua finds the Show button among them)
+	store.overlays = {}
+	for i, f in ipairs(WorldMapFrame and WorldMapFrame.overlayFrames or {}) do
+		local okTag, tag = pcall(function() return f.menuTag or (f.GetMenuTag and f:GetMenuTag()) end)
+		store.overlays[i] = { name = f.GetName and f:GetName() or nil, dropdown = (f.SetupMenu and f.OpenMenu) and true or false,
+			generator = type(f.menuGenerator) == "function", tag = okTag and tag and tostring(tag) or nil }
+	end
+	store.showMenuCovered = public.MapShowMenu and public.MapShowMenu.Cover() ~= nil or false
 	store.cvars = cvars()
 	store.questLogTab = public.Tabs and public.Tabs.Selected() or false
 	store.mapShowMenu = (db.inspect and type(db.inspect.mapShowMenu) == "table" and db.inspect.mapShowMenu)

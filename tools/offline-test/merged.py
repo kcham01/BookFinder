@@ -210,6 +210,29 @@ INTEGRATION = r"""function(root)
         want(okOpen, "opening a menu failed: " .. tostring(errOpen))
     end
 
+    -- The map's Show menu: the game's own entries, read from its menu description, drawn in Questie's style
+    local MSM = BookFinder.MapShowMenu
+    want(MSM and MSM.Convert, "the Show menu module isn't there")
+    if MSM and MT then
+        local picked, cvar = 0, false
+        local function el(t, sel, kids)
+            local e = { text = t, kids = kids or {}, responder = function() end }
+            function e:EnumerateElementDescriptions() return ipairs(self.kids) end
+            if sel ~= nil then function e:IsSelected() return cvar end end
+            function e:Pick() picked = picked + 1 cvar = not cvar end
+            return e
+        end
+        local desc = el("root", nil, { el("Show:"), el("Quest Objectives", false), el(""), el("Tracked Items", true),
+            el("More", nil, { el("Inside", false) }) })
+        desc.kids[1].responder = nil
+        local m, list = MT.NewList()
+        local okC, n = pcall(MSM.Convert, desc, m, 0)
+        want(okC and n == 3, "the Show menu's entries weren't read: " .. tostring(n))
+        want(list[1] and list[1].isTitle and list[2] and list[2].checked and list[3] == MT.Divider and list[5] and list[5].hasArrow,
+            "the Show menu wasn't drawn as title, tick boxes, divider and submenu")
+        if list[2] then list[2].func() want(picked == 1 and list[2].checked() == true, "a Show menu switch didn't do the game's own click") end
+    end
+
     -- One minimap button and one launcher
     local LDBI = LibStub("LibDBIcon-1.0", true)
     local buttons = {}
