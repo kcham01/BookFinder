@@ -19,7 +19,8 @@ They work as one:
 - **One map menu**: OpenMap's own panel holds every switch for what the map draws, Questie's quest icons and the
   library books included.
 - **One minimap button** (and one launcher for Titan/ElvUI): your books collected and the nearest book in its
-  tooltip; left-click the map, right-click a menu.
+  tooltip; left-click the map, right-click a menu, with Questie's townsfolk and quest icon menu in it. Every dropdown
+  is drawn in Questie's style.
 - Books of **every zone in view** show on the seamless map, with the route trail, above its art.
 
 `/bookfinder selftest` checks every feature in game and logs the results and errors to its saved variables.
