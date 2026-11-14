@@ -152,7 +152,20 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
   nothing to the game's Show menu.
 - The self-test checks the map pin, the search in the BookFinder tab, the scrollbar and every switch on OpenMap's panel.
 
+## Said about 2.0.0
+- "It's better." Some things don't quite line up with the frames, but that's fine for now (to fix in the look pass;
+  screenshots will show which).
+- **The dropdowns should look like Questie's.** You really like Questie's dropdown.
+
+## Done in 2.0.1 (for you to test)
+- Every BookFinder dropdown (the minimap button's right-click, the books tab's gear, a book's right-click) is drawn
+  with Questie's own dropdown, like its map menu was.
+- Questie's own map menu is back: "Townsfolk and quest icons" in the minimap button's right-click opens it (vendors,
+  trainers and townsfolk to show, the quest icon switches, its windows). It used to open from Questie's map button,
+  which BookFinder leaves out.
+
 ## Still to do
+- **Frames that don't line up**: send screenshots of the ones you mean.
 - **Every setting into OpenMap's panel**, redundancy removed (you asked for this; next).
 - **The look**: the mock-ups (map panel, settings) wait for your markup; the journey card in them no longer applies.
 
