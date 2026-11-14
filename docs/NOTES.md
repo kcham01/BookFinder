@@ -102,6 +102,19 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   every line of BookFinder's code is new. Reason: it is the one source with WoW: Forever's own content (the server
   projects' open data has none of it).
 
+- **"These should be their full new own things but they should still be able to talk to the other addons so things
+  will work right, like for instance if I'm in a party with someone who has Questie I want it to still be able to
+  track their quests and all of that."**
+  - The map (answer to the map-art question), the quest system and the books are each BookFinder's own, new.
+  - BookFinder speaks the other addons' languages with players who use them: Questie's party sharing (their tracked
+    quests and progress), Books on map's group sharing (who still needs which book), OpenMap's sharing (where friends
+    and guild members are, shared pins).
+- **"Just make sure you really understand how all 3 addons work from a usage standpoint and all of the small tiny
+  details that matter, from tooltips to icons to messages. All of it. Also keeping all of my notes and docs in mind."**
+  Before anything is built: a full usage study of Questie, OpenMap and Books on map (their newest versions), every
+  window, menu, tooltip, icon, message, click, setting and what they send each other, written in BookFinder's docs
+  for you to check, together with these notes and `docs/WANTS.md`.
+
 ## Questions (only what I can't tell from your notes)
 
 - QuestieTrace is in Questie's zip and in its dropdown (image1). Should it be part of BookFinder?
