@@ -140,8 +140,12 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   the game."** The map's Show dropdown holds only BookFinder's entries: the game's own are taken out. What those entries
   switched on (the game's own quest tracking on the map) should be off too; which ones Forever has needs a look at the
   menu in game.
+- **Answered with screenshots**: Forever's Show menu is the world map's own filter button (the yellow arrow at the right
+  end of the map's top bar, beside the quest log's search). It holds "Show:" Quest Objectives, Show Quest Levels, Quest
+  Difficulty Color, Low-Level Quests, Tracked Items: **all off** on your account. BookFinder replaces that menu with
+  its own (heading "Show:", then its entries), so those five have no switch left and stay off; the button's red reset
+  cross (it would put the game's entries back on) is hidden.
 
 ## Questions (only what I can't tell from your notes)
 
-- **The game's own map tracking**: which entries does Forever's map Show menu have (a screenshot of it, with BookFinder
-  off)? Each one gets switched off once it's known.
+- None open.

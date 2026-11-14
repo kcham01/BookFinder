@@ -636,9 +636,11 @@ local function newDescription(kind, text)
 	function d:CreateTitle(label) local row = newDescription("title", label) self.rows[#self.rows + 1] = row return row end
 	function d:CreateDivider() local row = newDescription("divider") self.rows[#self.rows + 1] = row return row end
 	function d:SetResponse(r) self.response = r end
+	function d:SetTag(t) self.tag = t end
 	function d:AddInitializer(fn) self.initializers[#self.initializers + 1] = fn end
 	return d
 end
+World.NewMenuDescription = function() return newDescription("root") end
 function World.OpenMenu(tag)
 	local root = newDescription("root")
 	-- The game's own entries come first, as in the client.
@@ -656,4 +658,28 @@ function World.InitRow(row)
 	function button:AttachTexture() local t = self:CreateTexture() attached[#attached + 1] = t return t end
 	for _, fn in ipairs(row.initializers) do fn(button, row) end
 	return attached
+end
+
+-- The world map's Show button (tracking options) and the floor picker: both menu buttons among the map's overlay
+-- frames; the Show button is told apart by its mixin. SetupMenu keeps the generator; World.OpenShowButton() runs it.
+WorldMapTrackingOptionsButtonMixin = { OnLoad = function() end }
+WorldMapFloorNavigationFrameMixin = { OnLoad = function() end }
+local function menuButton(mixin)
+	local b = CreateFrame("DropdownButton", nil, WorldMapFrame)
+	b.OnLoad = mixin.OnLoad
+	function b:SetupMenu(fn) self.generator = fn end
+	b.ResetButton = CreateFrame("Button", nil, b)
+	return b
+end
+WorldMapFrame.overlayFrames = { menuButton(WorldMapFloorNavigationFrameMixin), menuButton(WorldMapTrackingOptionsButtonMixin) }
+WorldMapFrame.overlayFrames[2].generator = function(_, root)
+	root:SetTag("MENU_WORLD_MAP_TRACKING")
+	for _, label in ipairs({ "Quest Objectives", "Show Quest Levels", "Quest Difficulty Color", "Low-Level Quests", "Tracked Items" }) do
+		root:CreateCheckbox(label, function() return false end, function() end)
+	end
+end
+function World.OpenShowButton()
+	local root = World.NewMenuDescription()
+	WorldMapFrame.overlayFrames[2].generator(WorldMapFrame.overlayFrames[2], root)
+	return root
 end

@@ -194,5 +194,14 @@ See the log. Current phase is the first unchecked one.
   The owner then asked for the game's own entries to go ("I loathe the native tracking"): `Fill` empties the root
   description's `elementDescriptions` (the client's list of rows; count kept in `ShowMenu.removed`) before adding
   ours. **Not verified in game** that the field has that name on Forever (if not, ours follow the game's under a
-  divider, as before). Still to do: switch off what the game's entries controlled (its quest tracking on the map);
-  waiting on a screenshot of Forever's menu to know which they are.
+  divider, as before).
+  Then the owner's screenshots: the Show button is the world map's tracking options button (top bar, right end, beside
+  the quest log search); Forever's entries are Quest Objectives, Show Quest Levels, Quest Difficulty Color, Low-Level
+  Quests, Tracked Items, all off on the owner's account. Now `ShowMenu:FindButton()` takes the overlay frame whose
+  OnLoad is WorldMapTrackingOptionsButtonMixin's (not the floor picker) and `SetupMenu`s it with BookFinder's own
+  generator (tag MENU_BOOKFINDER_SHOW, title "Show:"): the game's rows are never built, and its ResetButton (red
+  cross) is hidden and kept hidden. The tag route stays as the fallback. The five game switches are not forced off
+  (their CVar names on Forever are unknown); they are off now and nothing can turn them on from the map any more.
+  The same screenshot shows an older build in game with OpenMap's coordinates in the title bar ("Cursor: x X, y Y |
+  Player: ...") and a "Player 45.0, 49.7" box at the map's bottom right: check in game that BookFinder's coordinate
+  line (bottom centre of the scroll area) does not double the game's own, if that box is the game's.

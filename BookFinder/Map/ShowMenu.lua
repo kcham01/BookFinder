@@ -176,8 +176,9 @@ local function removeGameEntries(root)
 end
 
 --- Makes a menu description (the game's map filter menu) BookFinder's: the game's entries out, BookFinder's in.
-function ShowMenu:Fill(root)
-	if not removeGameEntries(root) then root:CreateDivider() end
+--- fresh: a menu of BookFinder's own (nothing of the game's in it to take out).
+function ShowMenu:Fill(root, fresh)
+	if not fresh and not removeGameEntries(root) then root:CreateDivider() end
 	local pendingSection
 	for _, entry in ipairs(ShowMenu.entries) do
 		if entry.section then
@@ -194,8 +195,45 @@ function ShowMenu:Fill(root)
 	end
 end
 
+-- The button --------------------------------------------------------------------------------------------------
+--
+-- The map's Show button is the world map's tracking options button: one of the map's overlay frames, made from the
+-- game's WorldMapTrackingOptionsButtonMixin (told apart from the floor picker, the same kind of button, by that).
+-- Its menu is replaced whole, so the game's entries are never built. Forever's entries (seen in game): Quest
+-- Objectives, Show Quest Levels, Quest Difficulty Color, Low-Level Quests, Tracked Items; the owner keeps them all off,
+-- and with no switch left they stay off. The button's reset badge (the red cross, which puts the game's entries back
+-- to their defaults) goes with them.
+-- Where the button cannot be found, the menu is changed by its tag instead: the game's rows are emptied, ours added.
+
+function ShowMenu:FindButton()
+	local mixin = WorldMapTrackingOptionsButtonMixin
+	if not mixin or not WorldMapFrame then return nil end
+	for _, frame in ipairs(WorldMapFrame.overlayFrames or {}) do
+		if type(frame) == "table" and frame.OnLoad == mixin.OnLoad and frame.SetupMenu then return frame end
+	end
+end
+
+local function hideReset(button)
+	local reset = button.ResetButton
+	if type(reset) ~= "table" or not reset.Hide then return end
+	reset:Hide()
+	if reset.HookScript and not reset.bookFinderHidden then
+		reset.bookFinderHidden = true
+		reset:HookScript("OnShow", function(self) self:Hide() end)
+	end
+end
+
 BF:At("login", function()
-	if Menu and Menu.ModifyMenu then
+	local button = ShowMenu:FindButton()
+	if button then
+		ShowMenu.button = button
+		button:SetupMenu(function(_, root)
+			if root.SetTag then root:SetTag("MENU_BOOKFINDER_SHOW") end
+			if root.CreateTitle then root:CreateTitle(L["Show:"]) end
+			ShowMenu:Fill(root, true)
+		end)
+		hideReset(button)
+	elseif Menu and Menu.ModifyMenu then
 		Menu.ModifyMenu(TAG, function(_, root) ShowMenu:Fill(root) end)
 	end
 end, 75)
