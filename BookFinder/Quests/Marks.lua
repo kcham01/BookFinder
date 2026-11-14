@@ -157,6 +157,8 @@ end
 
 local layers = { available = {}, log = {} }
 
+
+
 local function merge()
 	local byMap = {}
 	for _, layer in pairs(layers) do
@@ -184,6 +186,35 @@ local function merge()
 	Marks.version = Marks.version + 1
 	BF:Send("BF_MARKS_CHANGED")
 end
+
+-- Other layers (townsfolk, party objectives...) register a builder: build(add), where
+-- add(map, x, y, key, role, source, inside) puts a role on the pin at that spot (same key = same pin).
+local extra = {}
+
+function Marks:RegisterLayer(name, build)
+	extra[name] = build
+end
+
+local function buildExtra(name)
+	local result = {}
+	building = result
+	local ok, err = pcall(extra[name], function(map, x, y, key, role, source, inside)
+		local pin = pinAt(map, x, y, key, source, inside)
+		pin.roles[#pin.roles + 1] = role
+	end)
+	building = nil
+	if not ok then geterrorhandler()(err) end
+	layers[name] = result
+end
+
+--- Rebuilds one registered layer (when what it shows changes).
+function Marks:RebuildLayer(name)
+	buildExtra(name)
+	merge()
+end
+
+--- The spot key for a source at a place (so other layers land on the same pin as the quest marks of that NPC).
+Marks.SpotKey = function(source, map, x, y, inside) return spotKey(source, map, x, y, inside) end
 
 local function buildLog()
 	building = {}
@@ -239,6 +270,7 @@ end
 --- Rebuilds now (log layers) and in slices (available); BF_MARKS_CHANGED when each is ready.
 function Marks:Rebuild(withAvailable)
 	buildLog()
+	if withAvailable then for name in pairs(extra) do buildExtra(name) end end
 	merge()
 	if withAvailable then buildAvailable(merge) end
 end

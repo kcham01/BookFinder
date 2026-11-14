@@ -20,6 +20,7 @@ Data\Objects.lua
 Data\Items.lua
 Data\Overrides.lua
 Data\Lists.lua
+Data\TownsfolkItems.lua
 
 Core\Settings.lua
 Core\Data.lua
@@ -42,6 +43,7 @@ Map\Pins.xml
 Map\WorldMap.lua
 Map\Minimap.lua
 Map\Guide.lua
+Map\Townsfolk.lua
 
 Books\List.lua
 Books\Books.lua

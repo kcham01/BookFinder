@@ -26,7 +26,7 @@ local function completeKind(quest)
 	return "complete"
 end
 
-local rank = { complete = 3, available = 2, itemStart = 2, objective = 1 }
+local rank = { complete = 3, available = 2, itemStart = 2, objective = 1, townsfolk = 0.5 }
 
 --- The role that decides the pin's icon.
 function Look:Lead(pin)
@@ -45,6 +45,7 @@ end
 function Look:Kind(pin)
 	local lead = Look:Lead(pin)
 	if not lead then return "available", "available", true end
+	if lead.role == "townsfolk" then return lead.kind.icon, "townsfolk", false end
 	if lead.role == "complete" then return completeKind(lead.quest), "available", true end
 	if lead.role == "available" or lead.role == "itemStart" then return availableKind(lead.quest), "available", true end
 	local icon = lead.objective and lead.objective.icon or Objectives.SLAY
@@ -72,6 +73,7 @@ function Look:Glow(pin, minimap)
 	local lead = Look:Lead(pin)
 	local perQuest = BF:Get(minimap and "icons.colorsMinimap" or "icons.colorsMap")
 	if lead and lead.role == "objective" and perQuest then return Look:QuestColour(lead.quest) end
+	if lead and lead.role == "townsfolk" then return nil end
 	if lead and (lead.role == "complete" or lead.role == "available" or lead.role == "itemStart") then
 		return { 1, 0.82, 0.25 }
 	end

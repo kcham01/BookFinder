@@ -100,10 +100,31 @@ end
 -- One pin's lines. `seen` stops a quest repeating when several pins at a spot list it.
 local function addPin(pin, shift, seen)
 	local hasDetail = false
-	local givers, objectives = {}, {}
+	local givers, objectives, folk = {}, {}, {}
 	for _, r in ipairs(pin.roles) do
-		if r.role == "objective" then objectives[#objectives + 1] = r else givers[#givers + 1] = r end
-		if r.role ~= "objective" then hasDetail = true end
+		if r.role == "objective" then objectives[#objectives + 1] = r
+		elseif r.role == "townsfolk" then folk[#folk + 1] = r
+		else givers[#givers + 1] = r end
+		if r.role ~= "objective" and r.role ~= "townsfolk" then hasDetail = true end
+	end
+
+	-- Townsfolk: the NPC (or object), what they are.
+	if #folk > 0 and #givers == 0 then
+		local name = sourceName(pin) or ""
+		line(name, GREEN)
+		local row = pin.source and pin.source.type == "npc" and BF:Npc(pin.source.id)
+		local sub = row and row[BF.N.subName]
+		local kinds = {}
+		for _, r in ipairs(folk) do
+			local label = L[r.kind.label]
+			if not seen["f" .. label] then
+				seen["f" .. label] = true
+				kinds[#kinds + 1] = label
+			end
+		end
+		if sub and sub ~= "" then line("<" .. sub .. ">", LIGHT) end
+		if #kinds > 0 and not (sub and #kinds == 1 and sub:find(kinds[1], 1, true)) then line(table.concat(kinds, ", "), DETAIL) end
+		if BF:Get("tooltips.ids.npc") and row then line("ID: " .. pin.source.id, GREY) end
 	end
 
 	if #givers > 0 then

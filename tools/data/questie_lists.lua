@@ -108,7 +108,30 @@ local darkmoon = {
 	elwynn = policy:LoadDarkmoonFixes(false),
 }
 
+-- Townsfolk: Questie's lists of who is who, for WoW: Forever (class trainers by class, mailboxes by faction, meeting
+-- stones, weapon masters, profession trainers by profession).
+local Townsfolk = module(modules, "Townsfolk")
+local professionTrainers = {}
+Townsfolk.SetProfessionTrainerIds = function(profession, ids) professionTrainers[profession] = ids end
+modules.QuestieProfessions = { professionKeys = Enum.professionKeys, private = {} }
+for _, f in ipairs({ "ClassTrainers", "Mailboxes", "MeetingStones", "WeaponTrainers" }) do
+	run("Modules/QuestieMenu/" .. f .. ".lua")
+end
+do
+	local p2 = io.popen('ls "' .. root .. '/Modules/QuestieMenu/ProfessionTrainers/"')
+	for file in p2:lines() do run("Modules/QuestieMenu/ProfessionTrainers/" .. file) end
+	p2:close()
+end
+local townsfolk = {
+	classTrainers = Townsfolk.GetClassTrainers and Townsfolk.GetClassTrainers() or {},
+	mailboxes = Townsfolk.GetMailboxes and Townsfolk.GetMailboxes() or {},
+	meetingStones = Townsfolk.GetMeetingStones and Townsfolk.GetMeetingStones() or {},
+	weaponTrainers = Townsfolk.GetWeaponTrainers and Townsfolk.GetWeaponTrainers() or {},
+	professionTrainers = professionTrainers,
+}
+
 io.write(encode({
+	townsfolk = townsfolk,
 	hiddenQuests = hiddenQuests,
 	hiddenNpcs = hiddenNpcs,
 	hiddenItems = hiddenItems,

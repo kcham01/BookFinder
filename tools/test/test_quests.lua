@@ -124,7 +124,7 @@ return {
 		local roles = {}
 		for _, pin in ipairs(BF.Marks:On(1429)) do
 			for _, r in ipairs(pin.roles) do
-				roles[r.role .. ":" .. r.quest] = (roles[r.role .. ":" .. r.quest] or 0) + 1
+				if r.quest then roles[r.role .. ":" .. r.quest] = (roles[r.role .. ":" .. r.quest] or 0) + 1 end
 			end
 		end
 		expect(roles["available:33"], "Wolves Across the Border offered by Eagan")
