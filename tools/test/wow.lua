@@ -231,6 +231,14 @@ function Region:GetLeft() return 0 end
 function Region:GetTop() return 0 end
 function Region:CreateTexture(name) return newRegion("Texture", name, self) end
 function Region:CreateFontString(name) return newRegion("FontString", name, self) end
+function Region:CreateLine(name)
+	local line = newRegion("Line", name, self)
+	function line:SetStartPoint(...) self.start = { ... } end
+	function line:SetEndPoint(...) self.stop = { ... } end
+	function line:SetThickness(t) self.thickness = t end
+	function line:SetColorTexture(r, g, b, a) self.colorTexture = { r, g, b, a } end
+	return line
+end
 function Region:CreateAnimationGroup() return newRegion("AnimationGroup", nil, self) end
 function Region:CreateAnimation(kind) return newRegion(kind or "Animation", nil, self) end
 function Region:SetTexture(t) self.texture = t end
@@ -286,20 +294,27 @@ C_AddOns = strict("C_AddOns", {
 
 UnitName = function(unit) if unit == "player" then return World.player.name, nil end return nil end
 UnitFullName = function(unit) if unit == "player" then return World.player.name, World.player.realm end end
-UnitGUID = function(unit) if unit == "player" then return World.player.guid end end
+-- Other units (a target, a nameplate's mob): World.units[token] = { guid =, dead =, player = }.
+World.units = {}
+UnitGUID = function(unit)
+	if unit == "player" then return World.player.guid end
+	return World.units[unit] and World.units[unit].guid
+end
+UnitIsPlayer = function(unit) return unit == "player" or (World.units[unit] and World.units[unit].player) or false end
+UnitIsDead = function(unit) return World.units[unit] and World.units[unit].dead or false end
 UnitFactionGroup = function() return World.player.faction, World.player.faction end
 UnitRace = function() return World.player.race, World.player.race, World.player.raceID end
 UnitClass = function() return World.player.class, World.player.class, World.player.classID end
 UnitClassBase = function() return World.player.class, World.player.classID end
 UnitLevel = function() return World.player.level end
 UnitSex = function() return 2 end
-UnitExists = function(unit) return unit == "player" end
+UnitExists = function(unit) return unit == "player" or World.units[unit] ~= nil end
 UnitIsDeadOrGhost = function() return false end
 UnitAffectingCombat = function() return false end
-InCombatLockdown = function() return false end
+InCombatLockdown = function() return World.combat == true end
 IsInGroup = function() return false end
 IsInRaid = function() return false end
-IsInInstance = function() return false, "none" end
+IsInInstance = function() if World.instance then return true, "party" end return false, "none" end
 GetNumGroupMembers = function() return 0 end
 GetRealmName = function() return World.player.realm end
 GetLocale = function() return "enUS" end
@@ -476,7 +491,7 @@ MapCanvasPinMixin = {
 }
 
 -- XML templates the add-on defines, as the harness knows them (template name -> mixin global name).
-World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin" }
+World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin", BookFinderPathPinTemplate = "BookFinderPathPinMixin" }
 
 local function newCanvas()
 	local map = CreateFrame("Frame", "WorldMapFrame", UIParent)
@@ -485,6 +500,12 @@ local function newCanvas()
 	map.providers, map.pins = {}, {}
 	function map:AddDataProvider(p) self.providers[#self.providers + 1] = p; p:OnAdded(self) end
 	function map:GetMapID() return self.mapID end
+	map.ScrollContainer = CreateFrame("ScrollFrame", nil, map)
+	function map.ScrollContainer:GetNormalizedCursorPosition() return World.cursorX or 0.5, World.cursorY or 0.5 end
+	function map.ScrollContainer:IsMouseOver() return World.cursorX ~= nil end
+	map.canvas = CreateFrame("Frame", nil, map)
+	map.canvas:SetSize(1002, 668)
+	function map:GetCanvas() return self.canvas end
 	function map:SetMapID(id) self.mapID = id; for _, p in ipairs(self.providers) do p:RefreshAllData() end end
 	function map:AcquirePin(template, ...)
 		local mixin = _G[World.templates[template]]
@@ -549,3 +570,84 @@ C_Item = strict("C_Item", {
 	GetItemNameByID = function() return nil end,
 	GetItemIconByID = function() return 134400 end,
 })
+
+-- Tooltips: the client's data processor (post-calls by data type) and the tooltip's first line ----------------------
+Enum.TooltipDataType = { Item = 0, Spell = 1, Unit = 2, Corpse = 3, Object = 4 }
+World.tooltipPostCalls = {}
+TooltipDataProcessor = strict("TooltipDataProcessor", {
+	AddTooltipPostCall = function(kind, fn)
+		World.tooltipPostCalls[kind] = World.tooltipPostCalls[kind] or {}
+		table.insert(World.tooltipPostCalls[kind], fn)
+	end,
+})
+GameTooltipTextLeft1 = GameTooltip:CreateFontString("GameTooltipTextLeft1")
+function GameTooltip:GetUnit() return nil end
+function GameTooltip:GetItem() return nil end
+function GameTooltip:GetSpell() return nil end
+
+--- Shows GameTooltip as the client would for a thing of `kind` ("Unit", "Item", "Spell", "Object") with `data`
+--- ({guid =} or {id =}); `title` is its first line. Returns the tooltip's lines.
+function World.ShowTooltip(kind, data, title)
+	local tip = GameTooltip
+	tip:SetOwner(UIParent)
+	if tip.scripts.OnTooltipCleared then tip.scripts.OnTooltipCleared(tip) end
+	tip.lines = {}
+	GameTooltipTextLeft1:SetText(title)
+	if title then tip:AddLine(title) end
+	for _, fn in ipairs(World.tooltipPostCalls[Enum.TooltipDataType[kind]] or {}) do fn(tip, data) end
+	tip:Show()
+	return tip.lines
+end
+
+-- Nameplates and the target frame ---------------------------------------------------------------------------------
+World.nameplates = {} -- [token] = frame
+C_NamePlate = strict("C_NamePlate", {
+	GetNamePlateForUnit = function(unit) return World.nameplates[unit] end,
+	GetNamePlates = function() local t = {} for _, f in pairs(World.nameplates) do t[#t + 1] = f end return t end,
+})
+TargetFrame = CreateFrame("Frame", "TargetFrame", UIParent)
+
+-- The client's menu system: menus built from descriptions; Menu.ModifyMenu(tag, fn) adds to a menu by its tag.
+World.menuModifiers = {}
+MenuResponse = { Open = 1, Refresh = 2, Close = 3 }
+Menu = strict("Menu", {
+	ModifyMenu = function(tag, fn)
+		World.menuModifiers[tag] = World.menuModifiers[tag] or {}
+		table.insert(World.menuModifiers[tag], fn)
+	end,
+})
+
+--- A menu description as the client's: records rows; World.OpenMenu(tag) runs every modifier on a fresh one.
+local function newDescription(kind, text)
+	local d = { kind = kind, text = text, rows = {}, initializers = {} }
+	function d:CreateCheckbox(label, isSelected, setSelected)
+		local row = newDescription("checkbox", label)
+		row.isSelected, row.setSelected = isSelected, setSelected
+		self.rows[#self.rows + 1] = row
+		return row
+	end
+	function d:CreateButton(label)
+		local row = newDescription("button", label)
+		self.rows[#self.rows + 1] = row
+		return row
+	end
+	function d:CreateTitle(label) local row = newDescription("title", label) self.rows[#self.rows + 1] = row return row end
+	function d:CreateDivider() local row = newDescription("divider") self.rows[#self.rows + 1] = row return row end
+	function d:SetResponse(r) self.response = r end
+	function d:AddInitializer(fn) self.initializers[#self.initializers + 1] = fn end
+	return d
+end
+function World.OpenMenu(tag)
+	local root = newDescription("root")
+	for _, fn in ipairs(World.menuModifiers[tag] or {}) do fn(nil, root) end
+	return root
+end
+--- Runs a row's initializers on a stand-in menu button; returns the textures attached (the row's icon).
+function World.InitRow(row)
+	local button = CreateFrame("Button")
+	button.fontString = button:CreateFontString()
+	local attached = {}
+	function button:AttachTexture() local t = self:CreateTexture() attached[#attached + 1] = t return t end
+	for _, fn in ipairs(row.initializers) do fn(button, row) end
+	return attached
+end
