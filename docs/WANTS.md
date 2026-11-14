@@ -228,7 +228,20 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
 ## Still to do
 - ~~**Finding things quickly**: an instant search key, a page for anything, "what to do here"~~: you didn't want
   these. **No bloat; everything should feel native.** No new features for now.
-- **Next: your test of 2.2.0.** Waiting on what you find.
+- **Your test of 2.2.0** (screenshots):
+  - **The map's Show dropdown is the menu for what the map shows**, with Questie-style tick boxes. 2.2.0 still opened
+    the game's own: BookFinder covered the wrong button (the map's floor picker is the same kind of button).
+  - **Questie's quest items seem broken** in the Quests tab (what exactly: waiting on you; the next self-test checks
+    them).
+  - The list's header said "Questie Tracker: 13/40".
+
+## Done in 2.2.1 (for you to test)
+- **The Show dropdown** finds the right button, and holds the game's entries, then BookFinder's switches for what the
+  map shows, in Questie's style: quest icons, places, dungeons, townsfolk, people, the books (longer groups as
+  submenus). Those switches left the settings window, so each is in one place. If the game's entries can't be read,
+  the first line is "Game map filters…", which opens the game's own.
+- **The Quests tab's header** reads "Quests: 13/40", without Questie's button.
+- The self-test checks the Show dropdown and every quest item button shown in the Quests tab.
 - **The rest of the rebuild**, in `docs/DESIGN.md`'s order: the Quests tab as BookFinder's own list, the map's
   corner buttons, one tooltip style, one voice for messages, the book alerts.
 - **Frames that don't line up**: send screenshots of the ones you mean; they need eyes on the game.
