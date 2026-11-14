@@ -220,7 +220,15 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
 - **Quests, in plain words**: the 37 quest settings a player uses (quest icons, quests to pick up, the quest list,
   tooltips, automatic accept and turn-in, nameplates, sounds, group); the rest keep Questie's defaults.
 
+## Said after 2.2.0
+- "I just want to be able to find things quickly and feel like I'm getting a lot of use from the addon." The
+  Dungeon Journal addon was an example of something both pretty and genuinely useful, not a gimmick: not a request
+  to copy it.
+
 ## Still to do
+- **Finding things quickly** (proposed, waiting on your yes): one key opens the search from anywhere; any result opens
+  a full page for it (a quest, NPC, item or zone, with links between them); a "what to do here" view for where you
+  stand.
 - **The rest of the rebuild**, in `docs/DESIGN.md`'s order: the Quests tab as BookFinder's own list, the map's
   corner buttons, one tooltip style, one voice for messages, the book alerts.
 - **Frames that don't line up**: send screenshots of the ones you mean; they need eyes on the game.
