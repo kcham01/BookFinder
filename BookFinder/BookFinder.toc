@@ -29,3 +29,6 @@ Core\Player.lua
 Quests\Options.lua
 Quests\Events.lua
 Quests\Log.lua
+Quests\Rules.lua
+Quests\Objectives.lua
+Quests\Marks.lua

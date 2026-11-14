@@ -72,4 +72,69 @@ return {
 		expect(BF.Events.active["Winter Veil"], "Winter Veil runs on 1 January")
 		World.date = { year = 2026, month = 7, monthDay = 1, hour = 12, minute = 0 }
 	end,
+
+	["rules: Northshire for a level 1 human warrior"] = function(BF)
+		World.player.level = 1
+		Login()
+		local R = BF.Rules
+		expect(R:IsAvailable(783), "A Threat Within")
+		equal(R:Blocker(7), "prerequisite", "Kobold Camp Cleanup needs A Threat Within")
+		expect(R:IsAvailable(33), "Wolves Across the Border")
+		equal(R:Blocker(4641), "race", "a Horde quest")
+		equal(R:Blocker(18), "level", "Brotherhood of Thieves needs level 2")
+	end,
+
+	["rules: prerequisites, breadcrumbs and chains follow the log"] = function(BF)
+		World.player.level = 2
+		World.completed[783] = true
+		World.questLog = { quest(33, "Wolves Across the Border", { obj("Tough Wolf Meat: 0/8", 0, 8, "item") }) }
+		Login()
+		local R = BF.Rules
+		expect(R:IsAvailable(7), "Kobold Camp Cleanup after A Threat Within")
+		equal(R:Blocker(5261), "breadcrumb", "Eagan Peltskinner leads to a quest already taken")
+		equal(R:Blocker(783), "completed", "done")
+		equal(R:Blocker(33), "active", "in the log")
+	end,
+
+	["rules: low-level quests follow the setting"] = function(BF)
+		World.player.level = 20
+		World.greenRange = 8
+		Login()
+		local R = BF.Rules
+		expect(R:IsTrivial(783), "a level 1 quest is grey at 20")
+		expect(not R:IsShown(783), "hidden by default")
+		BF:Set("quests.lowLevel", "all")
+		expect(R:IsShown(783), "shown with 'all'")
+		BF:Set("quests.lowLevel", "range")
+		BF:Set("quests.levelMin", 1)
+		BF:Set("quests.levelMax", 3)
+		expect(R:IsShown(783), "shown in range 1-3")
+		expect(not R:IsShown(33) or R:Level(33) <= 3, "range respected")
+	end,
+
+	["marks: a giver, a turn-in and objectives on the right map"] = function(BF)
+		World.player.level = 2
+		World.completed[783] = true
+		World.questLog = {
+			quest(7, "Kobold Camp Cleanup", { obj("Kobold Vermin slain: 0/10", 0, 10) }),
+			quest(5261, "Eagan Peltskinner", {}),
+		}
+		Login()
+		Tick(5) -- the available quests are worked out a slice per frame
+		local roles = {}
+		for _, pin in ipairs(BF.Marks:On(1429)) do
+			for _, r in ipairs(pin.roles) do
+				roles[r.role .. ":" .. r.quest] = (roles[r.role .. ":" .. r.quest] or 0) + 1
+			end
+		end
+		expect(roles["available:33"], "Wolves Across the Border offered by Eagan")
+		expect(roles["complete:5261"], "Eagan Peltskinner handed in to Eagan")
+		expect(roles["objective:7"] and roles["objective:7"] >= 1, "Kobold Vermin marked")
+		expect(not roles["available:7"], "a quest in the log is not offered")
+		-- Kobold Vermin live in a few packs: merged, far fewer pins than spawns.
+		local npc = BF:Npc(6)
+		local spawnCount = 0
+		for _, pts in pairs(npc[BF.N.spawns]) do spawnCount = spawnCount + #pts end
+		expect(roles["objective:7"] < spawnCount, ("packs merged (%d pins for %d spawns)"):format(roles["objective:7"], spawnCount))
+	end,
 }
