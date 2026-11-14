@@ -58,10 +58,9 @@ function PinPool:Register(map, name, mixin, build)
 	map.pinPools[name] = pool
 end
 
---- The mouse wiring every BookFinder pin gets: its own scripts, and the click action the canvas may route to.
+--- Mouse on: the canvas wires it. It asserts that a new pin has no OnEnter/OnLeave of its own (Blizzard_MapCanvas
+--- line 309 on WoW: Forever), then routes the mouse to the pin's OnMouseEnter, OnMouseLeave, OnMouseDown, OnMouseUp
+--- and, for a click released over the pin, OnMouseClickAction(button). So the pin only defines those methods.
 function PinPool:Wire(pin)
 	pin:EnableMouse(true)
-	pin:SetScript("OnEnter", function(self) self:OnMouseEnter() end)
-	pin:SetScript("OnLeave", function(self) self:OnMouseLeave() end)
-	pin:SetScript("OnMouseUp", function(self, button) self:OnMouseClickAction(button) end)
 end

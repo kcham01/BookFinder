@@ -177,3 +177,7 @@ See the log. Current phase is the first unchecked one.
   `Map/PinPool.lua`), pins in the sea on the world map (now never on World/Cosmic maps), hated icons (now plain
   gossip "!"/"?" and COMMON\Indicator-* dots, no glow), minimap pile-ups (objective markers of one objective within
   10 px show once). Errors: `Core/Errors.lua`, /bf errors.
+- **MapCanvas line 309 assert (the real cause)**: a new pin must have NO OnEnter/OnLeave script; the canvas sets its
+  own and calls the pin's OnMouseEnter/OnMouseLeave, OnMouseUp(button, upInside) and then OnMouseClickAction(button).
+  The stand-in now asserts the same. Item-start quests: dropper spawns merged into packs (8% of the map, at most 3 per
+  quest per map, droppers under 5% left out): "Crystal in the Mountains" put 519 "!" on Arathi before.
