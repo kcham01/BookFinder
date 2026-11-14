@@ -888,3 +888,7 @@ LOCALIZED_CLASS_NAMES_FEMALE = { WARRIOR = "Warrior", MAGE = "Mage" }
 RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 }, MAGE = { r = 0.25, g = 0.78, b = 0.92 } }
 UnitIsUnit = function(a, b) return a == b end
 GetUnitName = function(unit) return World.units[unit] and World.units[unit].name end
+
+-- Flight paths: World.taxi[map] = { {name, position = {x, y}, state} }.
+Enum.FlightPathState = { Current = 0, Reachable = 1, Unreachable = 2 }
+C_TaxiMap = strict("C_TaxiMap", { GetTaxiNodesForMap = function(map) return World.taxi and World.taxi[map] or {} end })

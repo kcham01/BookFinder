@@ -122,4 +122,22 @@ return {
 		for _, item in ipairs(BF.ShowMenu:Items()) do if item.text then seen[item.text] = true end end
 		expect(seen["Dungeons and raids"] and seen["Level ranges"], "both")
 	end,
+
+	["flight masters from the game: learned bright, the rest greyed"] = function(BF)
+		setup()
+		World.taxi = { [1415] = {
+			{ name = "Stormwind", position = { x = 0.5, y = 0.5 }, state = 1 },
+			{ name = "Far Away", position = { x = 0.52, y = 0.52 }, state = 2 },
+		} }
+		BF:Set("map.seamless", true)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(1415)
+		Tick(1)
+		local found = {}
+		for _, b in ipairs({ BF.WorldCanvas.overlay:GetChildren() }) do
+			if b.shown and b.node then found[b.node.name] = b end
+		end
+		expect(found.Stormwind and not found.Stormwind.Icon.color or found.Stormwind.Icon.color[1] == 1, "learned: bright")
+		equal(found["Far Away"].Icon.color[1], 0.5, "not learned: grey")
+	end,
 }

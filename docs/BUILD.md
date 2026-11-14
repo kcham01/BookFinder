@@ -388,3 +388,11 @@ See the log. Current phase is the first unchecked one.
   - If not: a converter of BookFinder's own (tools/), reading each continent's WDT file from the game (its MAID chunk
     lists each map tile's minimap texture file ID). The owner exports the WDT files (for example with wow.export) and
     sends them; Zephras Isle's internal map name is needed too.
+- Phase 12, step 4: lines on the canvas (`add.line(e1, n1, e2, n2, spec)`: Line regions on the overlay, in screen
+  pixels, redrawn with the view) and the patrol paths layer (Map/Paths.lua's NPCs, colours, switches); flight masters
+  from the game (C_TaxiMap.GetTaxiNodesForMap on the continent: learned bright, unreachable greyed, "Learned" / "Not
+  learned"), standing in on the seamless map for the townsfolk flight masters ("Flight Master" in the Show dropdown).
+  **Not verified in game**: GetTaxiNodesForMap on a continent map on Forever; whether its `state` tells learned
+  (Unreachable) as on other clients. Flight routes and times between two masters (OpenMap's click one, then another)
+  are not built: OpenMap's flight times are its own data; the game's own (C_TaxiMap) give routes only at a flight
+  master.
