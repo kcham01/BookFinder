@@ -40,10 +40,12 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
   #1 to #12; removing those needs the repository recreated.
 - **Study (first pass done)**: `docs/study/` holds, per addon, how it works from a player's side (in our words):
   `books-on-map.md` (2.3.0), `openmap.md` (v0.8.9), `questie.md` (12.9.0 with QuestieDB 1.1.1), each ending with the
-  protocols BookFinder must speak. Waiting on the owner's review.
-- **Then**: the owner checks the study against their notes; then the build starts, from scratch.
-- Newest reference versions (kept outside the repository): Questie 12.9.0, QuestieDB 1.1.1, Books on map 2.3.0,
-  OpenMap v0.8.9 (https://github.com/openmap-world/openmap). QuestieTrace: ignored.
+  protocols BookFinder must speak.
+- **The build is under way**: `docs/BUILD.md` has the plan (13 phases), which are done, and a log of what was learned.
+  Offline tests: `tools/test/run.sh` (lua5.1). Nothing has run in game until the owner says so.
+- Newest reference versions: Questie 12.9.0, QuestieDB 1.1.1, Books on map 2.3.0, OpenMap v0.8.9
+  (https://github.com/openmap-world/openmap). QuestieTrace: ignored. The zips lived in an earlier session's scratchpad
+  and are gone: ask the owner to send them again when they are needed (OpenMap is public).
 
 ## The owner's design notes (summary; full text in `docs/NOTES.md`)
 

@@ -101,7 +101,8 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 6. ~~Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).~~ Done.
 7. Books: list (ours), detection, pins, Books tab, route (no trail), cards, minimap button.
 8. ~~The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).~~ Done (its OpenMap entries appear as phase 12 builds them).
-9. Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.
+9. ~~Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.~~
+   Done (its action tiles, place search and favourite stars come with the map, phase 12).
 10. Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).
 11. Comms: questie + QuestieV1, BooksOnMapFE, OpenMapLoc, OpenMap pins.
 12. OpenMap's map: stitched world from the game's map art, dungeons, pins and card, quill, notes, people.
@@ -216,3 +217,20 @@ See the log. Current phase is the first unchecked one.
 - The quest log's gear menu ("Show Quest Objectives") ditched at the owner's word: `ShowMenu:FindQuestLogGear()`
   (QuestMapFrame.QuestsFrame.SettingsDropdown, QuestScrollFrame.SettingsDropdown, else a menu button its parent keeps
   under a key with "Settings" in it) is hidden and kept hidden. **Not verified in game**: the gear's name on Forever.
+- Phase 9 (settings panel) done: `UI/Widgets.lua` (tick box, slider, dropdown, colour swatch, heading; each picks the
+  newest template the client has through C_XMLUtil.GetTemplateInfo: MinimalSliderWithSteppersTemplate else
+  OptionsSliderTemplate, WowStyle1DropdownTemplate else a button opening MenuUtil.CreateContextMenu), `UI/Panel.lua`
+  (PortraitFrameTemplate window "BookFinder <version>", side tabs down the right in the spellbook's skill-line tab art:
+  Map, Quests, Books, Journey; top tabs per section (PanelTopTabButtonTemplate else TabButtonTemplate); pages built
+  from the settings' own `page` and `group` (heading); tick boxes in two columns, then sliders, choices and colours;
+  Defaults resets the page shown (asked first); Escape closes; place and last page remembered; pages and tabs made
+  once and kept), `UI/Profiles.lua` (Map > Profiles). Ways in: the BookFinder button on the world map (bottom right,
+  left of the game's "?"), `/bookfinder` and `/bf`, the game's AddOns settings (one entry with "Open BookFinder").
+  **Pending settings**: a setting whose feature is not built carries `pending = true` (Quests/Options.lua's
+  PENDING lists: the quest list, automation, announcements, sounds, DBM, party objectives, quest window icons, spawn
+  merging) and stays out of the panel. `tools/test/test_panel.lua` fails if a pending setting is read anywhere, or a
+  shown one is read nowhere: take a key off the list in the change that builds its feature. Section and page with
+  nothing to show are hidden (Journey appears with its windows; Quests' "Quest list" and "Automation" with theirs; the
+  Map's "On the map" with the map). Moved: the arrow and compass to Map > More ("Arrow and compass"), coordinates to
+  Map > Look ("Coordinates"); books on one page with Settings / Filters headings (Books on map's window's sections).
+  **Not verified in game**: every template name above on Forever; the side tab art's offsets; the map button's spot.
