@@ -90,7 +90,8 @@ end
 function Reward:ReputationLines(questID)
 	local lines = {}
 	for _, pair in ipairs(Reward:Reputation(questID) or {}) do
-		local name = GetFactionInfoByID and GetFactionInfoByID(pair[1])
+		local data = C_Reputation and C_Reputation.GetFactionDataByID and C_Reputation.GetFactionDataByID(pair[1])
+		local name = (data and data.name) or (GetFactionInfoByID and GetFactionInfoByID(pair[1]))
 		if name then
 			lines[#lines + 1] = ("%s%d %s"):format(pair[2] >= 0 and "+" or "", pair[2], name)
 		end

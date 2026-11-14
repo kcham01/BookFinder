@@ -26,7 +26,9 @@ local unpack = unpack
 -- Missing API: fail loudly with the name -------------------------------------------------------------------------
 
 -- BookFinder's saved variables read as nil until the test (or the add-on) sets them, as on a first login.
-local savedVariables = { BookFinderDB = true, BookFinderCharDB = true }
+local savedVariables = { BookFinderDB = true, BookFinderCharDB = true,
+	-- Old global API that WoW: Forever no longer has: reads as nil there, as here.
+	GetItemCount = true, GetFactionInfoByID = true }
 setmetatable(_G, {
 	__index = function(_, k)
 		if savedVariables[k] then return nil end
@@ -157,7 +159,12 @@ Region.__index = function(self, k)
 	if v ~= nil then return v end
 	-- Any other method (the game's are Capitalised) is accepted and recorded, so layout code runs; tests assert on
 	-- what matters. Lower-case names are fields: nil until set.
-	if type(k) ~= "string" or not k:match("^%u") then return nil end
+	if type(k) ~= "string" then return nil end
+	local verbs = { "Set", "Get", "Is", "Has", "Can", "Enable", "Disable", "Register", "Unregister", "Clear", "Lock",
+		"Unlock", "Start", "Stop", "Play", "Raise", "Lower", "Adjust", "Use", "Add", "Remove", "Release" }
+	local method = false
+	for _, v in ipairs(verbs) do if k:sub(1, #v) == v and k:sub(#v + 1, #v + 1):match("%u") then method = true break end end
+	if not method then return nil end
 	return function(frame, ...)
 		frame.calls = frame.calls or {}
 		frame.calls[#frame.calls + 1] = { k, ... }
@@ -397,14 +404,16 @@ end
 GetQuestLogSelection = function() return 0 end
 SelectQuestLogEntry = function() end
 
-GetItemCount = function(id, bank) return (World.bags[id] or 0) + (bank and World.bank and World.bank[id] or 0) end
 GetNumSkillLines = function() return #World.skills end
 GetSkillLineInfo = function(i) local s = World.skills[i] return s.name, false, false, s.rank, 0, 0, s.max end
-GetFactionInfoByID = function(id)
-	local v = World.reputations[id]
-	if not v then return nil end
-	return "Faction " .. id, "", 4, 0, 42000, v
-end
+-- As WoW: Forever: reputation and item counts only through C_Reputation / C_Item.
+C_Reputation = strict("C_Reputation", {
+	GetFactionDataByID = function(id)
+		local v = World.reputations[id]
+		if not v then return nil end
+		return { name = "Faction " .. id, currentStanding = v }
+	end,
+})
 IsSpellKnown = function() return false end
 C_Spell = strict("C_Spell", { GetSpellName = function(id) return World.spellNames and World.spellNames[id] or nil end })
 C_SkillInfo = strict("C_SkillInfo", {
@@ -546,6 +555,49 @@ issecrettable = function() return false end
 World.templates.BookFinderBookPinTemplate = "BookFinderBookPinMixin"
 BackdropTemplateMixin = {}
 C_Item = strict("C_Item", {
+	GetItemCount = function(id, bank) return (World.bags[id] or 0) + (bank and World.bank and World.bank[id] or 0) end,
 	GetItemNameByID = function() return nil end,
 	GetItemIconByID = function() return 134400 end,
 })
+
+-- The map's Show button and the game's menu descriptions (just enough of Menu.lua to read entries).
+UISpecialFrames = {}
+MenuInputContext = { MouseButton = 1 }
+do
+	local function newDescription()
+		local d = { children = {} }
+		function d:EnumerateElementDescriptions()
+			local i = 0
+			return function() i = i + 1 if self.children[i] then return i, self.children[i] end end
+		end
+		function d:SetTag(t) self.tag = t end
+		function d:GetTag() return self.tag end
+		function d:CreateCheckbox(text, isSelected, setSelected)
+			local e = newDescription()
+			e.text = text
+			e.IsSelected = function() return isSelected() end
+			e.Pick = function() setSelected() end
+			self.children[#self.children + 1] = e
+			return e
+		end
+		return d
+	end
+	MenuUtil = { CreateRootMenuDescription = function() return newDescription() end, GetElementText = function(e) return e.text end }
+	MenuVariants = { GetDefaultContextMenuMixin = function() return {} end }
+	Menu = { PopulateDescription = function(generator, owner, root) generator(owner, root) end }
+end
+WorldMapTrackingOptionsButtonMixin = { OnMouseDown = function() end }
+do
+	local show = CreateFrame("Button", nil, WorldMapFrame)
+	show.OnMouseDown = WorldMapTrackingOptionsButtonMixin.OnMouseDown
+	World.questObjectives = true
+	show.menuGenerator = function(_, root)
+		root:SetTag("MENU_WORLD_MAP_TRACKING")
+		root:CreateCheckbox("Quest Objectives", function() return World.questObjectives end,
+			function() World.questObjectives = not World.questObjectives end)
+	end
+	local floor = CreateFrame("Button", nil, WorldMapFrame) -- the floor picker: another dropdown button
+	floor.menuGenerator = function(_, root) root:SetTag("MENU_WORLD_MAP_FLOORS") end
+	WorldMapFrame.overlayFrames = { floor, show }
+	WorldMapFrame.showButton = show
+end
