@@ -231,6 +231,14 @@ function Region:GetLeft() return 0 end
 function Region:GetTop() return 0 end
 function Region:CreateTexture(name) return newRegion("Texture", name, self) end
 function Region:CreateFontString(name) return newRegion("FontString", name, self) end
+function Region:CreateLine(name)
+	local line = newRegion("Line", name, self)
+	function line:SetStartPoint(...) self.start = { ... } end
+	function line:SetEndPoint(...) self.stop = { ... } end
+	function line:SetThickness(t) self.thickness = t end
+	function line:SetColorTexture(r, g, b, a) self.colorTexture = { r, g, b, a } end
+	return line
+end
 function Region:CreateAnimationGroup() return newRegion("AnimationGroup", nil, self) end
 function Region:CreateAnimation(kind) return newRegion(kind or "Animation", nil, self) end
 function Region:SetTexture(t) self.texture = t end
@@ -483,7 +491,7 @@ MapCanvasPinMixin = {
 }
 
 -- XML templates the add-on defines, as the harness knows them (template name -> mixin global name).
-World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin" }
+World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin", BookFinderPathPinTemplate = "BookFinderPathPinMixin" }
 
 local function newCanvas()
 	local map = CreateFrame("Frame", "WorldMapFrame", UIParent)
@@ -492,6 +500,12 @@ local function newCanvas()
 	map.providers, map.pins = {}, {}
 	function map:AddDataProvider(p) self.providers[#self.providers + 1] = p; p:OnAdded(self) end
 	function map:GetMapID() return self.mapID end
+	map.ScrollContainer = CreateFrame("ScrollFrame", nil, map)
+	function map.ScrollContainer:GetNormalizedCursorPosition() return World.cursorX or 0.5, World.cursorY or 0.5 end
+	function map.ScrollContainer:IsMouseOver() return World.cursorX ~= nil end
+	map.canvas = CreateFrame("Frame", nil, map)
+	map.canvas:SetSize(1002, 668)
+	function map:GetCanvas() return self.canvas end
 	function map:SetMapID(id) self.mapID = id; for _, p in ipairs(self.providers) do p:RefreshAllData() end end
 	function map:AcquirePin(template, ...)
 		local mixin = _G[World.templates[template]]
