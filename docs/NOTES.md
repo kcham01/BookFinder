@@ -1,8 +1,8 @@
 # Notes (your words, as given)
 
 Note-taking mode: everything you say goes here as you say it. Nothing is built or changed until you say so.
-Your document is kept whole in `docs/notes/map-items-and-settings.docx`, its pictures as `docs/notes/image1.png` to
-`image8.png`.
+Your document and its pictures (image1 to image8 below) are kept on the session's machine for review only, never in
+the repository.
 
 ## 1. The map's dropdown (your document)
 
@@ -79,8 +79,10 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **QuestieTrace**: "no ignore trace." It stays out of BookFinder and out of the dropdown.
 - **Settings window**: "yes replace yours with open maps as i laid out in the document." BookFinder's 2.2.0 settings
   window goes; OpenMap's panel becomes the one settings window, as section 2 describes.
-- **Books tab**: you asked what I meant (explained in chat: the book-icon tab under the "!" Quests tab on the map's
-  right edge, showing Library books, Collect, Rewards and the sets). Waiting on what you want there.
+- **Books tab** (the book-icon tab under the "!" Quests tab on the map's right edge: Library books, Collect, Rewards,
+  the sets): "lets say yes for the books tab and see how it rocks out." It keeps showing the books.
+- **Other people's files**: "nobody elses files should be going onto my github btw. they are there for u to review."
+  Files you send (addon zips, documents, screenshots) are for review only and are never committed.
 
 ## Questions (only what I can't tell from your notes)
 
