@@ -38,6 +38,12 @@
   (Panel.lua) is exposed for the self-test.
 - **OpenMap draws its own docks, flight masters and townsfolk again** (Shortest Path did in 1.2 to 1.8.1); a save
   that had them off for that is put back once (`db.bfSupersededBack`).
+- **Dropdowns** (`merge/Menu.lua`, 2.0.1): `BookFinder.ContextMenu(owner, build)` takes the builder the game's
+  `MenuUtil.CreateContextMenu` takes (CreateTitle, CreateButton, CreateCheckbox, CreateDivider, CreateSubmenu) and
+  draws it with Questie's `LibUIDropDownMenuQuestie-4.0` EasyMenu at the cursor (Questie's divider, a closing
+  Cancel; a second right-click on the same owner closes it). Without that library whole, the game's menu draws it.
+  Used by the minimap button and compartment menu, the books tab's gear and a book's right-click. The minimap menu's
+  "Townsfolk and quest icons" opens Questie's own map menu (`QuestieMenu:Show`).
 - **Gone**: `merge/Journeys.lua`, `merge/MapMenu.lua`, `src/ShortestPathForever`, `src/ForeverCore`,
   `tools/routing`, the journey recorder (`BookFinderDB.journeys`, `attempts`), `/bookfinder near`.
 - **Still to do**: every setting into OpenMap's panel (the owner likes it), with duplicates removed; the settings

@@ -190,6 +190,26 @@ INTEGRATION = r"""function(root)
     end
     want(BookFinder.OpenSettings("map") and BookFinder.OpenSettings("books") and BookFinder.OpenSettings(), "settings: a page can't be opened")
 
+    -- Our dropdowns are drawn with Questie's dropdown library, from the same builder calls the game's menu takes
+    local MT = BookFinder.MenuTest
+    want(MT and BookFinder.ContextMenu, "the menu helper isn't there")
+    if MT then
+        local m, list = MT.NewList()
+        local on = false
+        m:CreateTitle("BookFinder")
+        m:CreateButton("Settings", function() end)
+        m:CreateDivider()
+        m:CreateCheckbox("Route", function() return on end, function() on = not on end)
+        local sub = m:CreateSubmenu("More")
+        sub:CreateButton("Inside", function() end)
+        want(#list == 5 and list[1].isTitle and list[3] == MT.Divider and list[5].hasArrow and #list[5].menuList == 1,
+            "the menu builder didn't make Questie-style entries (" .. #list .. ")")
+        list[4].func()
+        want(on and list[4].checked() == true, "a menu checkbox didn't toggle or read back")
+        local okOpen, errOpen = pcall(BookFinder.ContextMenu, UIParent, function(_, menu) menu:CreateTitle("x") end)
+        want(okOpen, "opening a menu failed: " .. tostring(errOpen))
+    end
+
     -- One minimap button and one launcher
     local LDBI = LibStub("LibDBIcon-1.0", true)
     local buttons = {}

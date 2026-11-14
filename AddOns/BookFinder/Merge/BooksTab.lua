@@ -463,8 +463,7 @@ local function bookTooltip(b)
 end
 
 local function bookMenu(owner, b)
-	if not (MenuUtil and MenuUtil.CreateContextMenu) then return end
-	MenuUtil.CreateContextMenu(owner, function(_, menu)
+	public.ContextMenu(owner, function(_, menu)
 		menu:CreateTitle(b.name)
 		for _, loc in ipairs(b.locs) do
 			local where = #b.locs > 1 and (L["Go to %s"]):format(loc[4] or "?") or L["Go there"]
@@ -917,11 +916,7 @@ end
 
 -- The top bar: the quest log's search box, and the gear with the list's filters ----------------------------------
 local function filterMenu(owner)
-	if not (MenuUtil and MenuUtil.CreateContextMenu) then
-		public.OpenSettings("books")
-		return
-	end
-	MenuUtil.CreateContextMenu(owner, function(_, menu)
+	public.ContextMenu(owner, function(_, menu)
 		local db = BOOKS.db or {}
 		local function flag(key, invert)
 			return function() return (db[key] and true or false) ~= (invert or false) end,

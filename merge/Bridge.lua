@@ -39,6 +39,12 @@ local function menu(_, rootMenu)
 		rootMenu:CreateButton(QUESTS_LABEL or "Quests", function()
 			if not (public.OpenQuestLog and public.OpenQuestLog()) then public.OpenSettings("quests") end
 		end)
+		-- (Questie's own map menu: townsfolk, trainers and vendors to show, the quest icons, its windows. It opened from
+		-- Questie's map button, which BookFinder leaves out)
+		rootMenu:CreateButton("Townsfolk and quest icons", function()
+			local ok, qm = pcall(QuestieLoader.ImportModule, QuestieLoader, "QuestieMenu")
+			if ok and qm and qm.Show then C_Timer.After(0, function() qm:Show() end) end
+		end)
 		rootMenu:CreateButton("My Journey", function()
 			local ok, journey = pcall(QuestieLoader.ImportModule, QuestieLoader, "QuestieJourney")
 			if ok and journey and journey.ToggleJourneyWindow then journey:ToggleJourneyWindow() end
@@ -47,7 +53,7 @@ local function menu(_, rootMenu)
 end
 
 local function openMenu(owner)
-	if MenuUtil and MenuUtil.CreateContextMenu then MenuUtil.CreateContextMenu(owner, menu) else public.OpenSettings() end
+	public.ContextMenu(owner, menu)
 end
 
 -- What the button's tooltip and the broker displays say: the books, the journey, what a click does
