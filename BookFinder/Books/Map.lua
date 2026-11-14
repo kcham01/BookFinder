@@ -69,6 +69,20 @@ end
 local Provider = CreateFromMixins(MapCanvasDataProviderMixin)
 BookMap.Provider = Provider
 
+local function buildPin(pin)
+	pin:SetSize(20, 20)
+	pin.Icon = pin:CreateTexture(nil, "ARTWORK")
+	pin.Icon:SetAllPoints()
+	pin.Step = pin:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+	pin.Step:SetPoint("BOTTOMRIGHT", 3, -3)
+	BF.PinPool:Wire(pin)
+end
+
+function Provider:OnAdded(map)
+	MapCanvasDataProviderMixin.OnAdded(self, map)
+	BF.PinPool:Register(map, TEMPLATE, BookFinderBookPinMixin, buildPin)
+end
+
 function Provider:RemoveAllData()
 	self:GetMap():RemoveAllPinsByTemplate(TEMPLATE)
 end
@@ -80,6 +94,8 @@ function Provider:RefreshAllData()
 	if not map then return end
 	local info = C_Map.GetMapInfo(map)
 	local continent = info and info.mapType and Enum.UIMapType and info.mapType <= Enum.UIMapType.Continent
+	-- Not on the world map itself (no scaled picture of either continent: books would land in the sea).
+	if info and info.mapType and Enum.UIMapType and info.mapType <= Enum.UIMapType.World then return end
 	for _, book in ipairs(Books.list) do
 		local shows = BookMap:Shows(book)
 		if shows then
@@ -126,9 +142,10 @@ function BookFinderBookPinMixin:OnMouseLeave()
 	GameTooltip:Hide()
 end
 
-function BookFinderBookPinMixin:OnMouseUp(button)
+function BookFinderBookPinMixin:OnMouseClickAction(button)
 	BookMap:Click(self.book, self.place, button)
 end
+BookFinderBookPinMixin.OnMouseUp = BookFinderBookPinMixin.OnMouseClickAction
 
 local function refreshWorldMap()
 	if WorldMapFrame and WorldMapFrame:IsShown() then Provider:RefreshAllData() end

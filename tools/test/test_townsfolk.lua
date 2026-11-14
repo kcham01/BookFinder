@@ -53,7 +53,7 @@ return {
 		WorldMapFrame:Show()
 		WorldMapFrame:SetMapID(1453)
 		local pin
-		for _, p in ipairs(WorldMapFrame.pins) do
+		for _, p in ipairs(MapPins(WorldMapFrame)) do
 			if p.pin and p.pin.roles[1] and p.pin.roles[1].role == "townsfolk" and p.pin.roles[1].kind.key == "flightMaster" then pin = p end
 		end
 		expect(pin, "a flight master pin on the Stormwind map")

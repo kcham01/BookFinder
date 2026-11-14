@@ -37,8 +37,8 @@ def("icons.hideUntracked", false, P, "Hide untracked quests")
 def("icons.hideOnContinents", false, P, "Hide on continent maps")
 def("icons.colorsMap", false, P, "A colour per quest on the map")
 def("icons.colorsMinimap", false, P, "A colour per quest on the minimap")
-def("icons.glowMap", true, P, "Glow on the map")
-def("icons.glowMinimap", true, P, "Glow on the minimap")
+def("icons.glowMap", false, P, "Glow on the map")
+def("icons.glowMinimap", false, P, "Glow on the minimap")
 def("paths.map", true, P, "Patrol paths on the map")
 def("paths.minimap", true, P, "Patrol paths on the minimap")
 
@@ -49,10 +49,10 @@ def("icons.minimapScale", 0.7, P, "Minimap icon size", { min = 0.2, max = 2, ste
 def("icons.townsfolkMapScale", 0.6, P, "Townsfolk size on the map", { min = 0.2, max = 2, step = 0.05 })
 def("icons.townsfolkMinimapScale", 0.7, P, "Townsfolk size on the minimap", { min = 0.2, max = 2, step = 0.05 })
 def("icons.scale.available", 1.2, P, "Quest givers", { min = 0.2, max = 3, step = 0.05 })
-def("icons.scale.event", 1.35, P, "Events", { min = 0.2, max = 3, step = 0.05 })
-def("icons.scale.slay", 1, P, "Slay", { min = 0.2, max = 3, step = 0.05 })
-def("icons.scale.loot", 1, P, "Loot", { min = 0.2, max = 3, step = 0.05 })
-def("icons.scale.object", 1, P, "Objects", { min = 0.2, max = 3, step = 0.05 })
+def("icons.scale.event", 0.7, P, "Events", { min = 0.2, max = 3, step = 0.05 })
+def("icons.scale.slay", 0.55, P, "Slay", { min = 0.2, max = 3, step = 0.05 })
+def("icons.scale.loot", 0.55, P, "Loot", { min = 0.2, max = 3, step = 0.05 })
+def("icons.scale.object", 0.55, P, "Objects", { min = 0.2, max = 3, step = 0.05 })
 def("icons.slay", "default", P, "Slay icon", { iconChoice = true })
 def("icons.loot", "default", P, "Loot icon", { iconChoice = true })
 def("icons.object", "default", P, "Object icon", { iconChoice = true })
@@ -175,6 +175,8 @@ def("dbm.interact", true, P, "HUD: interact")
 --[[ Questie settings with no counterpart here, and why:
 	- iconTheme (Questie / pfQuest / Blizzard art): BookFinder ships no other addon's art; every icon is the game's own,
 	  and each objective kind's icon can be chosen among the game's (icons.slay ... above).
+	- glow defaults to off and objective icons are small markers: the owner hated the first look (badged "!" atlases,
+	  skulls with white glows piling up on the minimap).
 	- mapShowHideEnabled (Questie's own map button): the map's Show dropdown holds every switch (docs/NOTES.md 1).
 	- tracker window settings (lock, sizer, backdrop, border, hide/minimize in combat or instances, header, fonts'
 	  faces): the quest list lives in the map's Quests tab, not in a window of its own.

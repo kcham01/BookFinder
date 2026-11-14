@@ -20,7 +20,7 @@ end
 
 local function pinsWithRole(map, role, quest)
 	local found = {}
-	for _, pin in ipairs(map.pins) do
+	for _, pin in ipairs(MapPins(map)) do
 		for _, r in ipairs(pin.template == "BookFinderMapPinTemplate" and pin.pin.roles or {}) do
 			if r.role == role and r.quest == quest then found[#found + 1] = pin end
 		end
@@ -46,7 +46,7 @@ return {
 		WorldMapFrame:SetMapID(1429)
 		BF:Set("quests.map", false)
 		local quests = 0
-		for _, p in ipairs(WorldMapFrame.pins) do if p.template == "BookFinderMapPinTemplate" then quests = quests + 1 end end
+		for _, p in ipairs(MapPins(WorldMapFrame)) do if p.template == "BookFinderMapPinTemplate" then quests = quests + 1 end end
 		equal(quests, 0, "no quest pins")
 	end,
 
@@ -68,14 +68,14 @@ return {
 		WorldMapFrame:SetMapID(1429)
 		local pin = pinsWithRole(WorldMapFrame, "available", 33)[1]
 		World.ctrl = true
-		pin:OnMouseUp("LeftButton")
+		pin:OnMouseClickAction("LeftButton")
 		World.ctrl = false
 		expect(World.waypoint and World.waypoint.uiMapID == 1429, "map pin set")
 		expect(World.superTracked, "tracked")
 		local asked
 		StaticPopup_Show = function(which, text, _, data) asked = { which, data } end
 		World.shift = true
-		pin:OnMouseUp("LeftButton")
+		pin:OnMouseClickAction("LeftButton")
 		World.shift = false
 		equal(asked and asked[1], "BOOKFINDER_HIDE_QUEST", "asked")
 		StaticPopupDialogs.BOOKFINDER_HIDE_QUEST.OnAccept(nil, asked[2])

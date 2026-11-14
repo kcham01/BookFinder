@@ -497,31 +497,27 @@ local function newCanvas()
 	function map:AddDataProvider(p) self.providers[#self.providers + 1] = p; p:OnAdded(self) end
 	function map:GetMapID() return self.mapID end
 	function map:SetMapID(id) self.mapID = id; for _, p in ipairs(self.providers) do p:RefreshAllData() end end
+	map.pinPools = {}
+	function map:GetCanvas() return self end
+	-- As the client: pins come from map.pinPools[template]; a template with no pool must be an XML template the
+	-- client knows, else the canvas asserts (Blizzard_MapCanvas.lua:309 on WoW: Forever).
 	function map:AcquirePin(template, ...)
-		local mixin = _G[World.templates[template]]
-		local pin = CreateFrame("Frame", nil, self)
-		Mixin(pin, mixin)
-		pin.owningMap, pin.template = self, template
-		pin.Icon, pin.Glow, pin.Step = pin:CreateTexture(), pin:CreateTexture(), pin:CreateFontString()
-		if pin.OnLoad then pin:OnLoad() end
+		local pool = self.pinPools[template]
+		assert(pool, "MapCanvas: no pool and no XML template for " .. tostring(template))
+		local pin = pool:Acquire()
 		pin:OnAcquired(...)
-		self.pins[#self.pins + 1] = pin
 		return pin
 	end
 	function map:RemoveAllPinsByTemplate(template)
-		for i = #self.pins, 1, -1 do
-			if self.pins[i].template == template then
-				if self.pins[i].OnReleased then self.pins[i]:OnReleased() end
-				table.remove(self.pins, i)
-			end
-		end
+		if self.pinPools[template] then self.pinPools[template]:ReleaseAll() end
 	end
 	function map:EnumeratePinsByTemplate(template)
+		local pool = self.pinPools[template]
+		if not pool then return function() end end
+		local list = {}
+		for pin in pool:EnumerateActive() do list[#list + 1] = pin end
 		local i = 0
-		return function()
-			repeat i = i + 1 until not self.pins[i] or self.pins[i].template == template
-			return self.pins[i]
-		end
+		return function() i = i + 1 return list[i] end
 	end
 	function map:GetPinFrameLevelsManager()
 		return { InsertFrameLevelAbove = function() end }
@@ -609,3 +605,15 @@ ACCEPT, CANCEL, SEARCH = "Accept", "Cancel", "Search"
 FACTION_ALLIANCE, FACTION_HORDE = "Alliance", "Horde"
 ToggleWorldMap = function() WorldMapFrame:Show() end
 C_Item.GetItemInfo = function() return nil end
+
+--- Every active pin on a canvas (any pool), each with .template set to its pool's name.
+function MapPins(map)
+	local list = {}
+	for name, pool in pairs(map.pinPools or {}) do
+		for pin in pool:EnumerateActive() do
+			pin.template = name
+			list[#list + 1] = pin
+		end
+	end
+	return list
+end

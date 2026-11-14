@@ -14,26 +14,26 @@ local TRACK = "Interface\\Minimap\\Tracking\\"
 local RAID = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_"
 
 -- tint: vertex colour; grey: desaturated and dimmed (a low-level quest)
+local DOT = "Interface\\COMMON\\Indicator-"
 local kinds = {
-	available = { { atlas = "QuestNormal" }, { file = QUEST .. "AvailableQuestIcon" } },
-	availableTrivial = { { atlas = "QuestNormal", grey = true }, { file = QUEST .. "AvailableQuestIcon", grey = true } },
-	availableRepeatable = { { atlas = "QuestDaily" }, { file = QUEST .. "DailyQuestIcon" },
-		{ file = QUEST .. "AvailableQuestIcon", tint = { 0.35, 0.65, 1 } } },
-	availableEvent = { { atlas = "QuestLegendary" }, { file = QUEST .. "AvailableLegendaryQuestIcon" },
-		{ file = QUEST .. "AvailableQuestIcon", tint = { 1, 0.55, 0.15 } } },
-	availablePvP = { { atlas = "QuestNormal", tint = { 1, 0.35, 0.3 } }, { file = QUEST .. "AvailableQuestIcon", tint = { 1, 0.35, 0.3 } } },
-	complete = { { atlas = "QuestTurnin" }, { file = QUEST .. "ActiveQuestIcon" } },
-	completeRepeatable = { { atlas = "QuestRepeatableTurnin" }, { file = QUEST .. "DailyActiveQuestIcon" },
-		{ file = QUEST .. "ActiveQuestIcon", tint = { 0.35, 0.65, 1 } } },
-	completeEvent = { { atlas = "QuestTurnin", tint = { 1, 0.6, 0.2 } }, { file = QUEST .. "ActiveQuestIcon", tint = { 1, 0.6, 0.2 } } },
+	-- Quest givers and turn-ins: the plain gold marks of the game's quest windows (no badge round them).
+	available = { { file = QUEST .. "AvailableQuestIcon" } },
+	availableTrivial = { { file = QUEST .. "AvailableQuestIcon", grey = true } },
+	availableRepeatable = { { file = QUEST .. "DailyQuestIcon" } },
+	availableEvent = { { file = QUEST .. "AvailableQuestIcon", tint = { 1, 0.55, 0.15 } } },
+	availablePvP = { { file = QUEST .. "AvailableQuestIcon", tint = { 1, 0.35, 0.3 } } },
+	complete = { { file = QUEST .. "ActiveQuestIcon" } },
+	completeRepeatable = { { file = QUEST .. "DailyActiveQuestIcon" } },
+	completeEvent = { { file = QUEST .. "ActiveQuestIcon", tint = { 1, 0.6, 0.2 } } },
 	incomplete = { { file = QUEST .. "IncompleteQuestIcon" } },
 
-	slay = { { file = RAID .. "8" } },                                  -- skull
-	loot = { { file = "Interface\\GroupFrame\\UI-Group-MasterLooter" } }, -- the loot bag
-	object = { { file = "Interface\\Cursor\\Interact" } },              -- the cogwheel hand
-	event = { { file = RAID .. "1" } },                                 -- star
-	talk = { { file = QUEST .. "GossipGossipIcon" } },                  -- speech bubble
-	interact = { { file = "Interface\\Cursor\\Interact" } },
+	-- Objectives: small round markers, the game's own indicator lights, one colour per kind.
+	slay = { { file = DOT .. "Red" } },
+	loot = { { file = DOT .. "Yellow" } },
+	object = { { file = DOT .. "Green" } },
+	event = { { file = DOT .. "Gray" } },
+	talk = { { file = DOT .. "Yellow" } },
+	interact = { { file = DOT .. "Green" } },
 
 	-- Townsfolk: the minimap's own tracking icons.
 	innkeeper = { { file = TRACK .. "Innkeeper" } },
@@ -70,17 +70,15 @@ Icons.kinds = kinds
 -- The choices a player can pick for an objective kind's icon (Quests > Look): every objective art above, by name.
 Icons.objectiveChoices = {
 	{ key = "default", label = "Default" },
-	{ key = "slay", label = "Skull" },
-	{ key = "event", label = "Star" },
-	{ key = "loot", label = "Loot bag" },
-	{ key = "object", label = "Cogwheel" },
-	{ key = "talk", label = "Speech bubble" },
-	{ key = "raid2", label = "Circle", file = RAID .. "2" },
-	{ key = "raid3", label = "Diamond", file = RAID .. "3" },
-	{ key = "raid4", label = "Triangle", file = RAID .. "4" },
-	{ key = "raid5", label = "Moon", file = RAID .. "5" },
-	{ key = "raid6", label = "Square", file = RAID .. "6" },
-	{ key = "raid7", label = "Cross", file = RAID .. "7" },
+	{ key = "dotRed", label = "Red marker", file = DOT .. "Red" },
+	{ key = "dotYellow", label = "Yellow marker", file = DOT .. "Yellow" },
+	{ key = "dotGreen", label = "Green marker", file = DOT .. "Green" },
+	{ key = "dotGray", label = "Grey marker", file = DOT .. "Gray" },
+	{ key = "skull", label = "Skull", file = RAID .. "8" },
+	{ key = "star", label = "Star", file = RAID .. "1" },
+	{ key = "diamond", label = "Diamond", file = RAID .. "3" },
+	{ key = "triangle", label = "Triangle", file = RAID .. "4" },
+	{ key = "lootBag", label = "Loot bag", file = "Interface\\GroupFrame\\UI-Group-MasterLooter" },
 }
 for _, c in ipairs(Icons.objectiveChoices) do
 	if c.file and not kinds[c.key] then kinds[c.key] = { { file = c.file } } end
@@ -117,6 +115,26 @@ function Icons:ObjectiveKind(kind)
 end
 
 --- Draws `kind` on a texture region (and resets anything a previous kind left on it).
+local ROUND_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+
+-- Spell and item icons are square: cut round (the game's portrait mask) so they sit with the round markers.
+local function roundOff(texture, on)
+	if not texture.AddMaskTexture then return end
+	if on then
+		if not texture.bfMask then
+			local parent = texture:GetParent()
+			if not (parent and parent.CreateMaskTexture) then return end
+			texture.bfMask = parent:CreateMaskTexture()
+			texture.bfMask:SetTexture(ROUND_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+			texture.bfMask:SetAllPoints(texture)
+		end
+		if not texture.bfMasked then texture:AddMaskTexture(texture.bfMask) texture.bfMasked = true end
+	elseif texture.bfMasked then
+		texture:RemoveMaskTexture(texture.bfMask)
+		texture.bfMasked = nil
+	end
+end
+
 function Icons:Apply(texture, kind)
 	local c = Icons:Resolve(kind)
 	if c.atlas then
@@ -125,6 +143,9 @@ function Icons:Apply(texture, kind)
 		texture:SetTexture(c.file)
 		texture:SetTexCoord(0, 1, 0, 1)
 	end
+	local square = c.file and c.file:find("^Interface\\Icons\\") ~= nil
+	roundOff(texture, square)
+	if square then texture:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
 	if c.tint then texture:SetVertexColor(c.tint[1], c.tint[2], c.tint[3], 1) else texture:SetVertexColor(1, 1, 1, 1) end
 	if texture.SetDesaturated then texture:SetDesaturated(c.grey == true) end
 	texture:SetAlpha(c.grey and 0.7 or 1)
