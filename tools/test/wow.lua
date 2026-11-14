@@ -593,7 +593,12 @@ BackdropTemplateMixin = {}
 C_Item = strict("C_Item", {
 	GetItemNameByID = function() return nil end,
 	GetItemIconByID = function() return 134400 end,
+	GetItemQualityByID = function() return 3 end,
+	GetItemInfo = function(id) return "Item " .. id, "|Hitem:" .. id .. "|h[Item " .. id .. "]|h" end,
 })
+ITEM_QUALITY_COLORS = { [3] = { r = 0, g = 0.44, b = 0.87 } }
+DressUpItemLink = function(link) World.triedOn = link end
+QuestMapFrame_Show = function() QuestMapFrame:Show() end
 
 -- Tooltips: the client's data processor (post-calls by data type) and the tooltip's first line ----------------------
 Enum.TooltipDataType = { Item = 0, Spell = 1, Unit = 2, Corpse = 3, Object = 4 }

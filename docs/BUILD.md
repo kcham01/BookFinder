@@ -253,3 +253,13 @@ See the log. Current phase is the first unchecked one.
   except `list.playButtons` (VoiceOver's play buttons need that addon's interface: pending).
   **Not verified in game**: QuestScrollFrame and its Contents / ScrollBar / SearchBox names on Forever; the row look
   next to the game's own headers; scrolling a list holding secure item buttons in combat.
+- Phase 10, part 2: the map window's tabs and the Books tab. `UI/MapTabs.lua`: a column of side tabs down the map
+  window's right edge (the bare Forever map has none), "Quests" (the game's quest panel with BookFinder's list) and
+  "Library books"; a page other than Quests is a frame laid over QuestMapFrame. `Books/Tab.lua`: title, "Books: n/38",
+  its own search box, the progress bar with a notch and number at 10, 20, 25, 38 (green once reached; hover: the
+  rewards), the route (when on: the next book, Skip, Recalc), each set foldable with "n / total", large book rows
+  (icon, name, place and coordinates, tick box: a hand tick only, the bags and hand-ins are the game's), Rewards
+  (tiers and items: hover, Shift-click link, Ctrl-click try on), Group, and Show all / Hide all / Optimized route
+  (`Books:TickAll`, one chat line). `/bom` opens it. `UI/Widgets.lua` now holds the side tab (`Widgets:SideTab`),
+  shared with the settings panel. **Not verified in game**: the tab column's spot on the window's edge; the page's
+  dark fill against the game's quest panel art.

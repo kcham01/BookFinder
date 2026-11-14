@@ -252,6 +252,33 @@ function Widgets:Colour(parent, def, width)
 	return f
 end
 
+-- Side tab ------------------------------------------------------------------------------------------------------------
+
+--- A tab for a column of tabs down a window's right edge (the settings panel's sections, the map window's Quests and
+--- Books): the spellbook's skill-line tab art with an icon; lit when chosen; its name on hover. The caller places it.
+function Widgets:SideTab(parent, icon, label, onClick)
+	local tab = CreateFrame("CheckButton", nil, parent)
+	tab:SetSize(32, 32)
+	tab.bg = tab:CreateTexture(nil, "BACKGROUND")
+	tab.bg:SetTexture("Interface\\SpellBook\\SpellBook-SkillLineTab")
+	tab.bg:SetSize(64, 64)
+	tab.bg:SetPoint("TOPLEFT", -3, 11)
+	tab:SetNormalTexture(icon)
+	tab:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+	tab:SetCheckedTexture("Interface\\Buttons\\CheckButtonHilight", "ADD")
+	tab:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(L[label])
+		GameTooltip:Show()
+	end)
+	tab:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	tab:SetScript("OnClick", function(self)
+		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+		onClick(self)
+	end)
+	return tab
+end
+
 --- The control for a setting, or nil when it has none (a choice whose list is not built yet, a pending setting).
 function Widgets:For(parent, def, width)
 	if def.pending or def.soundChoice then return nil end

@@ -57,8 +57,10 @@ Books\Books.lua
 Books\Map.lua
 Books\Route.lua
 Books\Alerts.lua
+Books\Tab.lua
 
 UI\Dropdown.lua
 UI\Widgets.lua
 UI\Panel.lua
 UI\Profiles.lua
+UI\MapTabs.lua

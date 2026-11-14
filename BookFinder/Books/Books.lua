@@ -85,6 +85,26 @@ function Books:Tick(book, done)
 	end
 end
 
+--- Every book still missing ticked by hand (done = true: Hide all), or every hand tick taken off (Show all). One
+--- message, one chat line.
+function Books:TickAll(done)
+	local s = state()
+	s.ticked = s.ticked or {}
+	local n = 0
+	for _, b in ipairs(list) do
+		if done and not Books:IsDone(b) then
+			s.ticked[b.key] = true
+			n = n + 1
+		elseif not done and s.ticked[b.key] then
+			s.ticked[b.key] = nil
+			n = n + 1
+		end
+	end
+	if n == 0 then return end
+	BF:Send("BF_BOOKS_CHANGED")
+	BF:Print(done and L["%d books hidden from the map."] or L["%d books shown on the map again."], n)
+end
+
 -- Watching for new books -------------------------------------------------------------------------------------------
 
 local known = {} -- [key] = true once seen as done this session
