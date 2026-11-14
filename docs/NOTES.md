@@ -89,6 +89,10 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   references to learn from, not parts to ship. (Until now BookFinder has been built from their code: Questie,
   QuestieDB, OpenMap and Books on map are in `src/` and in every build.)
 
+- **"It should be its own new thing like I've said multiple times. Yes take their code from my repo."** BookFinder is
+  written fresh, fully original (option 1: quest help is only what the game itself provides). Their code is out of
+  the branch; taking it out of GitHub's history too needs a force-push, which waits on your go-ahead.
+
 ## Questions (only what I can't tell from your notes)
 
 - QuestieTrace is in Questie's zip and in its dropdown (image1). Should it be part of BookFinder?

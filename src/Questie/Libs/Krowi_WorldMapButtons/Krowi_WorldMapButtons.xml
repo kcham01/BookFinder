@@ -1,8 +1,0 @@
-<!--
-    Copyright (c) 2020 Krowi
-    Licensed under the terms of the LICENSE file in this repository.
- -->
-
-<Ui>
-	<Script file="Krowi_WorldMapButtons.lua"/>
-</Ui>
