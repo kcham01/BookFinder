@@ -64,6 +64,10 @@ local kinds = {
 	glow = { { atlas = "WhiteCircle-RaidBlips" }, { file = "Interface\\Minimap\\UI-Minimap-Background" } },
 	waypoint = { { atlas = "Waypoint-MapPin-Tracked" }, { file = "Interface\\Minimap\\Ping\\ping5" } },
 	book = { { file = "Interface\\Icons\\INV_Misc_Book_09" } },
+	userPin = { { atlas = "Waypoint-MapPin-Untracked" }, { file = "Interface\\Minimap\\Ping\\ping5" } },
+	friend = { { atlas = "socialqueuing-icon-group" }, { file = "Interface\\FriendsFrame\\UI-Toast-FriendOnlineIcon" } },
+	guild = { { file = "Interface\\FriendsFrame\\UI-Toast-ChatInviteIcon" } },
+	groupMember = { { atlas = "WhiteCircle-RaidBlips" }, { file = "Interface\\Minimap\\PartyRaidBlips" } },
 }
 Icons.kinds = kinds
 

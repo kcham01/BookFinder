@@ -47,7 +47,7 @@ return {
 		BF.Panel:Show("quests")
 		equal(labels(BF.Panel.frame.topTabs, "page"), "Map, Look, Tooltips, Quest list, Automation, Advanced", "the top tabs")
 		BF.Panel:Show("map")
-		equal(labels(BF.Panel.frame.topTabs, "page"), "Look, More, Profiles", "the map's (On the map comes with the map)")
+		equal(labels(BF.Panel.frame.topTabs, "page"), "Look, More, Pins, Profiles", "the map's (On the map comes with the map)")
 	end,
 
 	["a tick box changes its setting, and follows it"] = function(BF)

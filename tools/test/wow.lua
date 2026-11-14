@@ -518,7 +518,9 @@ MapCanvasPinMixin = {
 }
 
 -- XML templates the add-on defines, as the harness knows them (template name -> mixin global name).
-World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin", BookFinderPathPinTemplate = "BookFinderPathPinMixin" }
+World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin", BookFinderPathPinTemplate = "BookFinderPathPinMixin",
+	BookFinderUserPinTemplate = "BookFinderUserPinMixin", BookFinderPersonPinTemplate = "BookFinderPersonPinMixin",
+	BookFinderZoneBadgeTemplate = "BookFinderZoneBadgeMixin" }
 
 local function newCanvas()
 	local map = CreateFrame("Frame", "WorldMapFrame", UIParent)
@@ -854,3 +856,28 @@ PlaySoundFile = function(file, channel) table.insert(World.played, { file, chann
 AddonCompartmentFrame = { registered = {} }
 function AddonCompartmentFrame:RegisterAddon(info) table.insert(self.registered, info) end
 GetQuestLink = function(id) return "|Hquest:" .. id .. "|h[" .. id .. "]|h" end
+
+-- Guild, friends, Battle.net: World.guild = { {name, level, area, online, class} }, World.friends = { {name, level, area,
+-- className, connected} }.
+World.guild, World.friends = {}, {}
+IsInGuild = function() return #World.guild > 0 end
+GetNumGuildMembers = function() return #World.guild end
+GetGuildRosterInfo = function(i)
+	local g = World.guild[i]
+	return g.name, "", 0, g.level, "", g.area, "", "", g.online, 0, g.class
+end
+C_GuildInfo = strict("C_GuildInfo", { GuildRoster = function() end })
+C_FriendList = strict("C_FriendList", {
+	GetNumFriends = function() return #World.friends end,
+	GetFriendInfoByIndex = function(i) return World.friends[i] end,
+	ShowFriends = function() end,
+})
+BNGetNumFriends = function() return 0 end
+C_BattleNet = strict("C_BattleNet", { GetFriendAccountInfo = function() return nil end, GetGameAccountInfoByID = function() return nil end })
+BNSendGameData = function(id, prefix, text) table.insert(World.sentMessages, { prefix, text, "BN", id }) end
+BNET_CLIENT_WOW, WOW_PROJECT_ID = "WoW", 2
+LOCALIZED_CLASS_NAMES_MALE = { WARRIOR = "Warrior", MAGE = "Mage" }
+LOCALIZED_CLASS_NAMES_FEMALE = { WARRIOR = "Warrior", MAGE = "Mage" }
+RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 }, MAGE = { r = 0.25, g = 0.78, b = 0.92 } }
+UnitIsUnit = function(a, b) return a == b end
+GetUnitName = function(unit) return World.units[unit] and World.units[unit].name end
