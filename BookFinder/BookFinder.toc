@@ -57,6 +57,8 @@ Map\Townsfolk.lua
 Map\ShowMenu.lua
 Map\UserPins.lua
 Map\People.lua
+Map\Stitch.lua
+Map\WorldCanvas.lua
 
 Comms\Wire.lua
 Comms\QuestieSerial.lua

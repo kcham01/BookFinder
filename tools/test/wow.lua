@@ -366,7 +366,13 @@ C_Map = strict("C_Map", {
 		local s = m and m.size or 1000
 		return map, { x = 1 - pos.y / s, y = 1 - pos.x / s, GetXY = function(p) return p.x, p.y end }
 	end,
-	GetMapChildrenInfo = function() return {} end,
+	GetMapChildrenInfo = function(map) return World.children and World.children[map] or {} end,
+	-- Map art: World.art[map] = { layerWidth, layerHeight, tileWidth, tileHeight, files = {...} }.
+	GetMapArtLayers = function(map)
+		local a = World.art and World.art[map]
+		return a and { { layerWidth = a.layerWidth, layerHeight = a.layerHeight, tileWidth = a.tileWidth, tileHeight = a.tileHeight } }
+	end,
+	GetMapArtLayerTextures = function(map) local a = World.art and World.art[map] return a and a.files end,
 	GetAreaInfo = function(area) return "Area " .. area end,
 	CanSetUserWaypointOnMap = function() return true end,
 	SetUserWaypoint = function(point) World.waypoint = point end,

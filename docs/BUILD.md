@@ -355,3 +355,13 @@ See the log. Current phase is the first unchecked one.
   (5) unexplored areas, zone levels, the quill, map notes, place search, the panel's action tiles and favourites.
   The marks, pins, paths, books and people providers already draw on the game's map canvas; the new canvas should host
   the same providers.
+- Phase 12, step 1 started: `Map/Stitch.lua` (each map's art tiles placed in world yards from C_Map.GetMapArtLayers
+  and GetMapArtLayerTextures and the map's world rectangle; a continent's zones, largest first) and
+  `Map/WorldCanvas.lua` (a canvas over the map window's scroll area: the continent's art, then each zone's on top in
+  its own frame level; one canvas unit per yard, the world frame scaled to zoom and offset to pan; wheel zooms about the
+  cursor, drag pans, right-click zooms out; a zone opens it fitted to that zone). A switch on Map > Look, "Seamless
+  continent map (being built)", off by default, because nothing else draws on it yet. Tests: tile placement, fitting,
+  zoom about the cursor, panning. **Not verified in game at all**: how zone art overlaps at borders (OpenMap blends
+  them: expect visible seams), whether SetScale this small behaves, the speed of drawing every tile of a continent.
+  Next on the canvas: quest icons, books, map pins and people drawn on it (the providers today draw on the game's
+  MapCanvas); border blending; then minimap detail (settle the tiles' source first, see "Next" above).
