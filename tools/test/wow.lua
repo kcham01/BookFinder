@@ -429,3 +429,17 @@ StaticPopup_Show = function() end
 PlaySound = function() end
 PlaySoundFile = function() end
 SOUNDKIT = setmetatable({}, { __index = function(_, k) return k end })
+
+-- Quest difficulty, as the client works it out (QuestUtils): trivial when the quest is more than the green range
+-- below the player.
+UnitQuestTrivialLevelRange = function() return World.greenRange or 8 end
+GetQuestGreenRange = function() return World.greenRange or 8 end
+IsPlayerSpell = function(id) return World.spells and World.spells[id] or false end
+GetQuestDifficultyColor = function(level)
+	local diff = level - World.player.level
+	if diff >= 5 then return { r = 1, g = 0.1, b = 0.1 } end
+	if diff >= 3 then return { r = 1, g = 0.5, b = 0.25 } end
+	if diff >= -2 then return { r = 1, g = 0.82, b = 0 } end
+	if -diff <= (World.greenRange or 8) then return { r = 0.25, g = 0.75, b = 0.25 } end
+	return { r = 0.5, g = 0.5, b = 0.5 }
+end
