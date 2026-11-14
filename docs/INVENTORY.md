@@ -44,6 +44,14 @@
   Cancel; a second right-click on the same owner closes it). Without that library whole, the game's menu draws it.
   Used by the minimap button and compartment menu, the books tab's gear and a book's right-click. The minimap menu's
   "Townsfolk and quest icons" opens Questie's own map menu (`QuestieMenu:Show`).
+- **The map's Show dropdown in Questie's style** (`merge/MapShowMenu.lua`, 2.0.2): the map's filter button is found
+  among `WorldMapFrame.overlayFrames` (a dropdown button whose menu tag is `MENU_WORLD_MAP_TRACKING`, or with a
+  `menuGenerator`); a clear button of BookFinder's covers it (the game's button is never changed). Its click builds
+  the game's own description (`MenuUtil.CreateRootMenuDescription` + `Menu.PopulateDescription` with the button's
+  generator, so other addons' modifiers run too) and draws it through `BookFinder.ContextMenu`: "" is a divider, an
+  element with children a submenu, a boolean `IsSelected` a tick box, one with a responder a button, the rest
+  titles; each click is the element's own `Pick`. Nothing readable to click: the game's menu opens
+  (`button:OpenMenu()`). The recorder notes the overlay buttons (`inspect.overlays`) and whether the cover is on.
 - **Gone**: `merge/Journeys.lua`, `merge/MapMenu.lua`, `src/ShortestPathForever`, `src/ForeverCore`,
   `tools/routing`, the journey recorder (`BookFinderDB.journeys`, `attempts`), `/bookfinder near`.
 - **Still to do**: every setting into OpenMap's panel (the owner likes it), with duplicates removed; the settings
