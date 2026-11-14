@@ -147,6 +147,7 @@ local function update()
 	local overAlpha = BF:Get("icons.fadeOverPlayerAlpha")
 
 	releaseAll()
+	local placedObjectives = {}
 	local reach = radius
 	local c0x, c1x = floor((px - reach) / CELL), floor((px + reach) / CELL)
 	local c0y, c1y = floor((py - reach) / CELL), floor((py + reach) / CELL)
@@ -166,6 +167,18 @@ local function update()
 					end
 					local inside
 					if square then inside = abs(right) <= radius and abs(up) <= radius else inside = dist <= radius end
+					-- A minimap is small: objective markers of the same objective closer than a few pixels show once.
+					local px2, py2 = right * pixelsPerYard, up * pixelsPerYard
+					if inside then
+						local lead = e.pin.roles[1]
+						local objKey = lead and lead.role == "objective" and (lead.quest .. ":" .. tostring(lead.objective and (lead.objective.index or lead.objective.name)))
+						if objKey then
+							for _, p in ipairs(placedObjectives) do
+								if p.key == objKey and (p.x - px2) ^ 2 + (p.y - py2) ^ 2 < 100 then inside = false break end
+							end
+							if inside then placedObjectives[#placedObjectives + 1] = { key = objKey, x = px2, y = py2 } end
+						end
+					end
 					if inside then
 						local f = acquire()
 						f.pin = e.pin

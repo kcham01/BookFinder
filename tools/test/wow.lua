@@ -622,3 +622,19 @@ function MapPins(map)
 	end
 	return list
 end
+
+-- Tooltips (the modern data processor), nameplates, the target frame, CVars.
+World.postCalls = {}
+TooltipDataProcessor = { AddTooltipPostCall = function(kind, fn) World.postCalls[kind] = fn end }
+Enum.TooltipDataType = { Item = 0, Unit = 2, Object = 33 }
+World.plates = {}
+C_NamePlate = strict("C_NamePlate", {
+	GetNamePlateForUnit = function(unit) return World.plates[unit] end,
+	GetNamePlates = function() local t = {} for _, p in pairs(World.plates) do t[#t + 1] = p end return t end,
+})
+TargetFrame = CreateFrame("Frame", "TargetFrame", UIParent)
+World.cvars.showQuestTrackingTooltips = "1"
+C_CVar = strict("C_CVar", { GetCVar = function(k) return World.cvars[k] end, SetCVar = function(k, v) World.cvars[k] = v end })
+World.units = {}
+UnitGUID = function(unit) if unit == "player" then return World.player.guid end return World.units[unit] end
+UnitExists = function(unit) return unit == "player" or World.units[unit] ~= nil end
