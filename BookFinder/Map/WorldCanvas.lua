@@ -71,6 +71,74 @@ local function build(cont)
 	return l
 end
 
+-- Icons -----------------------------------------------------------------------------------------------------------------
+--
+-- Other files draw on the canvas through layers: Canvas:AddLayer(name, fn(continent, add)), where
+-- add(east, north, spec) puts an icon at a world point. spec: { kind = BF.Icons kind | file = texture, size = pixels,
+-- tint = {r, g, b}?, onEnter = fn(button), onLeave = fn(button)?, onClick = fn(button, mouseButton), data fields... }.
+-- Icons keep their size on screen; only those in view are drawn; they are drawn again shortly after every zoom or pan.
+
+local layerList = {}
+local overlay
+local pool, used = {}, 0
+
+function Canvas:AddLayer(name, fn)
+	for _, l in ipairs(layerList) do if l.name == name then l.fn = fn return end end
+	layerList[#layerList + 1] = { name = name, fn = fn }
+end
+
+local function iconButton()
+	used = used + 1
+	local b = pool[used]
+	if not b then
+		b = CreateFrame("Button", nil, overlay)
+		b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+		b.Icon = b:CreateTexture(nil, "ARTWORK")
+		b.Icon:SetAllPoints()
+		b:SetScript("OnEnter", function(self) if self.spec.onEnter then self.spec.onEnter(self) end end)
+		b:SetScript("OnLeave", function(self)
+			if self.spec.onLeave then self.spec.onLeave(self) else GameTooltip:Hide() end
+		end)
+		b:SetScript("OnClick", function(self, button) if self.spec.onClick then self.spec.onClick(self, button) end end)
+		pool[used] = b
+	end
+	b:Show()
+	return b
+end
+
+function Canvas:Redraw()
+	if not frame or not frame:IsShown() or not continent then return end
+	for i = 1, used do pool[i]:Hide() end
+	used = 0
+	local w, h = frame:GetWidth(), frame:GetHeight()
+	local function add(east, north, spec)
+		local px = (east - centre.east) * zoom + w / 2
+		local py = (centre.north - north) * zoom + h / 2
+		if px < -20 or py < -20 or px > w + 20 or py > h + 20 then return end
+		local b = iconButton()
+		b.spec = spec
+		for k, v in pairs(spec) do if k ~= "onEnter" and k ~= "onLeave" and k ~= "onClick" then b[k] = v end end
+		if spec.kind then BF.Icons:Apply(b.Icon, spec.kind) else
+			b.Icon:SetTexture(spec.file)
+			b.Icon:SetVertexColor(1, 1, 1, 1)
+		end
+		if spec.tint then b.Icon:SetVertexColor(spec.tint[1], spec.tint[2], spec.tint[3], 1) end
+		b:SetSize(spec.size or 20, spec.size or 20)
+		b:ClearAllPoints()
+		b:SetPoint("CENTER", frame, "TOPLEFT", px, -py)
+	end
+	for _, l in ipairs(layerList) do BF.safecall(l.fn, continent, add) end
+end
+
+local redrawSoon = BF:Debounce(0.05, function() Canvas:Redraw() end)
+
+--- A world point (east, north yards) from a map's point; nil if the map is in another world than the continent.
+function Canvas:WorldOf(map, x, y)
+	local instance, wx, wy = BF.Zones:ToWorld(map, x, y)
+	if not instance then return nil end
+	return -wy, wx, instance
+end
+
 -- The world frame's TOPLEFT is the world origin (east 0, north 0): a point at (east, north) is drawn at (east, north) in
 -- the frame's units, its scale is the zoom. Panning puts the centre point in the middle of the view.
 local function layout()
@@ -80,6 +148,7 @@ local function layout()
 	world:ClearAllPoints()
 	world:SetPoint("TOPLEFT", frame, "TOPLEFT", (w / 2) / zoom - centre.east, (-h / 2) / zoom - centre.north)
 	world:SetSize(1, 1)
+	redrawSoon()
 end
 
 --- The world point under a point of the view (pixels from the view's top left, y down).
@@ -164,6 +233,9 @@ local function makeFrame()
 	frame.bg:SetColorTexture(0.12, 0.09, 0.05, 1)
 	world = CreateFrame("Frame", nil, frame)
 	world:SetFrameLevel(frame:GetFrameLevel() + 1)
+	overlay = CreateFrame("Frame", nil, frame)
+	overlay:SetAllPoints(frame)
+	overlay:SetFrameLevel(frame:GetFrameLevel() + 200) -- above every zone's art
 	frame:SetScript("OnMouseWheel", function(_, delta)
 		local px, py = cursor()
 		Canvas:ZoomAt(delta > 0 and 1.25 or 0.8, px, py)
