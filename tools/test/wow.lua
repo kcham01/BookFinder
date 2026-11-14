@@ -336,10 +336,12 @@ UnitExists = function(unit) return unit == "player" or World.units[unit] ~= nil 
 UnitIsDeadOrGhost = function() return false end
 UnitAffectingCombat = function() return false end
 InCombatLockdown = function() return World.combat == true end
-IsInGroup = function() return false end
+-- The group: World.group = { "Bob Builder", ... } (party members' names).
+World.group = {}
+IsInGroup = function(category) return category ~= LE_PARTY_CATEGORY_INSTANCE and #World.group > 0 end
 IsInRaid = function() return false end
 IsInInstance = function() if World.instance then return true, "party" end return false, "none" end
-GetNumGroupMembers = function() return 0 end
+GetNumGroupMembers = function() return #World.group > 0 and #World.group + 1 or 0 end
 GetRealmName = function() return World.player.realm end
 GetLocale = function() return "enUS" end
 GetPlayerFacing = function() return World.player.facing end
@@ -771,3 +773,26 @@ GetQuestLink = function(id) return "|Hquest:" .. id .. "|h[" .. id .. "]|h" end
 ChatEdit_InsertLink = function(link) World.insertedLink = link end
 QuestMapFrame_OpenToQuestDetails = function(id) World.openedQuest = id end
 ToggleWorldMap = function() WorldMapFrame:Show() end
+
+UnitInParty = function(unit)
+	if unit == "player" then return #World.group > 0 end
+	for _, n in ipairs(World.group) do if n == unit then return true end end
+	return false
+end
+UnitInRaid = function() return nil end
+UnitInBattleground = function() return nil end
+LE_PARTY_CATEGORY_INSTANCE = 2
+Ambiguate = function(name) return (name:gsub("%-.*$", "")) end
+C_QuestLog.GetMaxNumQuestsCanAccept = function() return 25 end
+
+-- The game's CBOR and compression (C_EncodingUtil): a stand-in that keeps each value under a token, so a test can
+-- send a payload and read it back; "compression" leaves the text as it is but adds a NUL and a 1 to exercise escaping.
+World.cbor = {}
+C_EncodingUtil = strict("C_EncodingUtil", {
+	SerializeCBOR = function(v) table.insert(World.cbor, v) return "cbor" .. #World.cbor end,
+	DeserializeCBOR = function(s) return World.cbor[tonumber(s:match("^cbor(%d+)$"))] end,
+	CompressString = function(s) return "\000\001" .. s end,
+	DecompressString = function(s) return (s:gsub("^%z\001", "")) end,
+})
+Enum.CompressionMethod = { Deflate = 0 }
+Enum.CompressionLevel = { Default = 0 }
