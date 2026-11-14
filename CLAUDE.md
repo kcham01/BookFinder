@@ -56,7 +56,8 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
   own, laid out that way; not OpenMap's code.)
 - **Books tab** beside the quest log stays, showing the books.
 - **Arrow and compass** at the top of the screen guide you to the map pin you drop (Shortest Path's idea, BookFinder's
-  own code: `docs/study/arrow-and-compass.md`). **No route lines on the map**: the owner hated them.
+  own code: `docs/study/arrow-and-compass.md`). **No route lines on the map**: the owner hated them; Books' route trail is out too. Kept: OpenMap's boat and zeppelin
+  routes, Questie's NPC patrol paths.
 
 ## Working here
 
