@@ -2,7 +2,7 @@
 ## Title: |cff33ff99Book|rFinder
 ## Notes: One addon for the world: a seamless map, every quest and the library books. /bookfinder
 ## Author: OpenMap contributors; Daeler; Questie: Aero/Logon/Muehe/TheCrux(BreakBB)/Drejjmit/Dyaxler/Cheeq/TechnoHunter/Yttrium/Everyone else; merged as BookFinder
-## Version: 2.2.0
+## Version: 2.2.1
 ## X-OpenMap-Version: v0.8.7
 ## X-Books-Version: 2.2.6
 ## X-Questie-Version: 12.8.0

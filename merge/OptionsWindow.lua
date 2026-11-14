@@ -21,7 +21,7 @@ local DIVIDER = "Interface\\Common\\UI-TooltipDivider-Transparent"
 local HIGHLIGHT = "Interface\\QuestFrame\\UI-QuestTitleHighlight"
 
 local frame, nav, scroll, child, searchBox, emptyText
-local current = "map"
+local current = "look"
 local query = ""
 local pools = { header = {}, toggle = {}, slider = {}, choice = {}, button = {} }
 local used = {}
@@ -397,13 +397,16 @@ local function build()
 	return frame
 end
 
--- Open at a section ("map", "look", "quests", "library", "more"); a second call while open closes it
+-- Every way into any part's settings opens this window, at the section it belongs to
+local SECTION_OF = { map = "look", books = "library", quests = "quests", library = "library", look = "look", more = "more" }
+-- Open at a section ("look", "quests", "library", "more"); a second call while open closes it
 function public.OpenOptions(section, toggle)
 	if InCombatLockdown() then
 		if public.Notice then public.Notice("Settings open after combat.") end
 		return false
 	end
 	build()
+	section = section and (SECTION_OF[section] or section)
 	if toggle and frame:IsShown() and (not section or section == current) then frame:Hide() return true end
 	if section then current = section end
 	if SettingsPanel and SettingsPanel:IsShown() and HideUIPanel then HideUIPanel(SettingsPanel) end
@@ -413,12 +416,9 @@ function public.OpenOptions(section, toggle)
 	return true
 end
 
--- Every way into any part's settings opens this window, at the section it belongs to
-local SECTION_OF = { map = "map", books = "library", quests = "quests", library = "library", look = "look", more = "more" }
 function public.OpenSettings(key)
-	return public.OpenOptions(SECTION_OF[key] or "map")
+	return public.OpenOptions(SECTION_OF[key] or "look")
 end
-function public.OpenMapMenu() return public.OpenOptions("map") end
 
 public.OptionsWindow = {
 	Build = build, Refill = function() if frame then Refill() end end,

@@ -212,6 +212,12 @@ function TrackerHeaderFrame:Update()
         headerFrame.questieIcon:SetAlpha(1)
         headerFrame.questieIcon:SetPoint("TOPLEFT", headerFrame, "TOPLEFT", 6, 0)
         headerFrame.questieIcon:Show()
+        -- BookFinder: the list is the map's Quests tab; its header is a count, with no button of Questie's own
+        if BookFinder then
+            headerFrame.questieIcon:SetWidth(1)
+            headerFrame.questieIcon:SetAlpha(0)
+            headerFrame.questieIcon:EnableMouse(false)
+        end
 
         headerFrame.trackedQuests.label:SetFont(LSM30:Fetch("font", Questie.db.profile.trackerFontHeader), trackerFontSizeHeader, Questie.db.profile.trackerFontOutline)
 
@@ -219,9 +225,9 @@ function TrackerHeaderFrame:Update()
 
         if Questie.db.char.isTrackerExpanded then
             local activeQuests = QuestLogCache.GetQuestCount()
-            headerFrame.trackedQuests.label:SetText(l10n("Questie Tracker") .. l10n(": ") .. tostring(activeQuests) .. maxQuestAmount)
+            headerFrame.trackedQuests.label:SetText((BookFinder and (QUESTS_LABEL or "Quests") or l10n("Questie Tracker")) .. l10n(": ") .. tostring(activeQuests) .. maxQuestAmount)
         else
-            headerFrame.trackedQuests.label:SetText(l10n("Questie Tracker") .. " +")
+            headerFrame.trackedQuests.label:SetText((BookFinder and (QUESTS_LABEL or "Quests") or l10n("Questie Tracker")) .. " +")
         end
 
         headerFrame.trackedQuests.label:SetPoint("TOPLEFT", headerFrame.questieIcon, "TOPRIGHT", 2, 0)

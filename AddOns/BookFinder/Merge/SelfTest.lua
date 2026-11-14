@@ -175,13 +175,41 @@ local function steps()
 		wait(0.2)
 	end
 
-	-- The map's own Show dropdown, drawn in Questie's style
+	-- The map's own Show dropdown, drawn in Questie's style, with the game's entries and BookFinder's map switches
 	check("the map's Show menu is drawn in Questie's style", function()
 		local M = public.MapShowMenu
 		if not M then return false, "no module" end
 		M.Install()
+		local button = M.Find()
 		local n = M.Count()
-		return M.Cover() ~= nil and n > 0, ("button %s, %d entries read"):format(M.Find() and "found" or "not found", n)
+		local name = button and button.GetName and button:GetName()
+		return M.Cover() ~= nil and n > 0, ("button %s (%s), %d of the game's entries read"):format(button and "found" or "not found", tostring(name), n)
+	end)
+	check("the Show menu has BookFinder's map switches", function()
+		local m, list = public.MenuTest.NewList()
+		public.MapShowMenu.Ours(m)
+		return #list >= 5, #list .. " entries"
+	end)
+
+	-- Quest items in the Quests tab: each shown item button is in the list, set to use its item, and clickable
+	if public.OpenQuestLog then public.OpenQuestLog() end
+	wait(1)
+	check("quest item buttons work in the Quests tab", function()
+		local holder = public.QuestLog and public.QuestLog.Holder()
+		local report, bad = {}, 0
+		for i = 1, 40 do
+			local b = rawget(_G, "Questie_ItemButton" .. i)
+			if b and b:IsShown() then
+				local inside, p = false, b:GetParent()
+				while p do if p == holder then inside = true break end p = p:GetParent() end
+				local item = b:GetAttribute("item1")
+				local clicks = b:IsMouseEnabled()
+				local ok = inside and item ~= nil and clicks and b:GetAlpha() > 0.1
+				if not ok then bad = bad + 1 end
+				report[#report + 1] = ("%d:%s%s%s a%.1f"):format(i, inside and "in" or "OUT", item and "" or " no-item", clicks and "" or " no-mouse", b:GetAlpha())
+			end
+		end
+		return bad == 0, #report == 0 and "no item buttons shown (open the map's Quests tab with a quest item)" or table.concat(report, ", ")
 	end)
 
 	-- The map pin: a click's waypoint is the game's own, and a spot it can't take says so

@@ -6,7 +6,8 @@
 --
 -- An entry: { id, section, group, kind = "toggle" | "slider" | "choice" | "button", label, note, icon, get, set,
 --   min, max, step, fmt (slider), choices (choice: a function giving { value, label } pairs), run (button) }
--- Sections, in order: map, look, quests, library, more.
+-- Sections: map (what the map shows: drawn in the map's Show dropdown, MapShowMenu.lua, not in the window), and the
+-- window's look, quests, library and more.
 local _, root = ...
 local public = root.public
 if not public then return end
@@ -15,8 +16,8 @@ local OM, BOOKS = root.OpenMap, root.Books
 local Options = {}
 public.Options = Options
 
+-- (the settings window's sections; "map" is the Show dropdown's)
 Options.SECTIONS = {
-	{ key = "map", label = "Map", icon = "Interface\\Icons\\INV_Misc_Map_01" },
 	{ key = "look", label = "Look", icon = "Interface\\Icons\\INV_Misc_Spyglass_03" },
 	{ key = "quests", label = "Quests", icon = "Interface\\GossipFrame\\AvailableQuestIcon" },
 	{ key = "library", label = "Library", icon = "Interface\\Icons\\INV_Misc_Book_09" },
@@ -119,6 +120,8 @@ local SKIP_ROWS = { ["unexplored.dim"] = true, ["unexplored.hide"] = true, paint
 	tabRail = true }
 local GROUP_SECTION = { [BL("Library books")] = "library", BookFinder = "more" }
 local TAB_SECTION = { show = "map", look = "look", more = "more" }
+-- (the books' own map switches go with the map's; their notices stay in the window)
+local MAP_ROWS = { ["ext.BookFinder.pins"] = "map", ["ext.BookFinder.booksMinimap"] = "map", ["ext.BookFinder.booksGroup"] = "map" }
 
 local function fromMenuRows(list)
 	local wm = worldmap()
@@ -131,7 +134,7 @@ local function fromMenuRows(list)
 			tab = r.tab or tab
 			group = r[1]
 		elseif not SKIP_ROWS[r.id] and not r.id:match("^reopenView%.") then
-			local section = GROUP_SECTION[group] or TAB_SECTION[tab] or "more"
+			local section = MAP_ROWS[r.id] or GROUP_SECTION[group] or TAB_SECTION[tab] or "more"
 			local e = { id = "row." .. r.id, section = section, group = group, label = r[1], note = r.note, icon = r.icon,
 				kind = "toggle", get = r[2], set = r[3] }
 			-- (Questie's trainer and vendor choosers open a menu of their own: a button, not a tick)

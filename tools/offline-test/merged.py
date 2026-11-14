@@ -170,16 +170,15 @@ INTEGRATION = r"""function(root)
     for id in pairs(ids) do if id:match("^ext%.BookFinder%.") or id:match("^ext%.Books") then booksRows = booksRows + 1 end end
     want(booksRows >= 5, "OpenMap's panel has " .. booksRows .. " Books and BookFinder switches (expected the books' five and the minimap button)")
     want(not ids["ext.BookFinder.route"], "the books route is a switch in the map's menu too")
-    -- every switch in one place: the World map page leaves out what the map's menu holds, and Questie's dead options go
-    local ACR = LibStub("AceConfigRegistry-3.0")
-    local okO, opts = pcall(ACR.GetOptionsTable, ACR, "OpenMap", "dialog", "AceGUI-3.0")
-    local shownTwice = {}
-    if okO and opts then
-        for key, o in pairs(opts.args or {}) do
-            if ids[key] and not o.hidden then shownTwice[#shownTwice + 1] = key end
-        end
+    -- every switch in one place: no setting twice among BookFinder's settings (OpenMap's options and its menu rows
+    -- name the same setting by the same key)
+    local seen, twice = {}, {}
+    for _, e in ipairs(BookFinder.Options.All()) do
+        local key = e.id:gsub("^om%.", ""):gsub("^row%.", "")
+        if seen[key] then twice[#twice + 1] = key end
+        seen[key] = true
     end
-    want(okO and opts and #shownTwice == 0, "switches both in the map's menu and on the World map page: " .. table.concat(shownTwice, ", "))
+    want(#twice == 0, "settings in two places: " .. table.concat(twice, ", "))
     local fake = { items = { group = { type = "container", items = { lockTracker = {}, showQuestLevel = {} } } } }
     BookFinder.FilterQuestieOptions("tracker", fake)
     want(fake.items.group.items.lockTracker.visible == false and fake.items.group.items.showQuestLevel.visible == nil,
@@ -255,7 +254,7 @@ INTEGRATION = r"""function(root)
     if MSM and MT then
         local picked, cvar = 0, false
         local function el(t, sel, kids)
-            local e = { text = t, kids = kids or {}, responder = function() end }
+            local e = { text = t, kids = kids or {}, responder = (sel ~= nil or t == "") and function() end or nil }
             function e:EnumerateElementDescriptions() return ipairs(self.kids) end
             if sel ~= nil then function e:IsSelected() return cvar end end
             function e:Pick() picked = picked + 1 cvar = not cvar end
@@ -263,10 +262,15 @@ INTEGRATION = r"""function(root)
         end
         local desc = el("root", nil, { el("Show:"), el("Quest Objectives", false), el(""), el("Tracked Items", true),
             el("More", nil, { el("Inside", false) }) })
-        desc.kids[1].responder = nil
         local m, list = MT.NewList()
         local okC, n = pcall(MSM.Convert, desc, m, 0)
         want(okC and n == 3, "the Show menu's entries weren't read: " .. tostring(n))
+        -- and BookFinder's map switches follow, in Questie's style
+        local m2, list2 = MT.NewList()
+        local okO, errO = pcall(MSM.Ours, m2)
+        local subs = 0
+        for _, it in ipairs(list2) do if it.hasArrow then subs = subs + 1 end end
+        want(okO and #list2 >= 4 and subs >= 2, "the Show menu has no BookFinder switches: " .. tostring(errO) .. ", " .. #list2 .. " entries")
         want(list[1] and list[1].isTitle and list[2] and list[2].checked and list[3] == MT.Divider and list[5] and list[5].hasArrow,
             "the Show menu wasn't drawn as title, tick boxes, divider and submenu")
         if list[2] then list[2].func() want(picked == 1 and list[2].checked() == true, "a Show menu switch didn't do the game's own click") end

@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 MERGE = os.path.join(ROOT, "merge")
 NAME = "BookFinder"
-VERSION = "2.2.0"
+VERSION = "2.2.1"
 
 OPENMAP_REPO = "https://github.com/openmap-world/openmap.git"
 OPENMAP_COMMIT = "91c84b3bf633f3ae4840309e4620d63b249f626e"

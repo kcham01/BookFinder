@@ -1279,7 +1279,7 @@ function mod:SetupPanel(worldMap)
 	end)
 	toggle:SetScript("OnEnter", function(self)
 		if BookFinder and BookFinder.OpenOptions then
-			Tip(self, "ANCHOR_TOP", "BookFinder", { L["Settings: what the map shows, how it looks, quests and the library."] })
+			Tip(self, "ANCHOR_TOP", "BookFinder", { L["Settings. What the map shows is in its Show menu, top right."] })
 			return
 		end
 		Tip(self, "ANCHOR_TOP", "OpenMap", { L["Search, find me, map pins, the quest log, report a problem, options, and what the map shows."] })

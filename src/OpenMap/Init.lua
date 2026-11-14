@@ -28,22 +28,6 @@ local function Options()
 	args.padWaits = { type = "description", order = 0.5, fontSize = "medium",
 		name = function() return "|cffff8040" .. mod.PadOffText() .. "|r" end,
 		hidden = function() return not mod.padWaits or (mod.PadViewOn and mod.PadViewOn()) or false end }
-	-- BookFinder: every switch is in the map's menu (Panel.lua), so this page keeps only what a switch can't be
-	-- (sliders, choices, colours) and the few switches with no row there
-	if BookFinder and BookFinder.SettingsCategory then
-		local IN_MENU = { autoSwitch = true, hoverHighlight = true, reopenView = true, unexplored = true, chart = true,
-			fullWidth = true, chatOverMap = true, mapButtons = true, icons = true, dungeonMaps = true, dungeonLevels = true,
-			dungeonBosses = true, dungeonQuests = true, entranceClick = true, boats = true, zeppelins = true, flight = true,
-			foundOnly = true, playerArrow = true, allQuests = true, routes = true, group = true, friends = true, guild = true,
-			friendsShare = true, ctrlClickPin = true, pinsShared = true, sketchShown = true, coords = true, zoneLevels = true,
-			zoomHidePins = true, minimap = true, cityMinimap = true, gapMinimap = true, soften = true, underground = true }
-		for key in pairs(IN_MENU) do if args[key] then args[key].hidden = true end end
-		if args.news then args.news.hidden = true end   -- (OpenMap's own changelog, not BookFinder's)
-		args.intro = { type = "description", order = 1, fontSize = "medium",
-			name = ns.L["Every switch for the map is in its own menu: the OpenMap button on the map. This page holds the fine-tuning."] }
-		args.openMenu = { type = "execute", order = 1.5, name = ns.L["Open the map's menu"],
-			func = function() if BookFinder.OpenMapMenu then BookFinder.OpenMapMenu() end end }
-	end
 	return { type = "group", name = "|cff" .. ns.ACCENT .. "OpenMap|r " .. ns.version, args = args }
 end
 
