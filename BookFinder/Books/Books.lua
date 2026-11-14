@@ -17,16 +17,17 @@ local list = Books.list
 
 local S = BF.Settings
 local P = "Books/Books"
-S:Define("books.map", { default = true, page = P, label = "Show on the map" })
-S:Define("books.mapSize", { default = 20, min = 10, max = 40, step = 1, page = P, label = "Map icon size" })
-S:Define("books.minimap", { default = true, page = P, label = "Show books on the minimap" })
-S:Define("books.minimapSize", { default = 14, min = 8, max = 30, step = 1, page = P, label = "Minimap icon size" })
-S:Define("books.notifyCollected", { default = true, page = P, label = "Notify when a book is collected" })
-S:Define("books.alertNearby", { default = true, page = P, label = "Alert when a book is nearby" })
-P = "Books/Filters"
-S:Define("books.hideCollected", { default = true, page = P, label = "Hide collected books" })
-S:Define("books.onlyMyLevel", { default = false, page = P, label = "Only sets for my level" })
-S:Define("books.groupMissing", { default = true, page = P, label = "Also show the books my group is missing" })
+local G = "Settings"
+S:Define("books.map", { default = true, page = P, group = G, label = "Show on the map" })
+S:Define("books.mapSize", { default = 20, min = 10, max = 40, step = 1, page = P, group = G, label = "Map icon size" })
+S:Define("books.minimap", { default = true, page = P, group = G, label = "Show books on the minimap" })
+S:Define("books.minimapSize", { default = 14, min = 8, max = 30, step = 1, page = P, group = G, label = "Minimap icon size" })
+S:Define("books.notifyCollected", { default = true, page = P, group = G, label = "Notify when a book is collected" })
+S:Define("books.alertNearby", { default = true, page = P, group = G, label = "Alert when a book is nearby" })
+G = "Filters"
+S:Define("books.hideCollected", { default = true, page = P, group = G, label = "Hide collected books" })
+S:Define("books.onlyMyLevel", { default = false, page = P, group = G, label = "Only sets for my level" })
+S:Define("books.groupMissing", { default = true, page = P, group = G, label = "Also show the books my group is missing" })
 
 -- Lookups --------------------------------------------------------------------------------------------------------
 

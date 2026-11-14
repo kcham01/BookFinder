@@ -91,6 +91,7 @@ local function buildMap()
 	holder:SetAllPoints(parent)
 	holder:SetFrameLevel(parent:GetFrameLevel() + 20)
 	mapText = holder:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	Coords.mapText = mapText
 	mapText:SetPoint("BOTTOM", holder, "BOTTOM", 0, 8)
 	local elapsed, sinceSearch = 0, 1
 	holder:SetScript("OnUpdate", function(_, e)
@@ -116,6 +117,7 @@ local function buildMinimap()
 	holder:SetAllPoints(Minimap)
 	holder:SetFrameLevel(Minimap:GetFrameLevel() + 6)
 	miniText = holder:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	Coords.miniText = miniText
 	miniText:SetPoint("BOTTOM", holder, "BOTTOM", 0, 14)
 	local elapsed = 0
 	holder:SetScript("OnUpdate", function(_, e)

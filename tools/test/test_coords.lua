@@ -23,8 +23,7 @@ return {
 		game:SetText("Player: 48.2, 42.1")
 		WorldMapFrame:Show()
 		Tick(1.5)
-		local line
-		for _, f in ipairs(texts(WorldMapFrame)) do if f ~= game then line = f end end
+		local line = BF.Coords.mapText
 		equal(line.text, "", "nothing while the cursor is off the map")
 		World.cursorX, World.cursorY = 0.25, 0.75
 		Tick(0.5)
@@ -37,7 +36,7 @@ return {
 		setup()
 		WorldMapFrame:Show()
 		Tick(0.5)
-		local line = texts(WorldMapFrame)[1]
+		local line = BF.Coords.mapText
 		expect(line and line.text and line.text:find("48.2, 42.1", 1, true), "player at 48.2, 42.1: " .. tostring(line and line.text))
 		BF:Set("coords.precision", 2)
 		Tick(0.5)
@@ -53,8 +52,7 @@ return {
 	["minimap: off until chosen"] = function(BF)
 		setup()
 		Tick(0.5)
-		local line
-		for _, c in ipairs(texts(Minimap)) do if c.text ~= nil then line = c end end
+		local line = BF.Coords.miniText
 		equal(line and line.text, "", "off by default")
 		BF:Set("coords.minimap", true)
 		Tick(0.5)

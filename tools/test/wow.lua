@@ -268,8 +268,21 @@ function Region:SetEnabled(v) self.enabled = v end
 CreateFrame = function(kind, name, parent, template)
 	local f = newRegion(kind, name, parent)
 	f.template = template
+	-- The newer templates' own methods, as the client's mixins give them.
+	if template == "MinimalSliderWithSteppersTemplate" then
+		f.callbacks = {}
+		function f:Init(value, min, max, steps) self.value, self.min, self.max, self.steps = value, min, max, steps end
+		function f:RegisterCallback(event, fn) self.callbacks[event] = fn end
+		function f:SetValue(v) self.value = v; if self.callbacks.OnValueChanged then self.callbacks.OnValueChanged(nil, v) end end
+	elseif template == "WowStyle1DropdownTemplate" then
+		function f:SetupMenu(fn) self.generator = fn end
+	elseif template == "PortraitFrameTemplate" then
+		function f:SetTitle(t) self.title = t end
+		function f:SetPortraitToAsset(a) self.portrait = a end
+	end
 	return f
 end
+MinimalSliderWithSteppersMixin = { Event = { OnValueChanged = "OnValueChanged" } }
 
 UIParent = newRegion("Frame", "UIParent")
 WorldFrame = newRegion("Frame", "WorldFrame")
@@ -702,3 +715,24 @@ QuestMapFrame.QuestsFrame.SearchBox = CreateFrame("EditBox", nil, QuestMapFrame.
 QuestMapFrame.QuestsFrame.SettingsDropdown = CreateFrame("DropdownButton", nil, QuestMapFrame.QuestsFrame)
 function QuestMapFrame.QuestsFrame.SettingsDropdown:SetupMenu(fn) self.generator = fn end
 QuestScrollFrame = CreateFrame("ScrollFrame", "QuestScrollFrame", QuestMapFrame.QuestsFrame)
+
+-- The settings panel's client parts: templates known by name, tabs, the game's settings window, the colour picker.
+World.knownTemplates = {} -- [template] = true for templates this "client" has (none: every older fallback is used)
+C_XMLUtil = strict("C_XMLUtil", { GetTemplateInfo = function(name) return World.knownTemplates[name] and {} or nil end })
+UISpecialFrames = {}
+PanelTemplates_TabResize = function() end
+PanelTemplates_SelectTab = function(tab) tab.selected = true end
+PanelTemplates_DeselectTab = function(tab) tab.selected = false end
+World.settingsCategories = {}
+Settings = strict("Settings", {
+	RegisterCanvasLayoutCategory = function(frame, name) return { frame = frame, name = name } end,
+	RegisterAddOnCategory = function(category) table.insert(World.settingsCategories, category) end,
+})
+SettingsPanel = CreateFrame("Frame", "SettingsPanel", UIParent)
+MenuUtil = strict("MenuUtil", { CreateContextMenu = function(owner, generator) World.contextMenu = { owner, generator } end })
+ColorPickerFrame = CreateFrame("Frame", "ColorPickerFrame", UIParent)
+function ColorPickerFrame:SetupColorPickerAndShow(info) World.colorPicker = info end
+function ColorPickerFrame:GetColorRGB() return World.pickedColor[1], World.pickedColor[2], World.pickedColor[3] end
+function ColorPickerFrame:GetColorAlpha() return World.pickedColor[4] end
+
+ACCEPT, CANCEL = "Accept", "Cancel"
