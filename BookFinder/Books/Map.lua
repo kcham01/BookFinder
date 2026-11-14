@@ -79,7 +79,7 @@ function Provider:RefreshAllData()
 	local map = self:GetMap():GetMapID()
 	if not map then return end
 	local info = C_Map.GetMapInfo(map)
-	local continent = info and Enum.UIMapType and info.mapType <= Enum.UIMapType.Continent
+	local continent = info and info.mapType and Enum.UIMapType and info.mapType <= Enum.UIMapType.Continent
 	for _, book in ipairs(Books.list) do
 		local shows = BookMap:Shows(book)
 		if shows then

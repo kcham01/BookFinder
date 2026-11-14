@@ -104,10 +104,11 @@ local function style(f, pin)
 	f.styled = pin
 	local kind, scaleKey = Look:Kind(pin)
 	Icons:Apply(f.Icon, kind)
-	local size = BASE_SIZE * BF:Get("icons.minimapScale") * BF:Get("icons.scale." .. scaleKey)
+	local size = scaleKey == "townsfolk" and BASE_SIZE * BF:Get("icons.townsfolkMinimapScale")
+		or BASE_SIZE * BF:Get("icons.minimapScale") * BF:Get("icons.scale." .. scaleKey)
 	f:SetSize(size, size)
-	if BF:Get("icons.glowMinimap") then
-		local c = Look:Glow(pin, true)
+	local c = BF:Get("icons.glowMinimap") and Look:Glow(pin, true)
+	if c then
 		Icons:Apply(f.Glow, "glow")
 		f.Glow:SetVertexColor(c[1], c[2], c[3], 1)
 		f.Glow:SetSize(size * 1.4, size * 1.4)

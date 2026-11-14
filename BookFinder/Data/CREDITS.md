@@ -8,6 +8,9 @@ layout by `tools/data/convert.py`. Only data is used; none of QuestieDB's or Que
   (BreakBB), Drejjmit, Dyaxler, Cheeq, TechnoHunter, Yttrium and everyone else who contributed; code by Logonz.
 - `Lists.lua` holds lists Questie keeps as data (hidden quests, NPCs and items; holiday quests and dates; Darkmoon
   Faire positions), from **Questie** 12.9.0, evaluated for WoW: Forever by `tools/data/questie_lists.lua`.
+- `TownsfolkItems.lua` (hand-kept) holds Questie's item lists that tell what a vendor sells (food, drink, ammo,
+  reagents, poisons, trade goods, bags, potions) and its mage portal trainers, and `Lists.lua`'s `townsfolk` its
+  class, profession and weapon trainers and mailboxes for WoW: Forever.
 - QuestieDB's data was first imported from **Questie** (https://github.com/Questie/Questie) and carries the work of
   Questie's contributors, over 100 of them.
 

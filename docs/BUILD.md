@@ -151,3 +151,8 @@ See the log. Current phase is the first unchecked one.
   rim), `Route.lua` (set by set, nearest + 2-opt, guided by the map pin; no trail), `Alerts.lua` (cards).
   Still to do for books: the Books tab beside the quest log (phase 10 UI), the item tooltip line (phase 5), commands.
   Not carried over: Books on map's "New reward tier!" card (an upgrade notice for its own users).
+- Townsfolk (`Map/Townsfolk.lua`): a Marks layer (`Marks:RegisterLayer`), kinds with Questie's defaults, switches
+  `townsfolk.*` (shown only in the Show dropdown: decision 2.2.1). QuestieDB's Forever data has **no foodType** for
+  any item, so Questie's Pet Food vendors are empty on Forever too: left out rather than guessed. Meeting stones and
+  moonwells come from object names; mailboxes from Questie's curated list (55, not the 149 objects named Mailbox).
+  Faction: NPCs by friendlyTo, objects by factionTemplate (an enemy-group mask: 2 Alliance, 4 Horde).

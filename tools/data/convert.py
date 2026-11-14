@@ -606,6 +606,12 @@ def main():
         ("BF.Data.eventDates", lists["eventDates"]),
         ("BF.Data.lunarFestival", {int(k): v for k, v in lists["lunarFestival"].items()}),
         ("BF.Data.darkmoonNpcs", darkmoon),
+        ("BF.Data.townsfolk", {
+            "classTrainers": lists["townsfolk"]["classTrainers"],
+            "mailboxes": lists["townsfolk"]["mailboxes"],
+            "weaponTrainers": lists["townsfolk"]["weaponTrainers"],
+            "professionTrainers": {int(k): v for k, v in lists["townsfolk"]["professionTrainers"].items()},
+        }),
     ])
     sizes["BUILD"] = meta.get("X-BUILD-COMMIT")
 

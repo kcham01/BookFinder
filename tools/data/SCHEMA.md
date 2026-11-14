@@ -92,3 +92,5 @@ enums named after QuestieDB's: `zoneIDs`, `sortKeys`, `factionIDs`, `professionK
   in odd months and Mulgore in even ones (BookFinder's own rule, `Quests/Events.lua`).
 - `darkmoonNpcs.elwynn[npcID]`, `darkmoonNpcs.mulgore[npcID]` = whole NPC rows (tables, not strings) for the faire's
   NPCs in each place.
+- `townsfolk` = { classTrainers = {CLASS = {npcID...}}, mailboxes = {objectID...}, weaponTrainers = {npcID...},
+  professionTrainers = {[skillID] = {npcID...}} }: Questie's lists for WoW: Forever.

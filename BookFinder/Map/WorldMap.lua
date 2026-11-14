@@ -115,11 +115,12 @@ function BookFinderMapPinMixin:OnAcquired(pin, x, y, sourceMap)
 	self.mapX, self.mapY = x, y
 	local kind, scaleKey, giver = Look:Kind(pin)
 	Icons:Apply(self.Icon, kind)
-	local size = BASE_SIZE * BF:Get("icons.mapScale") * BF:Get("icons.scale." .. scaleKey)
+	local size = scaleKey == "townsfolk" and BASE_SIZE * BF:Get("icons.townsfolkMapScale")
+		or BASE_SIZE * BF:Get("icons.mapScale") * BF:Get("icons.scale." .. scaleKey)
 	self:SetSize(size, size)
 	if levelsReady then self:UseFrameLevelType(giver and LEVEL_GIVERS or LEVEL_OBJECTIVES) end
-	if BF:Get("icons.glowMap") then
-		local c = Look:Glow(pin, false)
+	local c = BF:Get("icons.glowMap") and Look:Glow(pin, false)
+	if c then
 		Icons:Apply(self.Glow, "glow")
 		self.Glow:SetVertexColor(c[1], c[2], c[3], 1)
 		self.Glow:SetSize(size * 1.4, size * 1.4)
