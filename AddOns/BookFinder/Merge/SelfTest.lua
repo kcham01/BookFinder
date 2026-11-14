@@ -191,6 +191,19 @@ local function steps()
 		return #list >= 5, #list .. " entries"
 	end)
 
+	-- Questie's icons: none points at a folder that isn't there (a missing texture draws as a green square)
+	check("quest icons point inside BookFinder", function()
+		local q = rawget(_G, "Questie")
+		local bad = {}
+		for kind, path in pairs(q and q.usedIcons or {}) do
+			if type(path) == "string" then
+				local low = path:lower()
+				if low:find("interface[\\/]addons[\\/]") and not low:find("addons[\\/]bookfinder[\\/]") then bad[#bad + 1] = tostring(kind) .. "=" .. path end
+			end
+		end
+		return #bad == 0, #bad == 0 and "all inside" or table.concat(bad, ", ")
+	end)
+
 	-- Quest items in the Quests tab: each shown item button is in the list, set to use its item, and clickable
 	if public.OpenQuestLog then public.OpenQuestLog() end
 	wait(1)

@@ -228,6 +228,17 @@ INTEGRATION = r"""function(root)
         if BookFinderOptions then BookFinderOptions:Hide() end
     end
 
+    -- Saved paths into a part's old folder point into BookFinder (a texture not found draws a green square)
+    local saved = { profiles = { Default = { ICON_SLAY = "Interface\\Addons\\Questie\\Icons\\slay.blp",
+        ICON_LOOT = "Interface/AddOns/Questie/Icons/loot.blp", other = "Interface\\Icons\\INV_Misc_Book_09",
+        done = "Interface\\AddOns\\BookFinder\\Questie\\Icons\\event.blp" } } }
+    local n = BookFinder.FixSavedPaths(saved)
+    local d = saved.profiles.Default
+    want(n == 2 and d.ICON_SLAY == "Interface\\AddOns\\BookFinder\\Questie\\Icons\\slay.blp"
+        and d.ICON_LOOT == "Interface\\AddOns\\BookFinder\\Questie/Icons/loot.blp"
+        and d.other == "Interface\\Icons\\INV_Misc_Book_09" and d.done:find("BookFinder\\Questie", 1, true),
+        "saved paths weren't moved into BookFinder (" .. n .. ", " .. tostring(d.ICON_SLAY) .. ", " .. tostring(d.ICON_LOOT) .. ")")
+
     -- Our dropdowns are drawn with Questie's dropdown library, from the same builder calls the game's menu takes
     local MT = BookFinder.MenuTest
     want(MT and BookFinder.ContextMenu, "the menu helper isn't there")

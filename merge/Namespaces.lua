@@ -109,12 +109,49 @@ function public.PublishSettings()
 	Settings.RegisterAddOnCategory(category)
 end
 
+-- Saved file paths into a part's old folder (Interface\AddOns\Questie\Icons\slay.blp, which Questie keeps for
+-- its chosen icons) point into BookFinder instead: the part's folder is inside it now, and a texture that isn't
+-- found draws as a green square. Done before any part reads its settings.
+local PART_FOLDERS = { "questiedb", "questie", "openmap", "books_on_map_forever" }
+local SAVED = { "QuestieConfig", "QuestieConfigCharacter", "OpenMapDB", "OpenMapCharDB", "BooksOnMapForeverDB",
+	"BooksOnMapForeverGlobal" }
+local function repath(value)
+	local low = value:lower()
+	local at = low:find("interface[\\/]addons[\\/]")
+	if not at then return nil end
+	local rest = low:sub(at + 17)
+	for _, folder in ipairs(PART_FOLDERS) do
+		if rest:sub(1, #folder + 1) == folder .. "\\" or rest:sub(1, #folder + 1) == folder .. "/" then
+			return value:sub(1, at - 1) .. "Interface\\AddOns\\" .. ADDON .. "\\" .. value:sub(at + 17)
+		end
+	end
+end
+local function fixPaths(t, depth, seen)
+	if depth > 12 or seen[t] then return 0 end
+	seen[t] = true
+	local n = 0
+	for k, v in pairs(t) do
+		if type(v) == "string" and #v < 260 then
+			local fixed = repath(v)
+			if fixed then t[k] = fixed n = n + 1 end
+		elseif type(v) == "table" then
+			n = n + fixPaths(v, depth + 1, seen)
+		end
+	end
+	return n
+end
+public.FixSavedPaths = function(t) return fixPaths(t, 0, {}) end   -- (for the offline test)
+
 -- BookFinder's own saved settings (the minimap button), ready before any part's
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("ADDON_LOADED")
 boot:SetScript("OnEvent", function(self, _, name)
 	if name ~= ADDON then return end
 	self:UnregisterEvent("ADDON_LOADED")
+	for _, global in ipairs(SAVED) do
+		local t = rawget(_G, global)
+		if type(t) == "table" then pcall(fixPaths, t, 0, {}) end
+	end
 	BookFinderDB = type(BookFinderDB) == "table" and BookFinderDB or {}
 	public.db = BookFinderDB
 end)
