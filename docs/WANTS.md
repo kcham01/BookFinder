@@ -235,6 +235,11 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
     them).
   - The list's header said "Questie Tracker: 13/40".
 
+## Done in 2.2.2 (for you to test)
+- **The green squares on the map are gone**: they were quest objective icons whose saved texture paths still pointed
+  at the standalone Questie folder (Questie keeps the icons you chose as file paths). At login, BookFinder now points
+  every saved path into a part's old folder inside BookFinder instead, for Questie, OpenMap and the books.
+
 ## Done in 2.2.1 (for you to test)
 - **The Show dropdown** finds the right button, and holds the game's entries, then BookFinder's switches for what the
   map shows, in Questie's style: quest icons, places, dungeons, townsfolk, people, the books (longer groups as
