@@ -68,7 +68,7 @@ function Panel:SettingsOf(page)
 	for _, src in ipairs(page.sources) do from[src] = true end
 	for _, key in ipairs(S:Keys()) do
 		local def = S:Definition(key)
-		if from[def.page] and not def.pending and not def.soundChoice then list[#list + 1] = def end
+		if from[def.page] and not def.pending then list[#list + 1] = def end
 	end
 	return list
 end
@@ -377,6 +377,4 @@ end
 BF:At("login", function()
 	mapButton()
 	addOnsEntry()
-	SLASH_BOOKFINDER1, SLASH_BOOKFINDER2 = "/bookfinder", "/bf"
-	SlashCmdList.BOOKFINDER = function() Panel:Toggle() end
 end, 80)

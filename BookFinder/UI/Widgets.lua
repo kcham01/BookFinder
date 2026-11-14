@@ -281,7 +281,7 @@ end
 
 --- The control for a setting, or nil when it has none (a choice whose list is not built yet, a pending setting).
 function Widgets:For(parent, def, width)
-	if def.pending or def.soundChoice then return nil end
+	if def.pending then return nil end
 	local t = type(def.default)
 	if def.color then return Widgets:Colour(parent, def, width), "wide" end
 	if def.iconChoice or def.choices then return Widgets:Dropdown(parent, def, width), "wide" end

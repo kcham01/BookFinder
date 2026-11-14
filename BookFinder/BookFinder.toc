@@ -27,6 +27,7 @@ Core\Data.lua
 Core\Zones.lua
 Core\Player.lua
 
+Quests\Sounds.lua
 Quests\Options.lua
 Quests\Events.lua
 Quests\Log.lua
@@ -42,6 +43,9 @@ Quests\PinTooltip.lua
 Quests\Tooltips.lua
 Quests\Nameplates.lua
 Quests\List.lua
+Quests\Auto.lua
+Quests\Announce.lua
+Quests\Links.lua
 Map\Waypoint.lua
 Map\Pins.xml
 Map\WorldMap.lua
@@ -74,3 +78,6 @@ UI\MapTabs.lua
 Journey\Journey.lua
 Journey\ByZone.lua
 Journey\Search.lua
+
+UI\MinimapButton.lua
+UI\Commands.lua

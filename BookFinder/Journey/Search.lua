@@ -326,6 +326,16 @@ end
 
 function Search:ShowQuest(id) Search:Show("quests", id) end
 
+--- Opens Advanced Search with words in its box (/bf search).
+function Search:Query(text)
+	BF.Panel:Show("journey", "search")
+	if page then
+		page.detail = nil
+		page.box:SetText(text or "")
+		render()
+	end
+end
+
 BF:At("login", function()
 	BF.Panel:AddPage("journey", { key = "search", label = "Advanced Search", build = function(content, width)
 		local box = CreateFrame("EditBox", nil, content, BF.Widgets:Template({ "SearchBoxTemplate", "InputBoxTemplate" }))

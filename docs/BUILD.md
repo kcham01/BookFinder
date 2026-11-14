@@ -108,7 +108,8 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 11. Comms: ~~questie + QuestieV1~~ (done), ~~BooksOnMapFE~~ (done in phase 7), OpenMapLoc, OpenMap pins (with the
     map's people and pins, phase 12).
 12. OpenMap's map: stitched world from the game's map art, dungeons, pins and card, quill, notes, people.
-13. Automation, announcements, sounds, chat links, commands; polish pass.
+13. ~~Automation, announcements, sounds, chat links, commands~~ (done, with the minimap button); polish pass after the
+    owner's first test in game.
 
 ## Status
 
@@ -297,3 +298,22 @@ See the log. Current phase is the first unchecked one.
   them encoded, so the keys come out wrong); BookFinder reads them right.
   **Not verified in game**: the game's CBOR/compression on Forever (QuestieV1 is skipped if C_EncodingUtil is
   missing); a live party with a Questie user.
+- Phase 13: `Quests/Auto.lua` (Questie's rules, read from 12.9.0: gossip and greeting hand in a finished quest first,
+  else open the first offered one; a quest page accepted unless low level / repeatable / PvP are not wanted; a finished
+  quest completed, its reward taken when there is no choice; the held key stops it until every quest window closes;
+  shared quests turned down in battlegrounds; never the NPCs and quests on Questie's lists, now converted as
+  `BF.Data.autoNever` by tools/data/questie_lists.lua; breadcrumbs: taking a quest whose breadcrumb is still to do
+  says so and, with "Abandon a quest whose breadcrumb isn't done", abandons that quest so the breadcrumb comes first:
+  Questie's real rule, which the setting's old label had backwards). `Quests/Announce.lua` (to party, raid, either or
+  nobody, plus "Also in my own chat"; "{rt1} BookFinder: " in front, as Questie puts its own name; objectives done,
+  items that start quests, accepted, abandoned, handed in; "Hide quest announcements from others" filters other
+  players' Questie and BookFinder announcements). `Quests/Sounds.lua` (the game's own sound files by ID, Questie's
+  names and defaults; loaded before the settings so the choices list them). `Quests/Links.lua` (Questie's
+  `questie:` chat links answered through LinkUtil link handlers, as Questie does on Forever; hover in chat windows;
+  the game's own quest links left to the game). `UI/MinimapButton.lua` (where to go, settings, drag round the edge,
+  "Show the minimap button" on Map > More; the AddOns compartment entry). `UI/Commands.lua` (/bf help, journey,
+  search, books, route, toggle, tomap [reset], flex, eligible, minimap, version).
+  Data converter re-run on QuestieDB 1.1.1 / Questie 12.9.0: every generated file came out byte for byte the same
+  except Lists.lua's one new line (autoNever).
+  Still pending (out of the panel): Deadly Boss Mods' HUD (dbm.*: needs DBM's interface), VoiceOver play buttons,
+  custom quest icons in quest and gossip windows (quests.frameIcons), spawn merging (icons.clusterSpawns).

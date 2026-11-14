@@ -8,7 +8,7 @@ local S = BF.Settings
 -- Settings whose feature is not built yet: declared now (their defaults are Questie's), left out of the settings panel
 -- until the code that reads them exists. Take a key off this list in the same change that builds its feature
 -- (tools/test/test_panel.lua checks both ways).
-local PENDING_PREFIXES = { "auto.", "announce.", "sounds.", "dbm." }
+local PENDING_PREFIXES = { "dbm." }
 local PENDING = { ["list.playButtons"] = true, ["quests.frameIcons"] = true, ["icons.clusterSpawns"] = true }
 
 local function pending(key)
@@ -168,30 +168,33 @@ P = "Quests/Automation"
 G = "Automation"
 def("auto.accept", false, P, "Accept quests")
 def("auto.complete", false, P, "Hand in quests")
-def("auto.modifier", "shift", P, "Hold to skip", { choices = { "shift", "ctrl", "alt" } })
+def("auto.modifier", "shift", P, "Hold to skip", { choices = { "shift", "ctrl", "alt", "disabled" },
+	choiceLabels = { shift = "Shift", ctrl = "Ctrl", alt = "Alt", disabled = "Nothing" } })
 def("auto.trivial", false, P, "Also low-level quests")
 def("auto.repeatable", true, P, "Also repeatable quests")
 def("auto.pvp", true, P, "Also PvP quests")
 def("auto.rejectInBattleground", false, P, "Reject quests shared in battlegrounds")
-def("auto.abandonBreadcrumb", false, P, "Abandon a breadcrumb once its quest is taken")
+def("auto.abandonBreadcrumb", false, P, "Abandon a quest whose breadcrumb isn't done")
 G = "Announcements"
-def("announce.channel", "party", P, "Announce to", { choices = { "disabled", "party", "yell", "self" } })
+def("announce.channel", "party", P, "Announce to", { choices = { "disabled", "party", "raid", "both" },
+	choiceLabels = { disabled = "Nobody", party = "My party", raid = "My raid", both = "My party or raid" } })
+def("announce.self", false, P, "Also in my own chat")
 def("announce.items", true, P, "Items that start quests")
 def("announce.accepted", false, P, "Quests accepted")
 def("announce.abandoned", false, P, "Quests abandoned")
 def("announce.objectives", true, P, "Objectives done")
 def("announce.completed", false, P, "Quests handed in")
-def("announce.incompleteBreadcrumb", true, P, "Skipped breadcrumbs")
+def("announce.incompleteBreadcrumb", true, P, "Tell me when I skip a breadcrumb")
 def("announce.quiet", false, P, "Hide quest announcements from others")
 G = "Party"
 def("party.objectives", true, P, "Party members' objectives")
 G = "Sounds"
 def("sounds.questComplete", false, P, "Sound: quest complete")
-def("sounds.questCompleteChoice", "QuestComplete", P, "Quest complete sound", { soundChoice = true })
+def("sounds.questCompleteChoice", "QuestDefault", P, "Quest complete sound", { choices = BF.SoundNames })
 def("sounds.objectiveComplete", false, P, "Sound: objective done")
-def("sounds.objectiveCompleteChoice", "ObjectiveComplete", P, "Objective done sound", { soundChoice = true })
+def("sounds.objectiveCompleteChoice", "ObjectiveDefault", P, "Objective done sound", { choices = BF.SoundNames })
 def("sounds.objectiveProgress", false, P, "Sound: objective progress")
-def("sounds.objectiveProgressChoice", "ObjectiveProgress", P, "Objective progress sound", { soundChoice = true })
+def("sounds.objectiveProgressChoice", "ObjectiveProgress", P, "Objective progress sound", { choices = BF.SoundNames })
 def("sounds.channel", "Master", P, "Sound channel", { choices = { "Master", "SFX", "Music", "Ambience", "Dialog" } })
 def("sounds.delay", 0.5, P, "Sound delay (seconds)", { min = 0, max = 3, step = 0.1 })
 
@@ -222,6 +225,6 @@ def("dbm.interact", true, P, "HUD: interact")
 	  faces): the quest list lives in the map's Quests tab, not in a window of its own.
 	- showSoDRunes, Isle of Quel'Danas phase: not on WoW: Forever.
 	- debug options and the profiler: development aids, not player settings.
-	- loadCustomSounds: sound choices list the game's sounds, plus any registered with LibSharedMedia when another
-	  addon provides it (sounds.*Choice).
+	- loadCustomSounds (sounds from LibSharedMedia): the choices are the game's own sounds (Quests/Sounds.lua).
+	- questieShutUp: "Announce to: Nobody" is the same switch.
 ]]
