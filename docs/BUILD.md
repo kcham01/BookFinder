@@ -202,6 +202,8 @@ See the log. Current phase is the first unchecked one.
   generator (tag MENU_BOOKFINDER_SHOW, title "Show:"): the game's rows are never built, and its ResetButton (red
   cross) is hidden and kept hidden. The tag route stays as the fallback. The five game switches are not forced off
   (their CVar names on Forever are unknown); they are off now and nothing can turn them on from the map any more.
-  The same screenshot shows an older build in game with OpenMap's coordinates in the title bar ("Cursor: x X, y Y |
+  **Those screenshots were taken with OpenMap running** (the owner said so); photos of the bare game's map are coming.
+  Check against them: whether the red cross (ResetButton) is the game's at all, which coordinates are the game's.
+  The same screenshot shows with OpenMap's coordinates in the title bar ("Cursor: x X, y Y |
   Player: ...") and a "Player 45.0, 49.7" box at the map's bottom right: check in game that BookFinder's coordinate
   line (bottom centre of the scroll area) does not double the game's own, if that box is the game's.
