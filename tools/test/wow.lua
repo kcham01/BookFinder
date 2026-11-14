@@ -694,3 +694,11 @@ function World.OpenShowButton()
 end
 
 PLAYER = "Player"
+
+-- The quest log beside the map: its gear menu ("Show Quest Objectives") by the search box.
+QuestMapFrame = CreateFrame("Frame", "QuestMapFrame", WorldMapFrame)
+QuestMapFrame.QuestsFrame = CreateFrame("Frame", nil, QuestMapFrame)
+QuestMapFrame.QuestsFrame.SearchBox = CreateFrame("EditBox", nil, QuestMapFrame.QuestsFrame)
+QuestMapFrame.QuestsFrame.SettingsDropdown = CreateFrame("DropdownButton", nil, QuestMapFrame.QuestsFrame)
+function QuestMapFrame.QuestsFrame.SettingsDropdown:SetupMenu(fn) self.generator = fn end
+QuestScrollFrame = CreateFrame("ScrollFrame", "QuestScrollFrame", QuestMapFrame.QuestsFrame)
