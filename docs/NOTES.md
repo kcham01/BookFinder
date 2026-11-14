@@ -115,6 +115,9 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   window, menu, tooltip, icon, message, click, setting and what they send each other, written in BookFinder's docs
   for you to check, together with these notes and `docs/WANTS.md`.
 
+- **"Start the study."** First pass done: `docs/study/books-on-map.md`, `openmap.md`, `questie.md`. "Make sure you
+  update the directive so any other agents know what's going on": `CLAUDE.md` at the repository's root.
+
 ## Questions (only what I can't tell from your notes)
 
 - QuestieTrace is in Questie's zip and in its dropdown (image1). Should it be part of BookFinder?
