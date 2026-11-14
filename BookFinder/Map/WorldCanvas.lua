@@ -346,6 +346,7 @@ local function makeFrame()
 		frame.label:SetText(Canvas:HoverText())
 	end)
 	frame:SetScript("OnMouseDown", function(self, button)
+		if Canvas.inputHook and Canvas.inputHook("down", button) then return end
 		if button == "LeftButton" then
 			local x, y = GetCursorPosition()
 			self.dragFrom = { x, y }
@@ -363,6 +364,7 @@ local function makeFrame()
 	end)
 	frame:SetScript("OnMouseUp", function(self, button)
 		self:SetScript("OnUpdate", nil)
+		if Canvas.inputHook and Canvas.inputHook("up", button) then return end
 		-- A click that did not drag: into the zone under the cursor.
 		if button == "LeftButton" and self.downAt then
 			local x, y = GetCursorPosition()

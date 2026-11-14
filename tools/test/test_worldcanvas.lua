@@ -168,4 +168,24 @@ return {
 		equal(WorldMapFrame:GetMapID(), 1429, "the map went there")
 		equal(#BF.FindPlace:Search("e"), 0, "one letter: nothing yet")
 	end,
+
+	["the quill: a line, an arrow's head, a mark, erase, undo, clear"] = function(BF)
+		setup()
+		BF.Quill:Start()
+		expect(BookFinderQuillBar and BookFinderQuillBar.shown, "the toolbar")
+		local e, n = BF.WorldCanvas:Centre()
+		BF.Quill:Add({ tool = "Arrow", ink = 2, width = 4, instance = 0, points = { { e, n }, { e + 100, n } } })
+		equal(#BF.Quill.Segments(BF.Quill:Strokes()[1]), 3, "an arrow: its shaft and two strokes of head")
+		BF.Quill:Add({ tool = "Mark", ink = 1, width = 2, instance = 0, mark = 8, points = { { e, n + 500 } } })
+		equal(#BF.Quill:Strokes(), 2, "two strokes")
+		expect(BF.Quill:EraseAt(e + 50, n + 1, 5), "erased the arrow near its shaft")
+		equal(#BF.Quill:Strokes(), 1, "one left")
+		BF.Quill:Undo()
+		equal(#BF.Quill:Strokes(), 0, "undone")
+		BF.Quill:Add({ tool = "Pen", ink = 1, width = 2, instance = 0, points = { { e, n }, { e + 1, n + 1 } } })
+		BF.Quill:Clear()
+		equal(#BF.Quill:Strokes(), 0, "cleared")
+		BF.Quill:Stop()
+		expect(not BookFinderQuillBar.shown, "done")
+	end,
 }

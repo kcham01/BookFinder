@@ -62,6 +62,7 @@ Map\WorldCanvas.lua
 Map\CanvasLayers.lua
 Map\Dungeons.lua
 Map\FindPlace.lua
+Map\Quill.lua
 
 Comms\Wire.lua
 Comms\QuestieSerial.lua
