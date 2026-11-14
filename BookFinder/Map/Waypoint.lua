@@ -2,7 +2,7 @@
 -- arrow and compass (Map/Arrow.lua, Map/Compass.lua). The game's pin has no name, so BookFinder remembers what it
 -- points at for the arrow, the compass and tooltips.
 --
--- Messages: BF_WAYPOINT_CHANGED(waypoint or nil)   waypoint = { map, x, y, title, subtitle }
+-- Messages: BF_WAYPOINT_CHANGED(waypoint or nil)   waypoint = { map, x, y, title, subtitle, quest }
 
 local _, BF = ...
 local L = BF.L
@@ -30,13 +30,14 @@ local function placeable(map, x, y)
 end
 
 --- Puts the map pin on a spot (map, x, y in 0..1) and tracks it. Setting the same spot again takes it away.
-function Waypoint:Set(map, x, y, title, subtitle)
+--- quest (optional): the quest it is for, so the arrow can say what to do on arrival.
+function Waypoint:Set(map, x, y, title, subtitle, quest)
 	local m, px, py = placeable(map, x, y)
 	if not m then
 		BF:Print(L["The map pin can't go there: that map takes no pins."])
 		return false
 	end
-	local wanted = { map = m, x = px, y = py, title = title, subtitle = subtitle }
+	local wanted = { map = m, x = px, y = py, title = title, subtitle = subtitle, quest = quest }
 	if same(current, wanted) and C_Map.HasUserWaypoint() then
 		Waypoint:Clear()
 		return false

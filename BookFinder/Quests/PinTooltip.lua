@@ -241,7 +241,7 @@ function PinTooltip:Click(pin, button, sourceMap, frame)
 
 	if IsControlKeyDown() then
 		local name = sourceName(pin) or (quest and BF:QuestName(quest)) or ""
-		BF.Waypoint:Set(pin.map, pin.x, pin.y, name, quest and BF:QuestName(quest))
+		BF.Waypoint:Set(pin.map, pin.x, pin.y, name, quest and BF:QuestName(quest), quest)
 		return
 	end
 

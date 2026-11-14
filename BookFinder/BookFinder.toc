@@ -41,3 +41,4 @@ Map\Waypoint.lua
 Map\Pins.xml
 Map\WorldMap.lua
 Map\Minimap.lua
+Map\Guide.lua
