@@ -386,7 +386,9 @@ function QuestieOptionsEngine:Initialize()
     end)
 
     local mainCategory
-    for _, tab in ipairs(tabs) do
+    -- BookFinder: its own settings window shows Questie's settings (Options.lua): no pages in the game's settings
+    local registerPages = not (BookFinder and BookFinder.OpenOptions)
+    for _, tab in ipairs(registerPages and tabs or {}) do
         local canvas = _CreateCanvas(UIParent, tab, RenderMode.BLIZZARD)
         local category
         -- BookFinder: Questie's tabs are pages of its one settings window: "Quests", with its other tabs under it
@@ -447,6 +449,8 @@ function QuestieOptionsEngine:HideFrame()
 end
 
 function QuestieOptionsEngine:ShowFrame()
+    -- BookFinder: its own settings window
+    if BookFinder and BookFinder.OpenOptions and BookFinder.OpenOptions("quests") then return end
     -- Only reachable right after login, because Initialize runs for just a few frames
     if not visibleTabs then
         print(Questie:Colorize(l10n("Please wait a moment for Questie to finish loading")))
@@ -465,8 +469,8 @@ function QuestieOptionsEngine:IsShown()
 end
 
 function QuestieOptionsEngine:ToggleConfigWindow()
-    -- BookFinder: Questie's options are its settings window's Quests pages
-    if BookFinder and BookFinder.OpenSettings and BookFinder.OpenSettings("quests") then
+    -- BookFinder: Questie's settings are its settings window's Quests section
+    if BookFinder and BookFinder.OpenOptions and BookFinder.OpenOptions("quests") then
         return
     end
     if QuestieOptionsEngine:IsShown() then

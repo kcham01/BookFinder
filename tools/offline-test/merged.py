@@ -194,16 +194,40 @@ INTEGRATION = r"""function(root)
     local top = {}
     for _, c in ipairs(SETTINGS.top) do top[#top + 1] = c.name end
     want(#SETTINGS.top == 1, "settings: top-level categories made: " .. table.concat(top, ", "))
-    local pages = {}
-    for _, c in ipairs(SETTINGS.listed[1] and SETTINGS.listed[1].subs or {}) do pages[c.name] = true end
-    local count = 0
-    for _ in pairs(pages) do count = count + 1 end
-    want(not pages["Journeys"] and not pages["Map icons"] and not pages["Interface"], "settings: Shortest Path's pages are still there")
-    want(count <= 3 and not pages["Library books"], "settings: BookFinder's window has " .. count .. " pages (expected World map and Quests)")
-    for _, page in ipairs({ "World map" }) do
-        want(pages[page], "settings: no " .. page .. " page in BookFinder's window")
+    -- (the game's settings hold one BookFinder entry and no pages: every setting is in BookFinder's own window)
+    local subs = SETTINGS.listed[1] and SETTINGS.listed[1].subs or {}
+    want(#subs == 0, "settings: the game's settings still hold BookFinder pages (" .. #subs .. ")")
+    -- BookFinder's settings window: every section draws, a search finds across them, a switch flips through it
+    local OW, O = BookFinder.OptionsWindow, BookFinder.Options
+    want(OW and O, "BookFinder's settings window isn't there")
+    if OW and O then
+        local okOpen, errOpen = pcall(BookFinder.OpenOptions, "map")
+        want(okOpen, "the settings window didn't open: " .. tostring(errOpen))
+        for _, sec in ipairs(O.SECTIONS) do
+            local okSel, errSel = pcall(OW.Select, sec.key)
+            local n = OW.Rows()
+            want(okSel and (n > 0 or sec.key == "quests"), "settings: section " .. sec.key .. " drew " .. n .. " rows " .. tostring(errSel))
+        end
+        local all = O.All()
+        local ids = {}
+        for _, e in ipairs(all) do
+            want(not ids[e.id], "settings: " .. e.id .. " is in the window twice")
+            ids[e.id] = true
+            want(e.label and e.label ~= "" and e.get and (e.set or e.run), "settings: " .. tostring(e.id) .. " has no label or no way to change it")
+        end
+        want(ids["om.brightness"] and ids["om.maxZoom"] and ids["row.icons"] and ids["books.pinSize"],
+            "settings: the map's sliders, switches or the books' sizes are missing")
+        OW.Search("zoom")
+        want(OW.Rows() >= 2, "settings: a search for zoom found " .. OW.Rows() .. " rows")
+        OW.Search("")
+        local wmod2 = root.OpenMap.modules.worldmap
+        local was = wmod2.db.icons
+        for _, e in ipairs(all) do if e.id == "row.icons" then e.set(not was) end end
+        want((wmod2.db.icons and true or false) == not was, "settings: the dungeons switch didn't work through the window")
+        wmod2.db.icons = was
+        want(BookFinder.OpenSettings("books") and BookFinder.OpenSettings("quests"), "settings: a part's way in doesn't open the window")
+        if BookFinderOptions then BookFinderOptions:Hide() end
     end
-    want(BookFinder.OpenSettings("map") and BookFinder.OpenSettings("books") and BookFinder.OpenSettings(), "settings: a page can't be opened")
 
     -- Our dropdowns are drawn with Questie's dropdown library, from the same builder calls the game's menu takes
     local MT = BookFinder.MenuTest

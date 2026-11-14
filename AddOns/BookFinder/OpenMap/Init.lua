@@ -54,6 +54,7 @@ local BUILT_IN = BookFinder ~= nil and BookFinder.SettingsCategory ~= nil
 ns.BUILT_IN = BUILT_IN
 
 local function OpenOptions()
+	if BUILT_IN and BookFinder.OpenOptions and BookFinder.OpenOptions("map") then return end
 	local mod = ns:GetModule("worldmap")
 	if mod.enabled and mod.OpenMenu and mod:OpenMenu() then return end
 	if BUILT_IN and BookFinder.OpenSettings("map") then return end
@@ -63,7 +64,7 @@ end
 
 -- the full options page, without the map's menu first (the menu's own "options", the minimap button's right-click)
 function ns.OpenOptionsPage()
-	if BUILT_IN and BookFinder.OpenSettings("map") then return end
+	if BUILT_IN and BookFinder.OpenOptions and BookFinder.OpenOptions("map") then return end
 	local ACD = LibStub("AceConfigDialog-3.0", true)
 	if ACD then ACD:Open("OpenMap") end
 end
@@ -110,15 +111,9 @@ boot:SetScript("OnEvent", function(self, event, name)
 		self:UnregisterEvent("ADDON_LOADED")
 		-- (BookFinder: its World map page, made now so it sits first among the settings window's pages)
 		local AC, ACD = LibStub("AceConfig-3.0", true), LibStub("AceConfigDialog-3.0", true)
-		local parent = BUILT_IN and BookFinder.SettingsCategory()
-		if parent and AC and ACD then
+		-- (BookFinder: its own settings window draws these; the options table stays registered for it to read)
+		if BUILT_IN and AC then
 			AC:RegisterOptionsTable("OpenMap", Options)
-			local ok, frame = pcall(ACD.AddToBlizOptions, ACD, "OpenMap", ns.L["World map"], parent:GetID())
-			if ok and frame and frame.name then
-				for _, sub in ipairs(parent:GetSubcategories() or {}) do
-					if sub:GetName() == ns.L["World map"] then BookFinder.RegisterPage("map", sub) end
-				end
-			end
 		end
 	elseif event == "PLAYER_LOGIN" then
 		local t0 = debugprofilestop and debugprofilestop()

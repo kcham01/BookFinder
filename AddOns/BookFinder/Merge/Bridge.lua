@@ -23,7 +23,7 @@ local function bookList()
 	if BOOKS.ToggleOptions then BOOKS.ToggleOptions() return true end
 	if SlashCmdList.BOOKSONMAP then SlashCmdList.BOOKSONMAP("") return true end
 end
--- The minimap button's menu: where to go. Every switch is in the map's menu, one entry here.
+-- The minimap button's menu: where to go, then the settings window.
 local function menu(_, rootMenu)
 	rootMenu:CreateTitle("BookFinder")
 	rootMenu:CreateButton(WORLD_MAP or "World Map", openMap)
@@ -41,8 +41,7 @@ local function menu(_, rootMenu)
 		end)
 	end
 	rootMenu:CreateDivider()
-	rootMenu:CreateButton("Map menu", function() if public.OpenMapMenu then public.OpenMapMenu() end end)
-	rootMenu:CreateButton(SETTINGS or "Settings", function() public.OpenSettings() end)
+	rootMenu:CreateButton(SETTINGS or "Settings", function() if public.OpenOptions then public.OpenOptions("map") end end)
 end
 
 local function openMenu(owner)
@@ -161,69 +160,14 @@ local function makeLauncher()
 	if icon then icon:Register("BookFinder", broker, minimapDB()) end
 end
 
--- Settings: the BookFinder page ------------------------------------------------------------
-local function proxy(page, key, varType, name, default, get, set)
-	if not (Settings and Settings.RegisterProxySetting) then return end
-	local ok, setting = pcall(Settings.RegisterProxySetting, page, "BookFinder_" .. key, varType, name, default, get, set)
-	return ok and setting or nil
-end
-local function slider(page, key, name, default, min, max, step, get, set, tip)
-	local setting = proxy(page, key, Settings.VarType.Number, name, default, get, set)
-	if not setting then return end
-	local options = Settings.CreateSliderOptions(min, max, step)
-	if MinimalSliderWithSteppersMixin then
-		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value) return tostring(value) end)
-	end
-	Settings.RegisterInitializer(page, Settings.CreateSliderInitializer(setting, options, tip))
-end
--- a Books label with its ": %d" left off ("Map icon size: %d" -> "Map icon size")
-local function label(text) return (BL(text):gsub("%s*[:：]%s*%%d", "")) end
-
--- The settings window's BookFinder page: what no switch can be. Every switch is in the map's menu; this page says so
--- and opens it, then holds the library books' sizes and language.
-local function header(page, text)
-	if Settings.CreateElementInitializer then
-		local ok, init = pcall(Settings.CreateElementInitializer, "SettingsListSectionHeaderTemplate", { name = text })
-		if ok and init then Settings.RegisterInitializer(page, init) end
-	end
-end
-local function button(page, name, text, onClick, tip)
-	if CreateSettingsButtonInitializer then
-		local ok, init = pcall(CreateSettingsButtonInitializer, name, text, onClick, tip, true)
-		if ok and init then Settings.RegisterInitializer(page, init) end
-	end
-end
-
+-- The game's AddOns settings list: BookFinder's entry opens BookFinder's own settings window
 local function frontPage(category)
-	header(category, "Switches")
-	button(category, "The map's menu", "Open", function() if public.OpenMapMenu then public.OpenMapMenu() end end,
-		"Every on/off switch for the map, the quest icons, the townsfolk, the library books and the minimap button.")
-	if not (public.Active("Books") and BOOKS.db) then return end
-	local db = BOOKS.db
-	local function refreshMinimap() if BOOKS.RefreshMinimapPins then BOOKS.RefreshMinimapPins() end end
-	header(category, BL("Library books"))
-	slider(category, "booksPinSize", label("Map icon size: %d"), BOOKS.DEFAULT_PIN_SIZE or 20, 10, 40, 1,
-		function() return db.pinSize or BOOKS.DEFAULT_PIN_SIZE or 20 end,
-		function(v) db.pinSize = v; if BOOKS.RefreshMap then BOOKS.RefreshMap() end end)
-	slider(category, "booksMinimapPinSize", label("Minimap icon size: %d"), BOOKS.DEFAULT_MINIMAP_PIN_SIZE or 14, 8, 30, 1,
-		function() return db.minimapPinSize or BOOKS.DEFAULT_MINIMAP_PIN_SIZE or 14 end,
-		function(v) db.minimapPinSize = v; refreshMinimap() end)
-	-- the books' language (theirs only: the rest follows the game's), applied by a reload as Books always has
-	local lang = proxy(category, "booksLanguage", Settings.VarType.String, BL("Language"), "auto",
-		function() return db.lang or "auto" end,
-		function(value)
-			if (db.lang or "auto") == value then return end
-			StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD.text = BL("The interface will be reloaded to apply the language.")
-			local dialog = StaticPopup_Show("BOOKSONMAPFOREVER_RELOAD")
-			if dialog then dialog.data = value end
-		end)
-	if lang and Settings.CreateControlTextContainer then
-		local choices = Settings.CreateControlTextContainer()
-		choices:Add("auto", BL("Automatic (game language)"))
-		for _, l in ipairs(BOOKS.LANGS or {}) do choices:Add(l[1], l[3]) end
-		Settings.RegisterInitializer(category, Settings.CreateDropdownInitializer(lang, function() return choices:GetData() end))
+	if CreateSettingsButtonInitializer then
+		local ok, init = pcall(CreateSettingsButtonInitializer, "BookFinder settings", "Open",
+			function() if public.OpenOptions then public.OpenOptions("map") end end,
+			"The map, its look, quests, the library books and the rest, in one window.", true)
+		if ok and init then Settings.RegisterInitializer(category, init) end
 	end
-	public.RegisterPage("books", category)
 end
 
 -- Load and login ---------------------------------------------------------------------------------------------

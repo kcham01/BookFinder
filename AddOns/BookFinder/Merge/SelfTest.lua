@@ -51,11 +51,28 @@ local function steps()
 	end
 
 	-- Settings: every page opens
-	for _, key in ipairs({ "map", "books", "quests" }) do
-		check("settings page " .. key .. " opens", function() return public.OpenSettings(key) end)
-		wait(0.3)
+	-- BookFinder's settings window: every section draws its settings (Quests once Questie's options have loaded)
+	local OW, O = public.OptionsWindow, public.Options
+	if OW and O then
+		public.OpenOptions("map")
+		for _, sec in ipairs(O.SECTIONS) do
+			check("settings: " .. sec.label .. " draws", function()
+				OW.Select(sec.key)
+				local n = OW.Rows()
+				return n > 2, n .. " rows"
+			end)
+			wait(0.3)
+		end
+		check("settings: every entry reads", function()
+			local bad = {}
+			for _, e in ipairs(O.All()) do
+				local ok = pcall(e.get or e.run and function() end)
+				if not ok then bad[#bad + 1] = e.id end
+			end
+			return #bad == 0, #bad == 0 and (#O.All() .. " settings") or table.concat(bad, ", ")
+		end)
+		if BookFinderOptions then BookFinderOptions:Hide() end
 	end
-	if SettingsPanel and SettingsPanel:IsShown() then HideUIPanel(SettingsPanel) end
 	wait(0.3)
 
 	-- The map, the books tab, the quests tab, the services tab

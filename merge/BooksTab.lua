@@ -931,7 +931,7 @@ local function filterMenu(owner)
 		menu:CreateButton(L["Mark every book collected"], function() if BOOKS.SetAll then BOOKS.SetAll(true) end end)
 		menu:CreateButton(L["Show every book on the map again"], function() if BOOKS.SetAll then BOOKS.SetAll(false) end end)
 		menu:CreateDivider()
-		menu:CreateButton(L["Book switches (the map's menu)"], function() if public.OpenMapMenu then public.OpenMapMenu() end end)
+		menu:CreateButton(SETTINGS or "Settings", function() if public.OpenOptions then public.OpenOptions("library") end end)
 	end)
 end
 

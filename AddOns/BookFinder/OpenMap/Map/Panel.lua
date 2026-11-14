@@ -696,7 +696,10 @@ local function BuildRail()
 	rail.main:RegisterForDrag("LeftButton")
 	rail.main:SetScript("OnClick", function(_, button)
 		if rail.dragEnd and GetTime() - rail.dragEnd < 0.3 then return end   -- (the end of a drag, not a click)
-		if button == "LeftButton" then SetOpen(not menu:IsShown()) end
+		if button == "LeftButton" then
+			if BookFinder and BookFinder.OpenOptions then BookFinder.OpenOptions("map", true) return end
+			SetOpen(not menu:IsShown())
+		end
 	end)
 	rail.main:SetScript("OnDragStart", function()
 		GameTooltip:Hide()
@@ -1269,8 +1272,16 @@ function mod:SetupPanel(worldMap)
 	toggle = Tile(map, TOGGLE, TOGGLE, nil, true)
 	toggle:SetFrameLevel(level)               -- (over the window's resize grip there: Window.lua)
 	ShowIcon(toggle.icon, OPENMAP_ICON)
-	toggle:SetScript("OnClick", function() SetOpen(not menu:IsShown()) end)
+	-- (BookFinder: the button opens BookFinder's settings window, which holds every setting this menu did)
+	toggle:SetScript("OnClick", function()
+		if BookFinder and BookFinder.OpenOptions then BookFinder.OpenOptions("map", true) return end
+		SetOpen(not menu:IsShown())
+	end)
 	toggle:SetScript("OnEnter", function(self)
+		if BookFinder and BookFinder.OpenOptions then
+			Tip(self, "ANCHOR_TOP", "BookFinder", { L["Settings: what the map shows, how it looks, quests and the library."] })
+			return
+		end
 		Tip(self, "ANCHOR_TOP", "OpenMap", { L["Search, find me, map pins, the quest log, report a problem, options, and what the map shows."] })
 	end)
 	toggle:SetScript("OnLeave", GameTooltip_Hide)
@@ -1723,6 +1734,7 @@ function mod.CloseMenu() if menu and menu:IsShown() then SetOpen(false) end end
 
 -- the menu: OpenMap's settings, opened with the map if it isn't (/openmap, Blizzard's settings page)
 function mod:OpenMenu()
+	if BookFinder and BookFinder.OpenOptions then return BookFinder.OpenOptions("map") end
 	if not menu then return false end
 	if not map:IsShown() then
 		ToggleWorldMap()

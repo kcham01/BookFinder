@@ -1,9 +1,7 @@
 -- BookFinder: where every setting lives, with each one in one place.
 --
---   The map's menu (OpenMap's panel, the OpenMap button on the map): every on/off switch. What the map shows (places,
---   dungeons, townsfolk, people, quest icons, the library books), how it looks, and the rest.
---   The settings window (Options > AddOns > BookFinder): only what a switch can't be (sliders, choices, sounds,
---   fonts, profiles), and Questie's own quest options.
+--   BookFinder's settings window (OptionsWindow.lua, its entries in Options.lua): every setting of the product,
+--   opened by the map's BookFinder button, the minimap button's menu, /bookfinder and the game's AddOns list.
 --
 -- This file does the parts of that no single part could:
 --   * Questie's townsfolk as switches in the map's menu (OpenMap's own townsfolk step aside: Townsfolk.lua)
@@ -80,6 +78,8 @@ local function hide(items, hidden)
 	end
 end
 function public.FilterQuestieOptions(tab, data)
+	-- (BookFinder's own settings window reads the ones it shows from here: Options.lua)
+	if public.CollectQuestieOptions then pcall(public.CollectQuestieOptions, tab, data) end
 	local hidden = QUESTIE_HIDDEN[tab]
 	if hidden and type(data) == "table" then hide(data.items, hidden) end
 end
@@ -111,19 +111,6 @@ local function registerSwitches()
 		icon = "Interface\\AddOns\\BookFinder\\OpenMap\\Media\\Textures\\OpenMapIconRound",
 		get = function() local m = public.db and public.db.minimap return not (m and m.hide) end,
 		set = function(on) if public.SetMinimapButtonShown then public.SetMinimapButtonShown(on) end end })
-end
-
--- The map's menu, opened from anywhere (the minimap menu, the settings window, the books tab's gear)
-function public.OpenMapMenu()
-	if InCombatLockdown() then return false end
-	if SettingsPanel and SettingsPanel:IsShown() and HideUIPanel then HideUIPanel(SettingsPanel) end
-	if WorldMapFrame and not WorldMapFrame:IsShown() and ToggleWorldMap then ToggleWorldMap() end
-	local wm = OM and OM.modules and OM.modules.worldmap
-	if wm and wm.OpenMenu then
-		local ok, opened = pcall(wm.OpenMenu, wm)
-		return ok and opened ~= false
-	end
-	return false
 end
 
 -- Old settings carried over, once --------------------------------------------------------------------------------

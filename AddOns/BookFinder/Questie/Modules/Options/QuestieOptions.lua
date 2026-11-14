@@ -101,8 +101,8 @@ end
 
 -- Open the configuration window
 function QuestieOptions:ToggleConfigWindow()
-    -- BookFinder: Questie's options are its settings window's Quests pages
-    if BookFinder and BookFinder.OpenSettings and BookFinder.OpenSettings("quests") then
+    -- BookFinder: Questie's settings are its settings window's Quests section
+    if BookFinder and BookFinder.OpenOptions and BookFinder.OpenOptions("quests") then
         return
     end
     if not QuestieConfigFrame:IsShown() then
