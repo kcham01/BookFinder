@@ -19,6 +19,7 @@ Data\Npcs.lua
 Data\Objects.lua
 Data\Items.lua
 Data\Overrides.lua
+Data\Lists.lua
 
 Core\Settings.lua
 Core\Data.lua

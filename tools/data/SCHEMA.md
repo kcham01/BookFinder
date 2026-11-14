@@ -80,3 +80,15 @@ zone area, {{area, x, y}...} entrances}. `areaToUiMap`, `uiMapToArea`, `subZoneT
 `objectiveFirst` (objective ordering hints per quest), `factionTemplate` (template -> faction group bits), and the
 enums named after QuestieDB's: `zoneIDs`, `sortKeys`, `factionIDs`, `professionKeys`, `specializationKeys`, `raceKeys`,
 `classKeys`, `npcFlags`, `questFlags`, `specialFlags`, `raceMaskById`.
+
+## Questie's lists (`Data/Lists.lua`)
+
+- `hiddenQuests[id]` = `true` (never shown) or `"HIDE_ON_MAP"` (a quest that exists, never drawn on the map);
+  `hiddenNpcs[id]`, `hiddenItems[id]` = `true`. Event quests leave the hidden state while their holiday runs.
+- `eventQuests` = `{ {event name, questID, start "d/m"?, end "d/m"?, start "h:m"?, end "h:m"?}, ... }`.
+- `eventDates[event]` = `{startDate = "d/m", startHour, startMinute, endDate, endHour, endMinute}`, or `false` for a
+  holiday that does not exist on this client. `lunarFestival[yy]` = the same shape for the Lunar Festival per year
+  (two-digit year). Darkmoon Faire has no dates: it runs the week after the first Friday of each month, Elwynn Forest
+  in odd months and Mulgore in even ones (BookFinder's own rule, `Quests/Events.lua`).
+- `darkmoonNpcs.elwynn[npcID]`, `darkmoonNpcs.mulgore[npcID]` = whole NPC rows (tables, not strings) for the faire's
+  NPCs in each place.
