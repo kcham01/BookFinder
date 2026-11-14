@@ -107,4 +107,12 @@ See the log. Current phase is the first unchecked one.
   into: everyone (folded into rows), per faction (126 quests, 9 NPCs, 9 objects, 5 items), per faction+class
   (4 quests each). Drop rates: correction > Wowhead > server. English names only (QuestieDB's l10n overlay not
   converted yet: TODO for other client languages).
-  Re-run: `python3 -I tools/data/convert.py <QuestieDB folder>` (needs `pip install cbor2`, `lua5.1`).
+  Re-run: `python3 -I tools/data/convert.py <QuestieDB folder> <Questie folder>` (needs `pip install cbor2`,
+  `lua5.1`). Questie's own data lists (hidden, holidays, Darkmoon) come from `tools/data/questie_lists.lua`.
+- Phase 2 (core) done: `Core/Init.lua` (events with safe in-place dispatch, BF_ messages, stages load/login/world,
+  timers, Spread for long jobs), `Settings.lua` (Define at file top level only: unknown saved keys are dropped at
+  "load"; profiles), `Data.lua` (BF:Quest/Npc/Object/Item, field names BF.Q/N/O/I/OBJ), `Zones.lua` (area ->
+  uiMap, dungeon entrances, world geometry from map corners), `Player.lua`, `Locale.lua`. Tests: `tools/test/run.sh`.
+  Gotchas: plain Lua 5.1's xpcall passes no arguments, the client's does (wow.lua emulates); areas of instances
+  often DO have a uiMap (their own dungeon map, e.g. 209 Shadowfang Keep -> 310), so EachSpawn gives both the
+  instance-map point and the entrance points.

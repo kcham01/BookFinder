@@ -5,7 +5,9 @@ Reads QuestieDB's data (the "baked" store in QuestieDB_Forever.toc plus its supp
 corrections) and writes BookFinder's own data files into BookFinder/Data/. Only data crosses over; the files written
 here are read by BookFinder's own code. Credits: BookFinder/Data/CREDITS.md. Layout of every row: tools/data/SCHEMA.md.
 
-Usage:  python3 -I tools/data/convert.py <QuestieDB folder> [<output folder>]
+Usage:  python3 -I tools/data/convert.py <QuestieDB folder> <Questie folder> [<output folder>]
+        (Questie's folder gives the lists Questie keeps as data: hidden quests, NPCs and items, holiday quests and
+        dates, Darkmoon Faire positions.)
 Needs:  python3 with cbor2 (pip install cbor2), lua5.1 (apt-get install lua5.1).
 """
 
@@ -372,6 +374,14 @@ def write_table(out_dir, file_name, assignments):
 # --------------------------------------------------------------------------------------------------------------------
 
 
+def run_lists(qdb, questie):
+    proc = subprocess.run(
+        ["lua5.1", os.path.join(HERE, "questie_lists.lua"), questie, qdb],
+        cwd=qdb, capture_output=True, check=True,
+    )
+    return json.loads(proc.stdout.decode("utf-8"))
+
+
 def run_dynamic(qdb):
     proc = subprocess.run(
         ["lua5.1", os.path.join(HERE, "dynamic.lua"), qdb],
@@ -387,8 +397,12 @@ def main():
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(2)
+    if len(sys.argv) < 3:
+        print(__doc__)
+        sys.exit(2)
     qdb = os.path.abspath(sys.argv[1])
-    out_dir = os.path.abspath(sys.argv[2]) if len(sys.argv) > 2 else os.path.join(REPO, "BookFinder", "Data")
+    questie = os.path.abspath(sys.argv[2])
+    out_dir = os.path.abspath(sys.argv[3]) if len(sys.argv) > 3 else os.path.join(REPO, "BookFinder", "Data")
     os.makedirs(out_dir, exist_ok=True)
 
     toc = os.path.join(qdb, "QuestieDB_Forever.toc")
@@ -568,6 +582,30 @@ def main():
         ("BF.Data.questFlags", enums["questFlags"]),
         ("BF.Data.specialFlags", enums["specialFlags"]),
         ("BF.Data.raceMaskById", int_keys(enums["raceMaskById"])),
+    ])
+    # Questie's lists: hidden quests/NPCs/items, holidays, Darkmoon Faire's two places (NPC rows in our layout).
+    lists = run_lists(qdb, questie)
+    darkmoon = {}
+    for place, fixes in lists["darkmoon"].items():
+        rows = {}
+        for ident, fields in fixes.items():
+            ident = int(ident)
+            base = dict(raw["Npc"].get(ident, {}))
+            for field, value in fields.items():
+                base[int(field)] = text(value)
+            rows[ident] = npc_row(base)
+        darkmoon[place] = rows
+    events = []
+    for e in lists["eventQuests"]:
+        events.append(e)
+    sizes["Lists.lua"] = write_table(out_dir, "Lists.lua", [
+        ("BF.Data.hiddenQuests", {int(k): v for k, v in lists["hiddenQuests"].items()}),
+        ("BF.Data.hiddenNpcs", {int(k): v for k, v in lists["hiddenNpcs"].items()}),
+        ("BF.Data.hiddenItems", {int(k): v for k, v in lists["hiddenItems"].items()}),
+        ("BF.Data.eventQuests", events),
+        ("BF.Data.eventDates", lists["eventDates"]),
+        ("BF.Data.lunarFestival", {int(k): v for k, v in lists["lunarFestival"].items()}),
+        ("BF.Data.darkmoonNpcs", darkmoon),
     ])
     sizes["BUILD"] = meta.get("X-BUILD-COMMIT")
 
