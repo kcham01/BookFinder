@@ -147,27 +147,8 @@ end
 local function state() return BF:AccountState("panel") end
 
 local function makeSideTab(frame, s, index)
-	local tab = CreateFrame("CheckButton", nil, frame)
-	tab:SetSize(32, 32)
+	local tab = Widgets:SideTab(frame, s.icon, s.label, function() Panel:Show(s.key) end)
 	tab:SetPoint("TOPLEFT", frame, "TOPRIGHT", 0, -36 - (index - 1) * 48)
-	-- The spellbook's side tab: the game's own art for a column of tabs down a window's edge.
-	tab.bg = tab:CreateTexture(nil, "BACKGROUND")
-	tab.bg:SetTexture("Interface\\SpellBook\\SpellBook-SkillLineTab")
-	tab.bg:SetSize(64, 64)
-	tab.bg:SetPoint("TOPLEFT", -3, 11)
-	tab:SetNormalTexture(s.icon)
-	tab:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
-	tab:SetCheckedTexture("Interface\\Buttons\\CheckButtonHilight", "ADD")
-	tab:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		GameTooltip:SetText(L[s.label])
-		GameTooltip:Show()
-	end)
-	tab:SetScript("OnLeave", function() GameTooltip:Hide() end)
-	tab:SetScript("OnClick", function()
-		PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN or SOUNDKIT.IG_CHARACTER_INFO_TAB)
-		Panel:Show(s.key)
-	end)
 	tab.section = s
 	return tab
 end
