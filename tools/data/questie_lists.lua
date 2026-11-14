@@ -130,7 +130,18 @@ local townsfolk = {
 	professionTrainers = professionTrainers,
 }
 
+-- Auto questing: the NPCs and quests Questie never accepts or hands in by itself (a choice matters, or the NPC
+-- offers turn-ins that spend items): BookFinder's automation keeps the same hands off.
+run("Modules/Auto/DisallowedIDs.lua")
+local auto = modules.AutoQuesting.private
+local autoNever = {
+	npcs = auto.disallowedNPCs or {},
+	accept = auto.disallowedQuests and auto.disallowedQuests.accept or {},
+	turnIn = auto.disallowedQuests and auto.disallowedQuests.turnIn or {},
+}
+
 io.write(encode({
+	autoNever = autoNever,
 	townsfolk = townsfolk,
 	hiddenQuests = hiddenQuests,
 	hiddenNpcs = hiddenNpcs,

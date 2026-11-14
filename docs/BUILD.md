@@ -101,11 +101,15 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 6. ~~Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).~~ Done.
 7. Books: list (ours), detection, pins, Books tab, route (no trail), cards, minimap button.
 8. ~~The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).~~ Done (its OpenMap entries appear as phase 12 builds them).
-9. Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.
-10. Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).
-11. Comms: questie + QuestieV1, BooksOnMapFE, OpenMapLoc, OpenMap pins.
+9. ~~Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.~~
+   Done (its action tiles, place search and favourite stars come with the map, phase 12).
+10. ~~Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).~~ Done
+    (also the Books tab and the map window's tabs).
+11. Comms: ~~questie + QuestieV1~~ (done), ~~BooksOnMapFE~~ (done in phase 7), OpenMapLoc, OpenMap pins (with the
+    map's people and pins, phase 12).
 12. OpenMap's map: stitched world from the game's map art, dungeons, pins and card, quill, notes, people.
-13. Automation, announcements, sounds, chat links, commands; polish pass.
+13. ~~Automation, announcements, sounds, chat links, commands~~ (done, with the minimap button); polish pass after the
+    owner's first test in game.
 
 ## Status
 
@@ -191,4 +195,224 @@ See the log. Current phase is the first unchecked one.
   (AddInitializer + AttachTexture). Trivial Quest maps to `quests.lowLevel` ("all" / "hide"). "Questie icons" (OpenMap's
   switch for Questie's icons on its map) is not an entry: in BookFinder those are the quest entries themselves.
   **Not verified in game**: that Forever's map filter menu carries that tag; how the row width makes room for the icon.
-  Still open with the owner: the game's own "Low-Level Quests" entry next to Trivial Quest (needs a look in game).
+  The owner then asked for the game's own entries to go ("I loathe the native tracking"): `Fill` empties the root
+  description's `elementDescriptions` (the client's list of rows; count kept in `ShowMenu.removed`) before adding
+  ours. **Not verified in game** that the field has that name on Forever (if not, ours follow the game's under a
+  divider, as before).
+  Then the owner's screenshots: the Show button is the world map's tracking options button (top bar, right end, beside
+  the quest log search); Forever's entries are Quest Objectives, Show Quest Levels, Quest Difficulty Color, Low-Level
+  Quests, Tracked Items, all off on the owner's account. Now `ShowMenu:FindButton()` takes the overlay frame whose
+  OnLoad is WorldMapTrackingOptionsButtonMixin's (not the floor picker) and `SetupMenu`s it with BookFinder's own
+  generator (tag MENU_BOOKFINDER_SHOW, title "Show:"): the game's rows are never built, and its ResetButton (red
+  cross) is hidden and kept hidden. The tag route stays as the fallback. The five game switches are not forced off
+  (their CVar names on Forever are unknown); they are off now and nothing can turn them on from the map any more.
+  **Those screenshots were taken with OpenMap running** (the owner said so); photos of the bare game's map are coming.
+  Check against them: whether the red cross (ResetButton) is the game's at all, which coordinates are the game's.
+  The same screenshot shows with OpenMap's coordinates in the title bar ("Cursor: x X, y Y |
+  Player: ...") and a "Player 45.0, 49.7" box at the map's bottom right: check in game that BookFinder's coordinate
+  line (bottom centre of the scroll area) does not double the game's own, if that box is the game's.
+- The owner's photos of the bare game's map (no addons): "Map & Quest Log" window; the Show button's red cross is the
+  game's (filters changed from their defaults: kept hidden). The game shows "Player: x, y" at the map's bottom left in
+  white small text, so `Map/Coords.lua` now finds that font string (text starting with the client's PLAYER word and
+  ":") and adds only "Cursor: x, y" to its right in its font; without it, BookFinder's line says both (bottom centre).
+  The gear beside "Quests: n/40" is a second game menu: "Show Quest Objectives" (the quest log's objective lines);
+  untouched, question to the owner. Continents in the map's picker: Eastern Kingdoms, Kalimdor, Zephras Isle (phase 12).
+- The quest log's gear menu ("Show Quest Objectives") ditched at the owner's word: `ShowMenu:FindQuestLogGear()`
+  (QuestMapFrame.QuestsFrame.SettingsDropdown, QuestScrollFrame.SettingsDropdown, else a menu button its parent keeps
+  under a key with "Settings" in it) is hidden and kept hidden. **Not verified in game**: the gear's name on Forever.
+- Phase 9 (settings panel) done: `UI/Widgets.lua` (tick box, slider, dropdown, colour swatch, heading; each picks the
+  newest template the client has through C_XMLUtil.GetTemplateInfo: MinimalSliderWithSteppersTemplate else
+  OptionsSliderTemplate, WowStyle1DropdownTemplate else a button opening MenuUtil.CreateContextMenu), `UI/Panel.lua`
+  (PortraitFrameTemplate window "BookFinder <version>", side tabs down the right in the spellbook's skill-line tab art:
+  Map, Quests, Books, Journey; top tabs per section (PanelTopTabButtonTemplate else TabButtonTemplate); pages built
+  from the settings' own `page` and `group` (heading); tick boxes in two columns, then sliders, choices and colours;
+  Defaults resets the page shown (asked first); Escape closes; place and last page remembered; pages and tabs made
+  once and kept), `UI/Profiles.lua` (Map > Profiles). Ways in: the BookFinder button on the world map (bottom right,
+  left of the game's "?"), `/bookfinder` and `/bf`, the game's AddOns settings (one entry with "Open BookFinder").
+  **Pending settings**: a setting whose feature is not built carries `pending = true` (Quests/Options.lua's
+  PENDING lists: the quest list, automation, announcements, sounds, DBM, party objectives, quest window icons, spawn
+  merging) and stays out of the panel. `tools/test/test_panel.lua` fails if a pending setting is read anywhere, or a
+  shown one is read nowhere: take a key off the list in the change that builds its feature. Section and page with
+  nothing to show are hidden (Journey appears with its windows; Quests' "Quest list" and "Automation" with theirs; the
+  Map's "On the map" with the map). Moved: the arrow and compass to Map > More ("Arrow and compass"), coordinates to
+  Map > Look ("Coordinates"); books on one page with Settings / Filters headings (Books on map's window's sections).
+  **Not verified in game**: every template name above on Forever; the side tab art's offsets; the map button's spot.
+- **One dropdown** (DESIGN rule 2; the owner "really likes Questie's dropdown"): `UI/Dropdown.lua`, the classic
+  tooltip-box dropdown (tooltip backdrop, the game's small font, UI-DropDownRadioChecks tick boxes and radio dots,
+  icon at the right, gold title rows, dividers, submenus to the right on hover, switches keep it open, Escape and a
+  click elsewhere close it). Every BookFinder menu is it: the map's Show button now opens it on press (OnMouseDown
+  replaced; the game's menu generator is also given BookFinder's items, in case a client opens it another way), the
+  panel's choices, the profile menus. The client's Menu API is used only by the tag fallback.
+  `ShowMenu:Items()` is the menu as BF.Dropdown items.
+- Phase 10, part 1: the quest list (`Quests/List.lua`). A scroll frame of BookFinder's own on QuestScrollFrame's
+  spot, as its child (it shows and hides with the game's quest panel); the game's rows (QuestScrollFrame.Contents)
+  and scroll bar kept hidden; the game's search box narrows the list; the on-screen tracker (ObjectiveTrackerFrame,
+  else QuestWatchFrame) kept hidden ("nothing on screen"; waits out combat). Zones fold; quest title with level in
+  difficulty colour; "- <objective text>" in the chosen colour style; "- Ready for turn-in" (the game's
+  QUEST_WATCH_QUEST_READY) plus the completion text; failed; timers; the quest's usable item as a secure button (made
+  and placed out of combat only); a tick to track; focus (others dim; follows the game's focused quest when chosen);
+  clicks by list.click*; right-click: Focus, Track, Show on map, Set the map pin, Minimize, the quest's web page (an
+  edit box to copy, the client cannot write the clipboard). The list's settings are live (off the pending list),
+  except `list.playButtons` (VoiceOver's play buttons need that addon's interface: pending).
+  **Not verified in game**: QuestScrollFrame and its Contents / ScrollBar / SearchBox names on Forever; the row look
+  next to the game's own headers; scrolling a list holding secure item buttons in combat.
+- Phase 10, part 2: the map window's tabs and the Books tab. `UI/MapTabs.lua`: a column of side tabs down the map
+  window's right edge (the bare Forever map has none), "Quests" (the game's quest panel with BookFinder's list) and
+  "Library books"; a page other than Quests is a frame laid over QuestMapFrame. `Books/Tab.lua`: title, "Books: n/38",
+  its own search box, the progress bar with a notch and number at 10, 20, 25, 38 (green once reached; hover: the
+  rewards), the route (when on: the next book, Skip, Recalc), each set foldable with "n / total", large book rows
+  (icon, name, place and coordinates, tick box: a hand tick only, the bags and hand-ins are the game's), Rewards
+  (tiers and items: hover, Shift-click link, Ctrl-click try on), Group, and Show all / Hide all / Optimized route
+  (`Books:TickAll`, one chat line). `/bom` opens it. `UI/Widgets.lua` now holds the side tab (`Widgets:SideTab`),
+  shared with the settings panel. **Not verified in game**: the tab column's spot on the window's edge; the page's
+  dark fill against the game's quest panel art.
+- Phase 10, part 3: the Journey tab's pages (in the settings panel, as the owner laid out). `UI/Rows.lua`: one way to
+  lay out a list in a page (foldable gold headings with counts, white lines, grey hints, clickable lines, button
+  rows; pooled). `Journey/Journey.lua`: My Journey, recorded as it happens (accepted, completed, abandoned, level
+  reached, notes with delete), per character, shown by level newest first; "It's about time you embark on your first
+  Journey!" when empty. `Journey/ByZone.lua`: Quests by Zone (categories Zones, Dungeons, Battlegrounds, Classes,
+  Professions, Events, Other; the player's zone first) and Quests by Faction (factions quests reward), each sorted
+  into Available, Breadcrumb, Repeatable, Completed, Missing Requirement (with the reason), Unobtainable, Hidden.
+  `Journey/Search.lua`: Advanced Search over every quest, NPC, object and item by name or ID (a name index read from
+  the rows' source text the first time), up to 50 per kind; details for each kind (quest: level, kinds, profession,
+  reputation, doable or why not, prerequisites, started and ended by, hide; NPC: title, level, friendly to, starts,
+  ends, where; object; item: drops, objects, vendors); Show on Map / Remove from Map (a "found" marks layer: Look and
+  PinTooltip know the role), Set the map pin, Clear the map. `Search.REASONS`: Rules:Blocker's keys in plain words.
+  Not done from Questie's Journey: importing another character's journey (pending: the study does not say how it
+  behaves; ask the owner or read Questie again).
+- The owner sent Questie 12.9.0 (with QuestieDB 1.1.1) and Books on map 2.3.0 again (same versions as the study);
+  unpacked in this session's scratchpad only. The protocol is now written down byte by byte in
+  `docs/study/questie-protocol.md`, so it survives the zips going away.
+- Phase 11, Questie's side: `Comms/Wire.lua` (AceComm's framing: pieces 1/2/3, escape 4, joined per prefix + channel
+  + sender; a bandwidth queue by priority; LibDeflate's addon-channel escape 0 -> 1,2 and 1 -> 1,3),
+  `Comms/QuestieSerial.lua` (Questie's value format and its "1short" and "b89" streams), `Comms/Questie.lua` (msgIds
+  1, 2, 10, 11, 12, 13, 14 and QuestieV1 visibility, sent when Questie sends them; BookFinder gives version "1.0.0" so
+  no Questie user is told to update and replies come as the v1 list; both lists are read), `Comms/Party.lua` (party
+  members' objectives on the map where the player has nothing of their own for them, per QuestieV1 visibility, groups
+  of 5 or fewer; their progress, and nearby players' as "Nearby", on NPC tooltips). `Objectives:ForData(questID)`:
+  a quest's objectives from the data alone. `party.objectives` is live.
+  **Checked against Questie's own code** (tools/check/): the serializer writes the same bytes as Questie's for every
+  sample (updates, removes, requests, v1 lists with hashed repeated strings, v2 lists, big numbers, floats, the
+  1short escape bytes, a b89 yell) and each reads the other's; the escape matches LibDeflate on 500 random strings.
+  Found while checking: Questie cannot read its own yells (it writes their strings raw in the b89 stream but reads
+  them encoded, so the keys come out wrong); BookFinder reads them right.
+  **Not verified in game**: the game's CBOR/compression on Forever (QuestieV1 is skipped if C_EncodingUtil is
+  missing); a live party with a Questie user.
+- Phase 13: `Quests/Auto.lua` (Questie's rules, read from 12.9.0: gossip and greeting hand in a finished quest first,
+  else open the first offered one; a quest page accepted unless low level / repeatable / PvP are not wanted; a finished
+  quest completed, its reward taken when there is no choice; the held key stops it until every quest window closes;
+  shared quests turned down in battlegrounds; never the NPCs and quests on Questie's lists, now converted as
+  `BF.Data.autoNever` by tools/data/questie_lists.lua; breadcrumbs: taking a quest whose breadcrumb is still to do
+  says so and, with "Abandon a quest whose breadcrumb isn't done", abandons that quest so the breadcrumb comes first:
+  Questie's real rule, which the setting's old label had backwards). `Quests/Announce.lua` (to party, raid, either or
+  nobody, plus "Also in my own chat"; "{rt1} BookFinder: " in front, as Questie puts its own name; objectives done,
+  items that start quests, accepted, abandoned, handed in; "Hide quest announcements from others" filters other
+  players' Questie and BookFinder announcements). `Quests/Sounds.lua` (the game's own sound files by ID, Questie's
+  names and defaults; loaded before the settings so the choices list them). `Quests/Links.lua` (Questie's
+  `questie:` chat links answered through LinkUtil link handlers, as Questie does on Forever; hover in chat windows;
+  the game's own quest links left to the game). `UI/MinimapButton.lua` (where to go, settings, drag round the edge,
+  "Show the minimap button" on Map > More; the AddOns compartment entry). `UI/Commands.lua` (/bf help, journey,
+  search, books, route, toggle, tomap [reset], flex, eligible, minimap, version).
+  Data converter re-run on QuestieDB 1.1.1 / Questie 12.9.0: every generated file came out byte for byte the same
+  except Lists.lua's one new line (autoNever).
+  Still pending (out of the panel): Deadly Boss Mods' HUD (dbm.*: needs DBM's interface), VoiceOver play buttons,
+  custom quest icons in quest and gossip windows (quests.frameIcons), spawn merging (icons.clusterSpawns).
+- Phase 12, part 1 (OpenMap's people and pins, the part that talks to OpenMap users): OpenMap's code is public
+  (cloned into the scratchpad only: ~45,000 lines; its stitched map, dungeon maps and prepared data are its own work and
+  the biggest piece left). `Map/UserPins.lua`: pins with notes and five colours (Ctrl-click the map drops one, followed
+  and its card open; card: note, colour, Follow, Share to group / guild / target / as a code, Done, Delete; Alt-click
+  deletes, Shift-click puts its code in chat; Map > Pins page lists them, Import, Share all, Delete all); OpenMap's
+  `P1` messages (prefix OpenMap, 0.3 s apart, at most 255 bytes) and `OMPINS1:` codes, both ways; shared pins gathered
+  1.5 s then asked about ("Add them" / "Ignore"), or added from the group with "Auto-add group's pins". BookFinder reads
+  a code to the end of the line (OpenMap stops at the first space, cutting notes with spaces).
+  `Map/People.lua`: OpenMapLoc (L1 / L0 / H1 / H2; guild, friends' whispers, Battle.net friends of this game and
+  faction; every 2 s, sent after 10 s when moved or 60 s still, L0 in instances; gone after 150 s), class-coloured dots
+  for those who share, zone badges (continent and world maps) for online friends and guild members by the zone their
+  roster gives. "Friends on the map" / "Guild members on the map" are Show dropdown entries; "Share where you are" is on
+  Map > More, off by default. Checked offline only: well-formed XML, every file compiles, every TOC file exists, the
+  only globals written are the saved variables, slash commands and the pin mixins the XML names.
+  Left of phase 12: the stitched world map from the game's art, zone blending, unexplored areas, up-close minimap
+  detail, dungeon entrances / maps / bosses, boats and zeppelins, flight masters and routes, zone levels, the quill,
+  map notes, the panel's place search and action tiles, favourites.
+
+## Next: phase 12, the map (start here in a new session)
+
+- The owner chose **"Own code, OpenMap as guide"** (docs/NOTES.md): BookFinder writes its own stitched map; OpenMap
+  (public, MIT, https://github.com/openmap-world/openmap: clone into the scratchpad, never into the repository) is read
+  only to see how it behaves and looks, and BookFinder should look even better.
+- The owner's favourite feature: **zooming all the way down to minimap detail** (past the painted map's pixels, the
+  game's own minimap art mixes in: real trees, rocks, buildings). Build this early. OpenMap does it in
+  `OpenMap/Map/Close.lua` (minimap tiles over the painted map, softened and warmed toward the parchment, from about zoom
+  20, taking over by zoom 30-48; a city's own minimap over the underground cities; caves surfacing as you zoom in).
+- Open question to settle first: **where the minimap tiles come from**. The game has no call that finds them by place;
+  OpenMap uses a table of the tiles' file IDs (`ns.MapMinimap`, in its Data folder). Rule 3 says the map is built from
+  the game's own art by BookFinder, not OpenMap's prepared data, so BookFinder needs its own way to learn the tiles'
+  file IDs (for example from the game's own files with a converter of ours, as tools/data does for QuestieDB), or the
+  owner must agree to an exception for that table. Ask before using OpenMap's table.
+- Suggested order: (1) the stitched world canvas from the game's own map art (C_Map.GetMapArtLayers and
+  GetMapArtLayerTextures per zone, placed by the zones' world rectangles that Core/Zones.lua already has), zoom and pan;
+  (2) minimap detail up close; (3) dungeon entrances and maps; (4) boats, zeppelins, flight masters and routes;
+  (5) unexplored areas, zone levels, the quill, map notes, place search, the panel's action tiles and favourites.
+  The marks, pins, paths, books and people providers already draw on the game's map canvas; the new canvas should host
+  the same providers.
+- Phase 12, step 1 started: `Map/Stitch.lua` (each map's art tiles placed in world yards from C_Map.GetMapArtLayers
+  and GetMapArtLayerTextures and the map's world rectangle; a continent's zones, largest first) and
+  `Map/WorldCanvas.lua` (a canvas over the map window's scroll area: the continent's art, then each zone's on top in
+  its own frame level; one canvas unit per yard, the world frame scaled to zoom and offset to pan; wheel zooms about the
+  cursor, drag pans, right-click zooms out; a zone opens it fitted to that zone). A switch on Map > Look, "Seamless
+  continent map (being built)", off by default, because nothing else draws on it yet. Tests: tile placement, fitting,
+  zoom about the cursor, panning. **Not verified in game at all**: how zone art overlaps at borders (OpenMap blends
+  them: expect visible seams), whether SetScale this small behaves, the speed of drawing every tile of a continent.
+  Next on the canvas: quest icons, books, map pins and people drawn on it (the providers today draw on the game's
+  MapCanvas); border blending; then minimap detail (settle the tiles' source first, see "Next" above).
+- Phase 12, step 2: icons on the seamless map. `WorldCanvas` has layers (`Canvas:AddLayer(name, fn(continent, add))`,
+  add(east, north, spec)): icons keep their size on screen, only those in view are drawn, redrawn 0.05 s after a zoom
+  or pan; an overlay above every zone's art. `Map/CanvasLayers.lua`: quest icons (every mark of the continent and its
+  zones, PinTooltip's tooltip and clicks), books (BookMap's), the player's map pins (UserPins' card and clicks),
+  friends and guild who share their place. Not yet on it: patrol paths, townsfolk sizes beyond the setting, the
+  minimap (it keeps its own pins), coordinates of the cursor on the canvas.
+- Phase 12, step 3: the canvas tells the zone under the cursor (the smallest zone rectangle holding the point) with its
+  level range from the game (C_Map.GetMapLevels, coloured for the player) and the cursor's coordinates, bottom right;
+  a click that does not drag zooms into that zone; dungeon and raid maps (and caves) stay the game's own map.
+  `Map/Dungeons.lua`: entrances from BF.Data.dungeons on the canvas, the level range under each ("Level ranges"),
+  hover: name, levels, "Click to open its map"; click opens the dungeon's own map. "Dungeons and raids" and "Level
+  ranges" now exist, so they appear in the Show dropdown's Dungeons section.
+  Lesson (a real bug the tests caught): `local a, b = x and f()` keeps only f's first value. Use `if x then a, b = f()`.
+  Checked the whole addon for the pattern: no other case.
+- Minimap detail's art: the owner chose **"BookFinder builds its own"** (no OpenMap list). First check, before asking
+  for game files: `/bf probe` asks the game whether it finds minimap pictures by name (World\Minimaps\<map>\mapX_Y,
+  three spellings, Azeroth and Kalimdor) and keeps the answer in SavedVariables (BookFinderDB.global.probe.minimap).
+  - If the game knows the names: no list at all. A tile covers 533 1/3 yards; its grid numbers come from the world
+    position (tile x = floor(32 - north / 533.33), tile y = floor(32 - west / 533.33), to check against one known
+    tile). Build minimap detail straight from that, mixed over the zone art as the canvas zooms in.
+  - If not: a converter of BookFinder's own (tools/), reading each continent's WDT file from the game (its MAID chunk
+    lists each map tile's minimap texture file ID). The owner exports the WDT files (for example with wow.export) and
+    sends them; Zephras Isle's internal map name is needed too.
+- Phase 12, step 4: lines on the canvas (`add.line(e1, n1, e2, n2, spec)`: Line regions on the overlay, in screen
+  pixels, redrawn with the view) and the patrol paths layer (Map/Paths.lua's NPCs, colours, switches); flight masters
+  from the game (C_TaxiMap.GetTaxiNodesForMap on the continent: learned bright, unreachable greyed, "Learned" / "Not
+  learned"), standing in on the seamless map for the townsfolk flight masters ("Flight Master" in the Show dropdown).
+  **Not verified in game**: GetTaxiNodesForMap on a continent map on Forever; whether its `state` tells learned
+  (Unreachable) as on other clients. Flight routes and times between two masters (OpenMap's click one, then another)
+  are not built: OpenMap's flight times are its own data; the game's own (C_TaxiMap) give routes only at a flight
+  master.
+- Phase 12, step 5: explored areas on the seamless map. `Stitch:Explored(map)` places the game's exploration pictures
+  (C_MapExplorationInfo.GetExploredMapTextures: offsets in the art layer's pixels, 256-pixel pieces, a last smaller
+  piece in a power-of-two file, as the game's own map draws them; mouse-over highlights left out) in world yards; each
+  zone's frame draws them over its base art and draws them again on MAP_EXPLORATION_UPDATED. **Not verified in game**:
+  how Forever's base art looks where nothing is explored (blank parchment, as classic maps, or painted); OpenMap's
+  "darken unexplored" can only darken what is not under an explored picture, since the game lists explored ones only.
+- Phase 12, step 6: Find a place (`Map/FindPlace.lua`): a search box at the seamless map's top left; two letters or
+  more list continents, zones (C_Map.GetMapChildrenInfo from the world, 947), raids, dungeons (BF.Data.dungeons, at
+  their entrance) and the flight masters of the continent in view, by kind, in the one dropdown; Enter takes the
+  first; choosing opens a continent or zone, or centres the canvas on a dungeon or flight master (`Canvas:CentreOn`).
+  Left of phase 12 (see "Next"): minimap detail (waiting on the owner's `/bf probe`), zone border blending (needs a
+  screenshot of the seams), boats and zeppelins (no game data for them: BookFinder's own list, checked in game),
+  the quill and map notes, the panel's action tiles and favourites.
+- Phase 12, step 7: the quill (`Map/Quill.lua`): Pen, Line, Arrow (shaft and a two-stroke head), Circle (a 36-sided
+  ring), Mark (a raid mark; right-click the button for the next), Erase (the stroke nearest the click, within 12 screen
+  pixels); six inks, three widths; Undo (also Ctrl-Z), Clear (click twice within 3 s), Done (also Escape). Strokes in
+  world yards with their continent's instance, kept for every character (at most 2000: "Too much drawn"), drawn as
+  canvas lines with "Your drawings" (Show dropdown). The canvas asks `Canvas.inputHook` first, so while the quill is on
+  presses draw instead of panning. Opened by the Quill button beside Find a place, or `/bf draw`.
+  Not done: a drawing attached to a map pin (OpenMap's card "Drawing"); map notes (OpenMap's painted areas tool).

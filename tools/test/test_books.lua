@@ -48,11 +48,14 @@ return {
 		World.bags[203755] = 1
 		Login()
 		Tick(1.5)
-		local sent = World.sentMessages[1]
+		-- Only the books' own messages (Questie's party messages go out too).
+		local mine = {}
+		for _, m in ipairs(World.sentMessages) do if m[1] == "BooksOnMapFE" then mine[#mine + 1] = m end end
+		local sent = mine[1]
 		equal(sent[1], "BooksOnMapFE", "prefix")
 		equal(sent[2], "S38:1" .. string.rep("0", 37) .. ":test BookFinder", "our state")
 		equal(sent[3], "PARTY", "to the party")
-		equal(World.sentMessages[2][2], "R", "asks for theirs")
+		equal(mine[2][2], "R", "asks for theirs")
 		-- Theirs: they have the second book only.
 		Fire("CHAT_MSG_ADDON", "BooksOnMapFE", "S38:01" .. string.rep("0", 36) .. ":2.3.0", "PARTY", "Daeler Backbi-Forever")
 		expect(BF.Books:MemberHas("Daeler Backbi", BF.Books.list[2]), "they have Antonidas")

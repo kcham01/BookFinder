@@ -218,7 +218,16 @@ function Region:SetParent(p) self.parent = p end
 function Region:GetName() return self.name end
 function Region:GetObjectType() return self.kind end
 function Region:IsObjectType(t) return self.kind == t end
-function Region:GetChildren() return unpack(self.children) end
+function Region:GetChildren()
+	local list = {}
+	for _, c in ipairs(self.children) do if c.kind ~= "Texture" and c.kind ~= "FontString" and c.kind ~= "Line" then list[#list + 1] = c end end
+	return unpack(list)
+end
+function Region:GetRegions()
+	local list = {}
+	for _, c in ipairs(self.children) do if c.kind == "Texture" or c.kind == "FontString" or c.kind == "Line" then list[#list + 1] = c end end
+	return unpack(list)
+end
 function Region:EnableMouse(v) self.mouse = v end
 function Region:IsMouseOver() return false end
 function Region:GetEffectiveScale() return 1 end
@@ -242,6 +251,7 @@ end
 function Region:CreateAnimationGroup() return newRegion("AnimationGroup", nil, self) end
 function Region:CreateAnimation(kind) return newRegion(kind or "Animation", nil, self) end
 function Region:SetTexture(t) self.texture = t end
+function Region:SetTexCoord(...) self.texCoord = { ... } end
 function Region:GetTexture() return self.texture end
 function Region:SetAtlas(a) self.atlas = a end
 function Region:GetAtlas() return self.atlas end
@@ -259,8 +269,21 @@ function Region:SetEnabled(v) self.enabled = v end
 CreateFrame = function(kind, name, parent, template)
 	local f = newRegion(kind, name, parent)
 	f.template = template
+	-- The newer templates' own methods, as the client's mixins give them.
+	if template == "MinimalSliderWithSteppersTemplate" then
+		f.callbacks = {}
+		function f:Init(value, min, max, steps) self.value, self.min, self.max, self.steps = value, min, max, steps end
+		function f:RegisterCallback(event, fn) self.callbacks[event] = fn end
+		function f:SetValue(v) self.value = v; if self.callbacks.OnValueChanged then self.callbacks.OnValueChanged(nil, v) end end
+	elseif template == "WowStyle1DropdownTemplate" then
+		function f:SetupMenu(fn) self.generator = fn end
+	elseif template == "PortraitFrameTemplate" then
+		function f:SetTitle(t) self.title = t end
+		function f:SetPortraitToAsset(a) self.portrait = a end
+	end
 	return f
 end
+MinimalSliderWithSteppersMixin = { Event = { OnValueChanged = "OnValueChanged" } }
 
 UIParent = newRegion("Frame", "UIParent")
 WorldFrame = newRegion("Frame", "WorldFrame")
@@ -296,6 +319,7 @@ UnitName = function(unit) if unit == "player" then return World.player.name, nil
 UnitFullName = function(unit) if unit == "player" then return World.player.name, World.player.realm end end
 -- Other units (a target, a nameplate's mob): World.units[token] = { guid =, dead =, player = }.
 World.units = {}
+World.watched = {}
 UnitGUID = function(unit)
 	if unit == "player" then return World.player.guid end
 	return World.units[unit] and World.units[unit].guid
@@ -312,10 +336,12 @@ UnitExists = function(unit) return unit == "player" or World.units[unit] ~= nil 
 UnitIsDeadOrGhost = function() return false end
 UnitAffectingCombat = function() return false end
 InCombatLockdown = function() return World.combat == true end
-IsInGroup = function() return false end
+-- The group: World.group = { "Bob Builder", ... } (party members' names).
+World.group = {}
+IsInGroup = function(category) return category ~= LE_PARTY_CATEGORY_INSTANCE and #World.group > 0 end
 IsInRaid = function() return false end
 IsInInstance = function() if World.instance then return true, "party" end return false, "none" end
-GetNumGroupMembers = function() return 0 end
+GetNumGroupMembers = function() return #World.group > 0 and #World.group + 1 or 0 end
 GetRealmName = function() return World.player.realm end
 GetLocale = function() return "enUS" end
 GetPlayerFacing = function() return World.player.facing end
@@ -340,7 +366,15 @@ C_Map = strict("C_Map", {
 		local s = m and m.size or 1000
 		return map, { x = 1 - pos.y / s, y = 1 - pos.x / s, GetXY = function(p) return p.x, p.y end }
 	end,
-	GetMapChildrenInfo = function() return {} end,
+	GetMapChildrenInfo = function(map) return World.children and World.children[map] or {} end,
+	-- Map art: World.art[map] = { layerWidth, layerHeight, tileWidth, tileHeight, files = {...} }.
+	GetMapArtLayers = function(map)
+		local a = World.art and World.art[map]
+		return a and { { layerWidth = a.layerWidth, layerHeight = a.layerHeight, tileWidth = a.tileWidth, tileHeight = a.tileHeight } }
+	end,
+	GetMapLevels = function(map) local m = World.maps and World.maps[map] if m and m.levels then return m.levels[1], m.levels[2] end end,
+	GetMapArtLayerTextures = function(map) local a = World.art and World.art[map] return a and a.files end,
+	GetAreaInfo = function(area) return "Area " .. area end,
 	CanSetUserWaypointOnMap = function() return true end,
 	SetUserWaypoint = function(point) World.waypoint = point end,
 	GetUserWaypoint = function() return World.waypoint end,
@@ -378,9 +412,9 @@ C_QuestLog = strict("C_QuestLog", {
 	GetLogIndexForQuestID = function(id)
 		for i, l in ipairs(World.QuestLogLines()) do if l.questID == id then return i end end
 	end,
-	GetQuestWatchType = function() return nil end,
-	AddQuestWatch = function() end,
-	RemoveQuestWatch = function() end,
+	GetQuestWatchType = function(id) return World.watched and World.watched[id] and 0 or nil end,
+	AddQuestWatch = function(id) World.watched = World.watched or {}; World.watched[id] = true end,
+	RemoveQuestWatch = function(id) if World.watched then World.watched[id] = nil end end,
 	GetTimeAllowed = function() return nil end,
 })
 
@@ -491,7 +525,9 @@ MapCanvasPinMixin = {
 }
 
 -- XML templates the add-on defines, as the harness knows them (template name -> mixin global name).
-World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin", BookFinderPathPinTemplate = "BookFinderPathPinMixin" }
+World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin", BookFinderPathPinTemplate = "BookFinderPathPinMixin",
+	BookFinderUserPinTemplate = "BookFinderUserPinMixin", BookFinderPersonPinTemplate = "BookFinderPersonPinMixin",
+	BookFinderZoneBadgeTemplate = "BookFinderZoneBadgeMixin" }
 
 local function newCanvas()
 	local map = CreateFrame("Frame", "WorldMapFrame", UIParent)
@@ -554,7 +590,10 @@ C_SuperTrack = strict("C_SuperTrack", {
 	IsSuperTrackingUserWaypoint = function() return World.superTracked == true end,
 })
 C_Texture = strict("C_Texture", { GetAtlasInfo = function(name) return World.atlases and World.atlases[name] or nil end })
-C_MapExplorationInfo = strict("C_MapExplorationInfo", { GetExploredAreaIDsAtPosition = function() return { 1 } end })
+C_MapExplorationInfo = strict("C_MapExplorationInfo", {
+	GetExploredAreaIDsAtPosition = function() return { 1 } end,
+	GetExploredMapTextures = function(map) return World.explored and World.explored[map] or {} end,
+})
 GetQuestLogRewardMoney = function() return 0 end
 GetCoinTextureString = function(c) return c .. "c" end
 BreakUpLargeNumbers = function(n) return tostring(n) end
@@ -569,7 +608,12 @@ BackdropTemplateMixin = {}
 C_Item = strict("C_Item", {
 	GetItemNameByID = function() return nil end,
 	GetItemIconByID = function() return 134400 end,
+	GetItemQualityByID = function() return 3 end,
+	GetItemInfo = function(id) return "Item " .. id, "|Hitem:" .. id .. "|h[Item " .. id .. "]|h" end,
 })
+ITEM_QUALITY_COLORS = { [3] = { r = 0, g = 0.44, b = 0.87 } }
+DressUpItemLink = function(link) World.triedOn = link end
+QuestMapFrame_Show = function() QuestMapFrame:Show() end
 
 -- Tooltips: the client's data processor (post-calls by data type) and the tooltip's first line ----------------------
 Enum.TooltipDataType = { Item = 0, Spell = 1, Unit = 2, Corpse = 3, Object = 4 }
@@ -619,7 +663,9 @@ Menu = strict("Menu", {
 
 --- A menu description as the client's: records rows; World.OpenMenu(tag) runs every modifier on a fresh one.
 local function newDescription(kind, text)
-	local d = { kind = kind, text = text, rows = {}, initializers = {} }
+	local d = { kind = kind, text = text, initializers = {} }
+	d.elementDescriptions = {}
+	d.rows = d.elementDescriptions
 	function d:CreateCheckbox(label, isSelected, setSelected)
 		local row = newDescription("checkbox", label)
 		row.isSelected, row.setSelected = isSelected, setSelected
@@ -634,11 +680,17 @@ local function newDescription(kind, text)
 	function d:CreateTitle(label) local row = newDescription("title", label) self.rows[#self.rows + 1] = row return row end
 	function d:CreateDivider() local row = newDescription("divider") self.rows[#self.rows + 1] = row return row end
 	function d:SetResponse(r) self.response = r end
+	function d:SetTag(t) self.tag = t end
 	function d:AddInitializer(fn) self.initializers[#self.initializers + 1] = fn end
 	return d
 end
+World.NewMenuDescription = function() return newDescription("root") end
 function World.OpenMenu(tag)
 	local root = newDescription("root")
+	-- The game's own entries come first, as in the client.
+	for _, label in ipairs(World.gameMenuEntries or { "Low-Level Quests", "Quest Objectives" }) do
+		root:CreateCheckbox(label, function() return true end, function() end)
+	end
 	for _, fn in ipairs(World.menuModifiers[tag] or {}) do fn(nil, root) end
 	return root
 end
@@ -651,3 +703,195 @@ function World.InitRow(row)
 	for _, fn in ipairs(row.initializers) do fn(button, row) end
 	return attached
 end
+
+-- The world map's Show button (tracking options) and the floor picker: both menu buttons among the map's overlay
+-- frames; the Show button is told apart by its mixin. SetupMenu keeps the generator; World.OpenShowButton() runs it.
+WorldMapTrackingOptionsButtonMixin = { OnLoad = function() end }
+WorldMapFloorNavigationFrameMixin = { OnLoad = function() end }
+local function menuButton(mixin)
+	local b = CreateFrame("DropdownButton", nil, WorldMapFrame)
+	b.OnLoad = mixin.OnLoad
+	function b:SetupMenu(fn) self.generator = fn end
+	b.ResetButton = CreateFrame("Button", nil, b)
+	b.scripts.OnMouseDown = nil
+	return b
+end
+WorldMapFrame.overlayFrames = { menuButton(WorldMapFloorNavigationFrameMixin), menuButton(WorldMapTrackingOptionsButtonMixin) }
+WorldMapFrame.overlayFrames[2].generator = function(_, root)
+	root:SetTag("MENU_WORLD_MAP_TRACKING")
+	for _, label in ipairs({ "Quest Objectives", "Show Quest Levels", "Quest Difficulty Color", "Low-Level Quests", "Tracked Items" }) do
+		root:CreateCheckbox(label, function() return false end, function() end)
+	end
+end
+function World.OpenShowButton()
+	local root = World.NewMenuDescription()
+	WorldMapFrame.overlayFrames[2].generator(WorldMapFrame.overlayFrames[2], root)
+	return root
+end
+
+PLAYER = "Player"
+
+-- The quest log beside the map: its gear menu ("Show Quest Objectives") by the search box.
+QuestMapFrame = CreateFrame("Frame", "QuestMapFrame", WorldMapFrame)
+QuestMapFrame.QuestsFrame = CreateFrame("Frame", nil, QuestMapFrame)
+QuestMapFrame.QuestsFrame.SearchBox = CreateFrame("EditBox", nil, QuestMapFrame.QuestsFrame)
+QuestMapFrame.QuestsFrame.SettingsDropdown = CreateFrame("DropdownButton", nil, QuestMapFrame.QuestsFrame)
+function QuestMapFrame.QuestsFrame.SettingsDropdown:SetupMenu(fn) self.generator = fn end
+QuestScrollFrame = CreateFrame("ScrollFrame", "QuestScrollFrame", QuestMapFrame.QuestsFrame)
+
+-- The settings panel's client parts: templates known by name, tabs, the game's settings window, the colour picker.
+World.knownTemplates = {} -- [template] = true for templates this "client" has (none: every older fallback is used)
+C_XMLUtil = strict("C_XMLUtil", { GetTemplateInfo = function(name) return World.knownTemplates[name] and {} or nil end })
+UISpecialFrames = {}
+PanelTemplates_TabResize = function() end
+PanelTemplates_SelectTab = function(tab) tab.selected = true end
+PanelTemplates_DeselectTab = function(tab) tab.selected = false end
+World.settingsCategories = {}
+Settings = strict("Settings", {
+	RegisterCanvasLayoutCategory = function(frame, name) return { frame = frame, name = name } end,
+	RegisterAddOnCategory = function(category) table.insert(World.settingsCategories, category) end,
+})
+SettingsPanel = CreateFrame("Frame", "SettingsPanel", UIParent)
+MenuUtil = strict("MenuUtil", { CreateContextMenu = function(owner, generator) World.contextMenu = { owner, generator } end })
+ColorPickerFrame = CreateFrame("Frame", "ColorPickerFrame", UIParent)
+function ColorPickerFrame:SetupColorPickerAndShow(info) World.colorPicker = info end
+function ColorPickerFrame:GetColorRGB() return World.pickedColor[1], World.pickedColor[2], World.pickedColor[3] end
+function ColorPickerFrame:GetColorAlpha() return World.pickedColor[4] end
+
+ACCEPT, CANCEL = "Accept", "Cancel"
+
+-- The quest list's client parts: fonts, the quest panel's list frame, the on-screen tracker, quest links.
+local function fontObject(name, size)
+	local f = { name = name, size = size }
+	function f:GetFont() return "Fonts\\FRIZQT__.TTF", self.size, "" end
+	function f:SetFont(file, size, flags) self.size = size end
+	function f:CopyFontObject(other) self.size = other.size end
+	_G[name] = f
+	return f
+end
+fontObject("GameFontNormalLarge", 16); fontObject("GameFontNormal", 12); fontObject("GameFontHighlight", 12)
+CreateFont = function(name) return fontObject(name, 12) end
+QuestScrollFrame.Contents = CreateFrame("Frame", nil, QuestScrollFrame)
+QuestScrollFrame.ScrollBar = CreateFrame("Frame", nil, QuestScrollFrame)
+QuestScrollFrame.SearchBox = QuestMapFrame.QuestsFrame.SearchBox
+function QuestScrollFrame.SearchBox:GetText() return self.text or "" end
+ObjectiveTrackerFrame = CreateFrame("Frame", "ObjectiveTrackerFrame", UIParent)
+QUEST_WATCH_QUEST_READY = "Ready for turn-in"
+CLOSE = "Close"
+GetQuestLogSpecialItemInfo = function(index) return World.questItems and World.questItems[index] end
+GetQuestLogCompletionText = function() return World.completionText end
+SecondsToTime = function(s) return s .. " sec" end
+GetQuestLink = function(id) return "|Hquest:" .. id .. "|h[" .. id .. "]|h" end
+ChatEdit_InsertLink = function(link) World.insertedLink = link end
+QuestMapFrame_OpenToQuestDetails = function(id) World.openedQuest = id end
+ToggleWorldMap = function() WorldMapFrame:Show() end
+
+UnitInParty = function(unit)
+	if unit == "player" then return #World.group > 0 end
+	for _, n in ipairs(World.group) do if n == unit then return true end end
+	return false
+end
+UnitInRaid = function() return nil end
+UnitInBattleground = function() return nil end
+LE_PARTY_CATEGORY_INSTANCE = 2
+Ambiguate = function(name) return (name:gsub("%-.*$", "")) end
+C_QuestLog.GetMaxNumQuestsCanAccept = function() return 25 end
+
+-- The game's CBOR and compression (C_EncodingUtil): a stand-in that keeps each value under a token, so a test can
+-- send a payload and read it back; "compression" leaves the text as it is but adds a NUL and a 1 to exercise escaping.
+World.cbor = {}
+C_EncodingUtil = strict("C_EncodingUtil", {
+	SerializeCBOR = function(v) table.insert(World.cbor, v) return "cbor" .. #World.cbor end,
+	DeserializeCBOR = function(s) return World.cbor[tonumber(s:match("^cbor(%d+)$"))] end,
+	CompressString = function(s) return "\000\001" .. s end,
+	DecompressString = function(s) return (s:gsub("^%z\001", "")) end,
+})
+Enum.CompressionMethod = { Deflate = 0 }
+Enum.CompressionLevel = { Default = 0 }
+
+-- Talking to NPCs: the quest window and gossip as the client gives them. World.talk = { questID, npcGuid,
+-- active = { {questID, isComplete} }, available = { {questID, isTrivial, repeatable} }, completable, choices }.
+World.talk = {}
+World.did = {} -- what was clicked: { "accept", id } ...
+local function did(...) table.insert(World.did, { ... }) end
+GetQuestID = function() return World.talk.questID or 0 end
+AcceptQuest = function() did("accept", World.talk.questID) end
+DeclineQuest = function() did("decline", World.talk.questID) end
+ConfirmAcceptQuest = function() did("confirm") end
+GetNumActiveQuests = function() return #(World.talk.active or {}) end
+GetActiveTitle = function(i) local q = World.talk.active[i] return "Quest " .. q.questID, q.isComplete end
+SelectActiveQuest = function(i) did("active", World.talk.active[i].questID) end
+GetNumAvailableQuests = function() return #(World.talk.available or {}) end
+SelectAvailableQuest = function(i) did("available", World.talk.available[i].questID) end
+C_GossipInfo = strict("C_GossipInfo", {
+	GetActiveQuests = function() return World.talk.active or {} end,
+	GetAvailableQuests = function() return World.talk.available or {} end,
+	SelectActiveQuest = function(id) did("active", id) end,
+	SelectAvailableQuest = function(id) did("available", id) end,
+})
+IsQuestCompletable = function() return World.talk.completable == true end
+CompleteQuest = function() did("complete", World.talk.questID) end
+GetNumQuestChoices = function() return World.talk.choices or 0 end
+GetQuestReward = function(i) did("reward", i) end
+C_QuestLog.SetSelectedQuest = function(id) World.selectedQuest = id end
+C_QuestLog.SetAbandonQuest = function() end
+C_QuestLog.AbandonQuest = function() did("abandon", World.selectedQuest) end
+do
+	local unitGUID = UnitGUID
+	UnitGUID = function(unit)
+		if unit == "questnpc" or unit == "npc" then return World.talk.npcGuid end
+		return unitGUID(unit)
+	end
+end
+
+-- Chat: what BookFinder says, chat filters, links, chat windows.
+World.said = {}
+SendChatMessage = function(text, channel) table.insert(World.said, { text, channel }) end
+World.chatFilters = {}
+ChatFrame_AddMessageEventFilter = function(event, fn) World.chatFilters[event] = World.chatFilters[event] or {} table.insert(World.chatFilters[event], fn) end
+World.linkHandlers = {}
+LinkUtil = strict("LinkUtil", { RegisterLinkHandler = function(kind, fn) World.linkHandlers[kind] = fn end })
+LinkProcessorResponse = { Unhandled = 0, Handled = 1 }
+ItemRefTooltip = CreateFrame("GameTooltip", "ItemRefTooltip", UIParent)
+ItemRefTooltip.lines = {}
+function ItemRefTooltip:AddLine(t) self.lines[#self.lines + 1] = t end
+function ItemRefTooltip:AddDoubleLine(a, b) self.lines[#self.lines + 1] = tostring(a) .. " | " .. tostring(b) end
+function ItemRefTooltip:ClearLines() self.lines = {} end
+ShowUIPanel = function(f) f:Show() end
+IsModifiedClick = function() return false end
+NUM_CHAT_WINDOWS = 1
+ChatFrame1 = CreateFrame("ScrollingMessageFrame", "ChatFrame1", UIParent)
+World.played = {}
+PlaySoundFile = function(file, channel) table.insert(World.played, { file, channel }) end
+AddonCompartmentFrame = { registered = {} }
+function AddonCompartmentFrame:RegisterAddon(info) table.insert(self.registered, info) end
+GetQuestLink = function(id) return "|Hquest:" .. id .. "|h[" .. id .. "]|h" end
+
+-- Guild, friends, Battle.net: World.guild = { {name, level, area, online, class} }, World.friends = { {name, level, area,
+-- className, connected} }.
+World.guild, World.friends = {}, {}
+IsInGuild = function() return #World.guild > 0 end
+GetNumGuildMembers = function() return #World.guild end
+GetGuildRosterInfo = function(i)
+	local g = World.guild[i]
+	return g.name, "", 0, g.level, "", g.area, "", "", g.online, 0, g.class
+end
+C_GuildInfo = strict("C_GuildInfo", { GuildRoster = function() end })
+C_FriendList = strict("C_FriendList", {
+	GetNumFriends = function() return #World.friends end,
+	GetFriendInfoByIndex = function(i) return World.friends[i] end,
+	ShowFriends = function() end,
+})
+BNGetNumFriends = function() return 0 end
+C_BattleNet = strict("C_BattleNet", { GetFriendAccountInfo = function() return nil end, GetGameAccountInfoByID = function() return nil end })
+BNSendGameData = function(id, prefix, text) table.insert(World.sentMessages, { prefix, text, "BN", id }) end
+BNET_CLIENT_WOW, WOW_PROJECT_ID = "WoW", 2
+LOCALIZED_CLASS_NAMES_MALE = { WARRIOR = "Warrior", MAGE = "Mage" }
+LOCALIZED_CLASS_NAMES_FEMALE = { WARRIOR = "Warrior", MAGE = "Mage" }
+RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 }, MAGE = { r = 0.25, g = 0.78, b = 0.92 } }
+UnitIsUnit = function(a, b) return a == b end
+GetUnitName = function(unit) return World.units[unit] and World.units[unit].name end
+
+-- Flight paths: World.taxi[map] = { {name, position = {x, y}, state} }.
+Enum.FlightPathState = { Current = 0, Reachable = 1, Unreachable = 2 }
+C_TaxiMap = strict("C_TaxiMap", { GetTaxiNodesForMap = function(map) return World.taxi and World.taxi[map] or {} end })

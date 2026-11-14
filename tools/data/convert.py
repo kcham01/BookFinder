@@ -606,6 +606,11 @@ def main():
         ("BF.Data.eventDates", lists["eventDates"]),
         ("BF.Data.lunarFestival", {int(k): v for k, v in lists["lunarFestival"].items()}),
         ("BF.Data.darkmoonNpcs", darkmoon),
+        ("BF.Data.autoNever", {
+            "npcs": {int(k): True for k, v in lists["autoNever"]["npcs"].items() if v},
+            "accept": {int(k): True for k, v in lists["autoNever"]["accept"].items() if v},
+            "turnIn": {int(k): True for k, v in lists["autoNever"]["turnIn"].items() if v},
+        }),
         ("BF.Data.townsfolk", {
             "classTrainers": lists["townsfolk"]["classTrainers"],
             "mailboxes": lists["townsfolk"]["mailboxes"],
