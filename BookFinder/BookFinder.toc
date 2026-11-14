@@ -55,6 +55,8 @@ Map\Coords.lua
 Map\Guide.lua
 Map\Townsfolk.lua
 Map\ShowMenu.lua
+Map\UserPins.lua
+Map\People.lua
 
 Comms\Wire.lua
 Comms\QuestieSerial.lua

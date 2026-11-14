@@ -28,6 +28,36 @@
 			<OnLoad method="OnLoad"/>
 		</Scripts>
 	</Frame>
+	<!-- A map pin of the player's (or shared with them): BookFinderUserPinMixin (Map/UserPins.lua). A friend or guild
+	     member who shares their place, and a zone's badge of who is there: Map/People.lua. -->
+	<Frame name="BookFinderUserPinTemplate" mixin="BookFinderUserPinMixin" virtual="true" enableMouse="true">
+		<Size x="24" y="24"/>
+		<Layers><Layer level="ARTWORK"><Texture parentKey="Icon" setAllPoints="true"/></Layer></Layers>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEnter method="OnMouseEnter"/>
+			<OnLeave method="OnMouseLeave"/>
+			<OnMouseUp method="OnMouseUp"/>
+		</Scripts>
+	</Frame>
+	<Frame name="BookFinderPersonPinTemplate" mixin="BookFinderPersonPinMixin" virtual="true" enableMouse="true">
+		<Size x="14" y="14"/>
+		<Layers><Layer level="ARTWORK"><Texture parentKey="Icon" setAllPoints="true"/></Layer></Layers>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEnter method="OnMouseEnter"/>
+			<OnLeave method="OnMouseLeave"/>
+		</Scripts>
+	</Frame>
+	<Frame name="BookFinderZoneBadgeTemplate" mixin="BookFinderZoneBadgeMixin" virtual="true" enableMouse="true">
+		<Size x="18" y="18"/>
+		<Layers><Layer level="ARTWORK"><Texture parentKey="Icon" setAllPoints="true"/></Layer></Layers>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEnter method="OnMouseEnter"/>
+			<OnLeave method="OnMouseLeave"/>
+		</Scripts>
+	</Frame>
 	<!-- A library book: the book's own icon, a route step number when the route is on. BookFinderBookPinMixin
 	     (Books/Map.lua). -->
 	<Frame name="BookFinderBookPinTemplate" mixin="BookFinderBookPinMixin" virtual="true" enableMouse="true">

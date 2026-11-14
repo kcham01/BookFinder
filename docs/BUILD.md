@@ -317,3 +317,20 @@ See the log. Current phase is the first unchecked one.
   except Lists.lua's one new line (autoNever).
   Still pending (out of the panel): Deadly Boss Mods' HUD (dbm.*: needs DBM's interface), VoiceOver play buttons,
   custom quest icons in quest and gossip windows (quests.frameIcons), spawn merging (icons.clusterSpawns).
+- Phase 12, part 1 (OpenMap's people and pins, the part that talks to OpenMap users): OpenMap's code is public
+  (cloned into the scratchpad only: ~45,000 lines; its stitched map, dungeon maps and prepared data are its own work and
+  the biggest piece left). `Map/UserPins.lua`: pins with notes and five colours (Ctrl-click the map drops one, followed
+  and its card open; card: note, colour, Follow, Share to group / guild / target / as a code, Done, Delete; Alt-click
+  deletes, Shift-click puts its code in chat; Map > Pins page lists them, Import, Share all, Delete all); OpenMap's
+  `P1` messages (prefix OpenMap, 0.3 s apart, at most 255 bytes) and `OMPINS1:` codes, both ways; shared pins gathered
+  1.5 s then asked about ("Add them" / "Ignore"), or added from the group with "Auto-add group's pins". BookFinder reads
+  a code to the end of the line (OpenMap stops at the first space, cutting notes with spaces).
+  `Map/People.lua`: OpenMapLoc (L1 / L0 / H1 / H2; guild, friends' whispers, Battle.net friends of this game and
+  faction; every 2 s, sent after 10 s when moved or 60 s still, L0 in instances; gone after 150 s), class-coloured dots
+  for those who share, zone badges (continent and world maps) for online friends and guild members by the zone their
+  roster gives. "Friends on the map" / "Guild members on the map" are Show dropdown entries; "Share where you are" is on
+  Map > More, off by default. Checked offline only: well-formed XML, every file compiles, every TOC file exists, the
+  only globals written are the saved variables, slash commands and the pin mixins the XML names.
+  Left of phase 12: the stitched world map from the game's art, zone blending, unexplored areas, up-close minimap
+  detail, dungeon entrances / maps / bosses, boats and zeppelins, flight masters and routes, zone levels, the quill,
+  map notes, the panel's place search and action tiles, favourites.
