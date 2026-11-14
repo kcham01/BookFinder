@@ -191,4 +191,8 @@ See the log. Current phase is the first unchecked one.
   (AddInitializer + AttachTexture). Trivial Quest maps to `quests.lowLevel` ("all" / "hide"). "Questie icons" (OpenMap's
   switch for Questie's icons on its map) is not an entry: in BookFinder those are the quest entries themselves.
   **Not verified in game**: that Forever's map filter menu carries that tag; how the row width makes room for the icon.
-  Still open with the owner: the game's own "Low-Level Quests" entry next to Trivial Quest (needs a look in game).
+  The owner then asked for the game's own entries to go ("I loathe the native tracking"): `Fill` empties the root
+  description's `elementDescriptions` (the client's list of rows; count kept in `ShowMenu.removed`) before adding
+  ours. **Not verified in game** that the field has that name on Forever (if not, ours follow the game's under a
+  divider, as before). Still to do: switch off what the game's entries controlled (its quest tracking on the map);
+  waiting on a screenshot of Forever's menu to know which they are.

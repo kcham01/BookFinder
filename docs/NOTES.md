@@ -136,6 +136,12 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **"I want you to remember my standards of quality. The better it is the first time, the less work you have to do.
   Your path to success will not be found in a shortcut."** (Also at the top of `docs/BUILD.md`'s ground rules.)
 
+- **"The games stuff in the drop down should be removed if possible. I loathe the native tracking that shipped with
+  the game."** The map's Show dropdown holds only BookFinder's entries: the game's own are taken out. What those entries
+  switched on (the game's own quest tracking on the map) should be off too; which ones Forever has needs a look at the
+  menu in game.
+
 ## Questions (only what I can't tell from your notes)
 
-- None open. (QuestieTrace, the Books tab and the settings window were answered above.)
+- **The game's own map tracking**: which entries does Forever's map Show menu have (a screenshot of it, with BookFinder
+  off)? Each one gets switched off once it's known.

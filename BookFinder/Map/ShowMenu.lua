@@ -1,9 +1,10 @@
 -- The map's Show dropdown: every map item of Questie and OpenMap, each once, as one flat list in Questie's layout
 -- (tick box, name, icon at the right), with only Dungeons in a section of its own (docs/NOTES.md, section 1).
 --
--- It goes into the game's own map filter menu (the world map's Show button), below the game's entries, through the
--- client's menu system (Menu.ModifyMenu on the menu's tag). Advanced Search, Quests by Zone and by Faction, My Journey
--- and the settings are not in it.
+-- It takes over the game's own map filter menu (the world map's Show button) through the client's menu system
+-- (Menu.ModifyMenu on the menu's tag): the game's own entries are taken out ("the game's stuff in the drop down should
+-- be removed": the owner, docs/NOTES.md) and BookFinder's are the menu. Advanced Search, Quests by Zone and by
+-- Faction, My Journey and the settings are not in it.
 --
 -- The list below is the whole menu in its order. An entry shows only once its setting exists: a part of BookFinder
 -- not built yet (dungeon maps, boats, people...) defines its setting when it is, and its entry appears then; nothing
@@ -164,9 +165,19 @@ local function addSubmenu(parent, entry)
 	return button
 end
 
---- Puts BookFinder's entries into a menu description (the game's map filter menu, below its own entries).
+-- The game's own entries go. The client keeps a description's rows in elementDescriptions; where it does not (another
+-- client), they stay, and BookFinder's follow them under a divider.
+local function removeGameEntries(root)
+	local rows = type(root.elementDescriptions) == "table" and root.elementDescriptions
+	if not rows then return false end
+	ShowMenu.removed = #rows
+	wipe(rows)
+	return true
+end
+
+--- Makes a menu description (the game's map filter menu) BookFinder's: the game's entries out, BookFinder's in.
 function ShowMenu:Fill(root)
-	root:CreateDivider()
+	if not removeGameEntries(root) then root:CreateDivider() end
 	local pendingSection
 	for _, entry in ipairs(ShowMenu.entries) do
 		if entry.section then
