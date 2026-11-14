@@ -23,7 +23,8 @@ local HELP = {
 	{ "toggle", "quest icons on the map on or off" },
 	{ "tomap <name or ID>", "put an NPC or object on the map (no name: your target)" }, { "tomap reset", "take them off" },
 	{ "flex", "how many quests you have done" }, { "eligible <quest ID>", "whether you can take a quest" },
-	{ "minimap", "the minimap button on or off" }, { "version", "BookFinder's version" },
+	{ "minimap", "the minimap button on or off" }, { "draw", "the quill: draw on the map" },
+	{ "version", "BookFinder's version" },
 }
 
 local function help()
@@ -94,6 +95,7 @@ local handlers = {
 	end,
 	minimap = function() BF:Toggle("minimap.button") end,
 	version = function() BF:Print("%s", BF.version or "?") end,
+	draw = function() BF.Quill:Start() end,
 	-- Whether the game finds its minimap pictures by name (the seamless map's minimap detail depends on it): tries a few
 	-- names, says which the game knows, and keeps the answer for the owner's SavedVariables.
 	probe = function()

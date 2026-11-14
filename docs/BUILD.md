@@ -409,3 +409,10 @@ See the log. Current phase is the first unchecked one.
   Left of phase 12 (see "Next"): minimap detail (waiting on the owner's `/bf probe`), zone border blending (needs a
   screenshot of the seams), boats and zeppelins (no game data for them: BookFinder's own list, checked in game),
   the quill and map notes, the panel's action tiles and favourites.
+- Phase 12, step 7: the quill (`Map/Quill.lua`): Pen, Line, Arrow (shaft and a two-stroke head), Circle (a 36-sided
+  ring), Mark (a raid mark; right-click the button for the next), Erase (the stroke nearest the click, within 12 screen
+  pixels); six inks, three widths; Undo (also Ctrl-Z), Clear (click twice within 3 s), Done (also Escape). Strokes in
+  world yards with their continent's instance, kept for every character (at most 2000: "Too much drawn"), drawn as
+  canvas lines with "Your drawings" (Show dropdown). The canvas asks `Canvas.inputHook` first, so while the quill is on
+  presses draw instead of panning. Opened by the Quill button beside Find a place, or `/bf draw`.
+  Not done: a drawing attached to a map pin (OpenMap's card "Drawing"); map notes (OpenMap's painted areas tool).
