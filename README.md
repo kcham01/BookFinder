@@ -1,6 +1,6 @@
 # BookFinder
 
-One WoW: Forever addon made of three:
+One WoW: Forever addon, built on three (`docs/DESIGN.md` is the product and its rules):
 
 - **[OpenMap](https://github.com/openmap-world/openmap)**: one seamless world map, every zone stitched together.
 - **Books on map (Forever)**: the library books on the map, with a collection route.
@@ -16,9 +16,8 @@ They work as one:
   book, the route, the rewards, your group's books and every book by set with its distance. `/bom` opens it.
 - **Quests in the map, nothing on screen**: Questie's quest list (every feature of its tracker) is the map's Quests
   tab, with its own scrollbar.
-- **One place for every switch**: the map's menu (the OpenMap button) holds every on/off switch: what the map shows,
-  the townsfolk, quest icons, the library books and the minimap button. The settings window holds only sliders,
-  choices and Questie's quest options.
+- **One settings window**, BookFinder's own: Map, Look, Quests, Library and More, with a search over every setting.
+  The map's BookFinder button, the minimap button, `/bookfinder` and the game's AddOns list open it.
 - **One minimap button** (and one launcher for Titan/ElvUI): your books collected and the nearest book in its
   tooltip; left-click the map, right-click where to go. Every dropdown, the map's Show menu too, is drawn in
   Questie's style.

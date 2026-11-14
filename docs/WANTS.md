@@ -205,7 +205,24 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
   and Settings. No switches in it.
 - **OpenMap's What's new and Report a problem are gone** (they were OpenMap's own changelog and bug reports).
 
+## Said after 2.1.0
+- "It should be one full cohesive product. One thing. New. Not just the addons slapped together." A full rebuild from
+  the ground up. "I don't want some addon I could get from CurseForge. I want it to feel custom made by Blizzard for
+  me." Quality standards are not a joke.
+- The product and its rules are written down in `docs/DESIGN.md`; the rebuild goes surface by surface from there.
+
+## Done in 2.2.0 (for you to test): the rebuild's first surface
+- **BookFinder's own settings window.** Every setting of the product, once, in one window drawn with the game's own
+  dialog art: Map, Look, Quests, Library, More, and a search over all of them. The map's BookFinder button (bottom
+  left of the map), the minimap button's Settings, `/bookfinder` and the game's AddOns list all open it.
+- **The old settings are gone**: OpenMap's map menu panel, the World map page, Questie's nine pages and the Library
+  books page. The game's AddOns list has one BookFinder entry with an Open button.
+- **Quests, in plain words**: the 37 quest settings a player uses (quest icons, quests to pick up, the quest list,
+  tooltips, automatic accept and turn-in, nameplates, sounds, group); the rest keep Questie's defaults.
+
 ## Still to do
+- **The rest of the rebuild**, in `docs/DESIGN.md`'s order: the Quests tab as BookFinder's own list, the map's
+  corner buttons, one tooltip style, one voice for messages, the book alerts.
 - **Frames that don't line up**: send screenshots of the ones you mean; they need eyes on the game.
 - **Every setting into OpenMap's panel**, redundancy removed (you asked for this; next).
 - **The look**: the mock-ups (map panel, settings) wait for your markup; the journey card in them no longer applies.
