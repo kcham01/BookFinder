@@ -39,6 +39,9 @@ Quests\Sounds.lua
 Quests\Journey.lua
 Quests\QuestTip.lua
 Quests\Search.lua
+Quests\Needs.lua
+Quests\Tooltips.lua
+Quests\Nameplates.lua
 
 UI\Dropdown.lua
 UI\Widgets.lua

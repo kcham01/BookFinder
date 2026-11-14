@@ -169,3 +169,10 @@ See the log. Current phase is the first unchecked one.
 - The owner's first in-game test ran a build that is NOT this repository (it had Journey/Quill/Stitch/WorldCanvas
   modules we never wrote): another session or an old copy. Always tell the owner to install this branch's
   `BookFinder/` folder, replacing the old one whole.
+- Tooltips and nameplates (`Quests/Needs.lua` index, `Tooltips.lua` via TooltipDataProcessor post-calls,
+  `Nameplates.lua` incl. the target frame): the game's own quest lines are turned off (CVar
+  showQuestTrackingTooltips, previous value restored) while ours show. Secret GUIDs/data: left alone. Nameplate
+  markers off in instances. The owner's 2nd in-game test: canvas assert on XML pin templates (now Lua pools,
+  `Map/PinPool.lua`), pins in the sea on the world map (now never on World/Cosmic maps), hated icons (now plain
+  gossip "!"/"?" and COMMON\Indicator-* dots, no glow), minimap pile-ups (objective markers of one objective within
+  10 px show once). Errors: `Core/Errors.lua`, /bf errors.
