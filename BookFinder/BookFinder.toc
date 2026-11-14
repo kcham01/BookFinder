@@ -49,6 +49,7 @@ Map\Paths.lua
 Map\Coords.lua
 Map\Guide.lua
 Map\Townsfolk.lua
+Map\ShowMenu.lua
 
 Books\List.lua
 Books\Books.lua

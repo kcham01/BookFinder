@@ -606,3 +606,48 @@ C_NamePlate = strict("C_NamePlate", {
 	GetNamePlates = function() local t = {} for _, f in pairs(World.nameplates) do t[#t + 1] = f end return t end,
 })
 TargetFrame = CreateFrame("Frame", "TargetFrame", UIParent)
+
+-- The client's menu system: menus built from descriptions; Menu.ModifyMenu(tag, fn) adds to a menu by its tag.
+World.menuModifiers = {}
+MenuResponse = { Open = 1, Refresh = 2, Close = 3 }
+Menu = strict("Menu", {
+	ModifyMenu = function(tag, fn)
+		World.menuModifiers[tag] = World.menuModifiers[tag] or {}
+		table.insert(World.menuModifiers[tag], fn)
+	end,
+})
+
+--- A menu description as the client's: records rows; World.OpenMenu(tag) runs every modifier on a fresh one.
+local function newDescription(kind, text)
+	local d = { kind = kind, text = text, rows = {}, initializers = {} }
+	function d:CreateCheckbox(label, isSelected, setSelected)
+		local row = newDescription("checkbox", label)
+		row.isSelected, row.setSelected = isSelected, setSelected
+		self.rows[#self.rows + 1] = row
+		return row
+	end
+	function d:CreateButton(label)
+		local row = newDescription("button", label)
+		self.rows[#self.rows + 1] = row
+		return row
+	end
+	function d:CreateTitle(label) local row = newDescription("title", label) self.rows[#self.rows + 1] = row return row end
+	function d:CreateDivider() local row = newDescription("divider") self.rows[#self.rows + 1] = row return row end
+	function d:SetResponse(r) self.response = r end
+	function d:AddInitializer(fn) self.initializers[#self.initializers + 1] = fn end
+	return d
+end
+function World.OpenMenu(tag)
+	local root = newDescription("root")
+	for _, fn in ipairs(World.menuModifiers[tag] or {}) do fn(nil, root) end
+	return root
+end
+--- Runs a row's initializers on a stand-in menu button; returns the textures attached (the row's icon).
+function World.InitRow(row)
+	local button = CreateFrame("Button")
+	button.fontString = button:CreateFontString()
+	local attached = {}
+	function button:AttachTexture() local t = self:CreateTexture() attached[#attached + 1] = t return t end
+	for _, fn in ipairs(row.initializers) do fn(button, row) end
+	return attached
+end

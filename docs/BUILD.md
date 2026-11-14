@@ -100,7 +100,7 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 5. ~~Unit/item/object tooltips, nameplate and target icons.~~ Done (party lines wait for phase 11).
 6. ~~Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).~~ Done.
 7. Books: list (ours), detection, pins, Books tab, route (no trail), cards, minimap button.
-8. The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).
+8. ~~The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).~~ Done (its OpenMap entries appear as phase 12 builds them).
 9. Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.
 10. Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).
 11. Comms: questie + QuestieV1, BooksOnMapFE, OpenMapLoc, OpenMap pins.
@@ -180,3 +180,15 @@ See the log. Current phase is the first unchecked one.
   and "Cursor: x, y" at the bottom of the world map's scroll area, the player's on the minimap (off by default),
   `coords.precision` decimals. **Not verified in game**: where the coordinate lines sit against Forever's map border;
   path line thickness when zoomed (lines live in canvas units, so they thicken with zoom).
+- Phase 8 (Show dropdown) done: `Map/ShowMenu.lua`. BookFinder's rows go into the game's own map filter menu below
+  its entries, through `Menu.ModifyMenu("MENU_WORLD_MAP_TRACKING", fn)` (no hunting for the button: 2.2.x covered the
+  floor picker by mistake). `ShowMenu.entries` is the owner's merged list in one order: Questie's townsfolk, OpenMap's
+  extra townsfolk (stable masters, rare mobs), Available / Trivial / Objective, Profession Trainers ▸ (Known
+  Professions first), Vendor ▸, OpenMap's places, then the one section, Dungeons. **An entry shows only once its
+  setting is defined**, so the OpenMap entries (`map.boats`, `map.dungeons`, `map.friends`...) appear when phase 12 and
+  phase 11 define those keys: use exactly those keys, and add their icon kinds to `Map/Icons.lua` (missing kinds draw
+  no icon). Tick boxes keep the menu open (MenuResponse.Refresh); each row's icon is attached at its right
+  (AddInitializer + AttachTexture). Trivial Quest maps to `quests.lowLevel` ("all" / "hide"). "Questie icons" (OpenMap's
+  switch for Questie's icons on its map) is not an entry: in BookFinder those are the quest entries themselves.
+  **Not verified in game**: that Forever's map filter menu carries that tag; how the row width makes room for the icon.
+  Still open with the owner: the game's own "Low-Level Quests" entry next to Trivial Quest (needs a look in game).
