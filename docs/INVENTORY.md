@@ -44,6 +44,12 @@
   Cancel; a second right-click on the same owner closes it). Without that library whole, the game's menu draws it.
   Used by the minimap button and compartment menu, the books tab's gear and a book's right-click. The minimap menu's
   "Townsfolk and quest icons" opens Questie's own map menu (`QuestieMenu:Show`).
+- **2.2.1: the Show dropdown holds what the map shows.** The Show button is the overlay whose `OnLoad` is
+  `WorldMapTrackingOptionsButtonMixin.OnLoad`, else whose built menu carries the tag `MENU_WORLD_MAP_TRACKING`
+  (2.0.2 to 2.2.0 took the first dropdown overlay with a generator, which can be the floor picker). After the game's
+  entries come `Options.Section("map")`'s groups (Places, Dungeons, Townsfolk, Library books' map switches; groups of
+  more than 4 as submenus). An element counts as clickable only with a responder (or selection functions); every
+  element has `Pick`. The settings window no longer has a Map section. The Quests tab header reads "Quests: n/m".
 - **The map's Show dropdown in Questie's style** (`merge/MapShowMenu.lua`, 2.0.2): the map's filter button is found
   among `WorldMapFrame.overlayFrames` (a dropdown button whose menu tag is `MENU_WORLD_MAP_TRACKING`, or with a
   `menuGenerator`); a clear button of BookFinder's covers it (the game's button is never changed). Its click builds
