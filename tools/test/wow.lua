@@ -796,3 +796,61 @@ C_EncodingUtil = strict("C_EncodingUtil", {
 })
 Enum.CompressionMethod = { Deflate = 0 }
 Enum.CompressionLevel = { Default = 0 }
+
+-- Talking to NPCs: the quest window and gossip as the client gives them. World.talk = { questID, npcGuid,
+-- active = { {questID, isComplete} }, available = { {questID, isTrivial, repeatable} }, completable, choices }.
+World.talk = {}
+World.did = {} -- what was clicked: { "accept", id } ...
+local function did(...) table.insert(World.did, { ... }) end
+GetQuestID = function() return World.talk.questID or 0 end
+AcceptQuest = function() did("accept", World.talk.questID) end
+DeclineQuest = function() did("decline", World.talk.questID) end
+ConfirmAcceptQuest = function() did("confirm") end
+GetNumActiveQuests = function() return #(World.talk.active or {}) end
+GetActiveTitle = function(i) local q = World.talk.active[i] return "Quest " .. q.questID, q.isComplete end
+SelectActiveQuest = function(i) did("active", World.talk.active[i].questID) end
+GetNumAvailableQuests = function() return #(World.talk.available or {}) end
+SelectAvailableQuest = function(i) did("available", World.talk.available[i].questID) end
+C_GossipInfo = strict("C_GossipInfo", {
+	GetActiveQuests = function() return World.talk.active or {} end,
+	GetAvailableQuests = function() return World.talk.available or {} end,
+	SelectActiveQuest = function(id) did("active", id) end,
+	SelectAvailableQuest = function(id) did("available", id) end,
+})
+IsQuestCompletable = function() return World.talk.completable == true end
+CompleteQuest = function() did("complete", World.talk.questID) end
+GetNumQuestChoices = function() return World.talk.choices or 0 end
+GetQuestReward = function(i) did("reward", i) end
+C_QuestLog.SetSelectedQuest = function(id) World.selectedQuest = id end
+C_QuestLog.SetAbandonQuest = function() end
+C_QuestLog.AbandonQuest = function() did("abandon", World.selectedQuest) end
+do
+	local unitGUID = UnitGUID
+	UnitGUID = function(unit)
+		if unit == "questnpc" or unit == "npc" then return World.talk.npcGuid end
+		return unitGUID(unit)
+	end
+end
+
+-- Chat: what BookFinder says, chat filters, links, chat windows.
+World.said = {}
+SendChatMessage = function(text, channel) table.insert(World.said, { text, channel }) end
+World.chatFilters = {}
+ChatFrame_AddMessageEventFilter = function(event, fn) World.chatFilters[event] = World.chatFilters[event] or {} table.insert(World.chatFilters[event], fn) end
+World.linkHandlers = {}
+LinkUtil = strict("LinkUtil", { RegisterLinkHandler = function(kind, fn) World.linkHandlers[kind] = fn end })
+LinkProcessorResponse = { Unhandled = 0, Handled = 1 }
+ItemRefTooltip = CreateFrame("GameTooltip", "ItemRefTooltip", UIParent)
+ItemRefTooltip.lines = {}
+function ItemRefTooltip:AddLine(t) self.lines[#self.lines + 1] = t end
+function ItemRefTooltip:AddDoubleLine(a, b) self.lines[#self.lines + 1] = tostring(a) .. " | " .. tostring(b) end
+function ItemRefTooltip:ClearLines() self.lines = {} end
+ShowUIPanel = function(f) f:Show() end
+IsModifiedClick = function() return false end
+NUM_CHAT_WINDOWS = 1
+ChatFrame1 = CreateFrame("ScrollingMessageFrame", "ChatFrame1", UIParent)
+World.played = {}
+PlaySoundFile = function(file, channel) table.insert(World.played, { file, channel }) end
+AddonCompartmentFrame = { registered = {} }
+function AddonCompartmentFrame:RegisterAddon(info) table.insert(self.registered, info) end
+GetQuestLink = function(id) return "|Hquest:" .. id .. "|h[" .. id .. "]|h" end
