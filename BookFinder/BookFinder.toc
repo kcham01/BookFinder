@@ -61,6 +61,11 @@ Books\Tab.lua
 
 UI\Dropdown.lua
 UI\Widgets.lua
+UI\Rows.lua
 UI\Panel.lua
 UI\Profiles.lua
 UI\MapTabs.lua
+
+Journey\Journey.lua
+Journey\ByZone.lua
+Journey\Search.lua

@@ -103,7 +103,8 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 8. ~~The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).~~ Done (its OpenMap entries appear as phase 12 builds them).
 9. ~~Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.~~
    Done (its action tiles, place search and favourite stars come with the map, phase 12).
-10. Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).
+10. ~~Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).~~ Done
+    (also the Books tab and the map window's tabs).
 11. Comms: questie + QuestieV1, BooksOnMapFE, OpenMapLoc, OpenMap pins.
 12. OpenMap's map: stitched world from the game's map art, dungeons, pins and card, quill, notes, people.
 13. Automation, announcements, sounds, chat links, commands; polish pass.
@@ -263,3 +264,17 @@ See the log. Current phase is the first unchecked one.
   (`Books:TickAll`, one chat line). `/bom` opens it. `UI/Widgets.lua` now holds the side tab (`Widgets:SideTab`),
   shared with the settings panel. **Not verified in game**: the tab column's spot on the window's edge; the page's
   dark fill against the game's quest panel art.
+- Phase 10, part 3: the Journey tab's pages (in the settings panel, as the owner laid out). `UI/Rows.lua`: one way to
+  lay out a list in a page (foldable gold headings with counts, white lines, grey hints, clickable lines, button
+  rows; pooled). `Journey/Journey.lua`: My Journey, recorded as it happens (accepted, completed, abandoned, level
+  reached, notes with delete), per character, shown by level newest first; "It's about time you embark on your first
+  Journey!" when empty. `Journey/ByZone.lua`: Quests by Zone (categories Zones, Dungeons, Battlegrounds, Classes,
+  Professions, Events, Other; the player's zone first) and Quests by Faction (factions quests reward), each sorted
+  into Available, Breadcrumb, Repeatable, Completed, Missing Requirement (with the reason), Unobtainable, Hidden.
+  `Journey/Search.lua`: Advanced Search over every quest, NPC, object and item by name or ID (a name index read from
+  the rows' source text the first time), up to 50 per kind; details for each kind (quest: level, kinds, profession,
+  reputation, doable or why not, prerequisites, started and ended by, hide; NPC: title, level, friendly to, starts,
+  ends, where; object; item: drops, objects, vendors); Show on Map / Remove from Map (a "found" marks layer: Look and
+  PinTooltip know the role), Set the map pin, Clear the map. `Search.REASONS`: Rules:Blocker's keys in plain words.
+  Not done from Questie's Journey: importing another character's journey (pending: the study does not say how it
+  behaves; ask the owner or read Questie again).

@@ -103,9 +103,9 @@ local function addPin(pin, shift, seen)
 	local givers, objectives, folk = {}, {}, {}
 	for _, r in ipairs(pin.roles) do
 		if r.role == "objective" then objectives[#objectives + 1] = r
-		elseif r.role == "townsfolk" then folk[#folk + 1] = r
+		elseif r.role == "townsfolk" or r.role == "found" then folk[#folk + 1] = r
 		else givers[#givers + 1] = r end
-		if r.role ~= "objective" and r.role ~= "townsfolk" then hasDetail = true end
+		if r.role ~= "objective" and r.role ~= "townsfolk" and r.role ~= "found" then hasDetail = true end
 	end
 
 	-- Townsfolk: the NPC (or object), what they are.
@@ -116,7 +116,7 @@ local function addPin(pin, shift, seen)
 		local sub = row and row[BF.N.subName]
 		local kinds = {}
 		for _, r in ipairs(folk) do
-			local label = L[r.kind.label]
+			local label = r.role == "found" and L["Shown by Advanced Search"] or L[r.kind.label]
 			if not seen["f" .. label] then
 				seen["f" .. label] = true
 				kinds[#kinds + 1] = label
