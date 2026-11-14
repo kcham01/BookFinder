@@ -365,3 +365,9 @@ See the log. Current phase is the first unchecked one.
   them: expect visible seams), whether SetScale this small behaves, the speed of drawing every tile of a continent.
   Next on the canvas: quest icons, books, map pins and people drawn on it (the providers today draw on the game's
   MapCanvas); border blending; then minimap detail (settle the tiles' source first, see "Next" above).
+- Phase 12, step 2: icons on the seamless map. `WorldCanvas` has layers (`Canvas:AddLayer(name, fn(continent, add))`,
+  add(east, north, spec)): icons keep their size on screen, only those in view are drawn, redrawn 0.05 s after a zoom
+  or pan; an overlay above every zone's art. `Map/CanvasLayers.lua`: quest icons (every mark of the continent and its
+  zones, PinTooltip's tooltip and clicks), books (BookMap's), the player's map pins (UserPins' card and clicks),
+  friends and guild who share their place. Not yet on it: patrol paths, townsfolk sizes beyond the setting, the
+  minimap (it keeps its own pins), coordinates of the cursor on the canvas.

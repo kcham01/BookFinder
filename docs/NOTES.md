@@ -162,6 +162,9 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   - Asked what "starting point" means: **"Own code, OpenMap as guide"**. BookFinder writes its own map; OpenMap is the
     reference for how it behaves and looks, and BookFinder goes further. The rule stands: no one else's code.
 
+- **"Make the whole map."** Phase 12 in full: the stitched map, minimap detail, dungeons, boats and flights, the quill
+  and the rest (docs/BUILD.md, "Next").
+
 ## Questions (only what I can't tell from your notes)
 
 - None open.

@@ -70,4 +70,26 @@ return {
 		local _, n2 = BF.WorldCanvas:Centre()
 		expect(n2 < n, "dragging up shows what lies south")
 	end,
+
+	["quest icons, books and map pins on the canvas, with their tooltips"] = function(BF)
+		setup()
+		World.completed[783] = true
+		World.player.level = 2
+		BF:Set("map.seamless", true)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(1429)
+		BF.UserPins:Add(1429, 0.5, 0.5, "Here", 1)
+		Tick(2)
+		local kinds = {}
+		for _, b in ipairs({ BookFinderWorldCanvas.children[#BookFinderWorldCanvas.children]:GetChildren() }) do
+			if b.shown and b.spec then
+				if b.pin and b.pin.roles then kinds.quest = b end
+				if b.pin and b.pin.note then kinds.userPin = b end
+			end
+		end
+		expect(kinds.quest, "a quest icon")
+		expect(kinds.userPin, "the map pin")
+		kinds.quest.scripts.OnEnter(kinds.quest)
+		expect(#GameTooltip.lines > 0, "its tooltip")
+	end,
 }
