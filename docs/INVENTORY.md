@@ -52,6 +52,20 @@
   element with children a submenu, a boolean `IsSelected` a tick box, one with a responder a button, the rest
   titles; each click is the element's own `Pick`. Nothing readable to click: the game's menu opens
   (`button:OpenMenu()`). The recorder notes the overlay buttons (`inspect.overlays`) and whether the cover is on.
+- **BookFinder's settings window** (2.2.0; `docs/DESIGN.md` is the product): `merge/Options.lua` declares every
+  setting once (`Options.All()`: id, section, group, kind toggle/slider/choice/button, label, note, icon, get/set),
+  reading and writing through each part's own code: OpenMap's menu rows (`mod.PanelRows`, which carry Questie's
+  townsfolk and the books' switches) and its options table (sliders and choices, read from AceConfigRegistry),
+  Questie's option definitions (collected as its options engine loads them, `CollectQuestieOptions`, with
+  Questie's calling conventions: a checkbox's and slider's `set(control, value)`, a dropdown's `set(value)`), and
+  Books' saved settings. `merge/OptionsWindow.lua` draws them: a dialog box (`UI-DialogBox-Background-Dark`,
+  `-Border`, `-Header`), sections on the left, rows on the right (`UICheckButtonTemplate`, `MinimalSliderTemplate`
+  with `OptionsSliderTemplate` as fallback, `UIPanelButtonTemplate` choices opening `BookFinder.ContextMenu`), a
+  `SearchBoxTemplate` over every section; a slider writes when let go. `BookFinder.OpenOptions(section, toggle)`;
+  `BookFinder.OpenSettings(key)` maps the parts' old keys (map, books, quests) to sections. OpenMap's panel is
+  built (its rows are read) but never opened: its button, rail tab, `mod:OpenMenu` and `/openmap` open this window.
+  OpenMap's options aren't added to the game's settings, nor Questie's pages (its `ShowFrame` and config toggles
+  open the window's Quests section). The game's AddOns list keeps one BookFinder entry with an Open button.
 - **Where settings live** (`merge/Settings.lua`, 2.1.0): every switch in the map's menu (OpenMap's panel), the
   settings window only for sliders, choices and Questie's options. OpenMap's options table hides the keys the panel
   holds (`Init.lua`, `IN_MENU`) and its changelog; the panel drops What's new and Report a problem in BookFinder.
