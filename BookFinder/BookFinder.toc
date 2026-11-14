@@ -60,6 +60,7 @@ Map\People.lua
 Map\Stitch.lua
 Map\WorldCanvas.lua
 Map\CanvasLayers.lua
+Map\Dungeons.lua
 
 Comms\Wire.lua
 Comms\QuestieSerial.lua

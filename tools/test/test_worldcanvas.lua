@@ -81,7 +81,7 @@ return {
 		BF.UserPins:Add(1429, 0.5, 0.5, "Here", 1)
 		Tick(2)
 		local kinds = {}
-		for _, b in ipairs({ BookFinderWorldCanvas.children[#BookFinderWorldCanvas.children]:GetChildren() }) do
+		for _, b in ipairs({ BF.WorldCanvas.overlay:GetChildren() }) do
 			if b.shown and b.spec then
 				if b.pin and b.pin.roles then kinds.quest = b end
 				if b.pin and b.pin.note then kinds.userPin = b end
@@ -91,5 +91,35 @@ return {
 		expect(kinds.userPin, "the map pin")
 		kinds.quest.scripts.OnEnter(kinds.quest)
 		expect(#GameTooltip.lines > 0, "its tooltip")
+	end,
+
+	["the zone under the cursor with its levels; a click zooms into it"] = function(BF)
+		setup()
+		World.maps[1429].levels = { 1, 10 }
+		BF:Set("map.seamless", true)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(1415)
+		BookFinderWorldCanvas.IsMouseOver = function() return true end
+		GetCursorPosition = function() return 500, -334 end -- the middle of the 1000 x 668 view
+		local zone = BF.WorldCanvas:ZoneAt(BF.WorldCanvas:Centre())
+		equal(zone, 1429, "Elwynn under the middle")
+		expect(BF.WorldCanvas:HoverText():find("Elwynn Forest", 1, true), "its name")
+		expect(BF.WorldCanvas:HoverText():find("1-10", 1, true), "its levels")
+	end,
+
+	["a dungeon's own map stays the game's"] = function(BF)
+		setup()
+		World.maps[310] = { size = 500, mapID = 310, name = "Shadowfang Keep", mapType = 4, parentMapID = 1421 }
+		BF:Set("map.seamless", true)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(310)
+		expect(not BookFinderWorldCanvas.shown, "the game's own map for a dungeon")
+	end,
+
+	["the Show dropdown now has the Dungeons section's first entries"] = function(BF)
+		setup()
+		local seen = {}
+		for _, item in ipairs(BF.ShowMenu:Items()) do if item.text then seen[item.text] = true end end
+		expect(seen["Dungeons and raids"] and seen["Level ranges"], "both")
 	end,
 }
