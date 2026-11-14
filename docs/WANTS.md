@@ -226,9 +226,9 @@ Kept up to date as you say things. Newest decisions win; anything struck out was
   to copy it.
 
 ## Still to do
-- **Finding things quickly** (proposed, waiting on your yes): one key opens the search from anywhere; any result opens
-  a full page for it (a quest, NPC, item or zone, with links between them); a "what to do here" view for where you
-  stand.
+- ~~**Finding things quickly**: an instant search key, a page for anything, "what to do here"~~: you didn't want
+  these. **No bloat; everything should feel native.** No new features for now.
+- **Next: your test of 2.2.0.** Waiting on what you find.
 - **The rest of the rebuild**, in `docs/DESIGN.md`'s order: the Quests tab as BookFinder's own list, the map's
   corner buttons, one tooltip style, one voice for messages, the book alerts.
 - **Frames that don't line up**: send screenshots of the ones you mean; they need eyes on the game.
