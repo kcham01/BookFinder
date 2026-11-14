@@ -18,13 +18,13 @@ local function row(rows, text)
 end
 
 return {
-	["Questie's order, one flat list, a divider below the game's entries"] = function()
+	["the game's own entries are gone; Questie's order, one flat list"] = function()
 		setup()
 		local root = World.OpenMenu(TAG)
 		local l = labels(root.rows)
-		equal(l[1], "---", "below the game's own entries")
-		equal(l[2], "Repair", "Questie's first")
-		equal(l[3], "Innkeeper", "then Innkeeper")
+		equal(l[1], "Repair", "Questie's first, nothing of the game's above it")
+		equal(l[2], "Innkeeper", "then Innkeeper")
+		expect(not row(root.rows, "Low-Level Quests") and not row(root.rows, "Quest Objectives"), "the game's entries gone")
 		local want = { "Repair", "Innkeeper", "Mailbox", "Class Trainer", "Weapon Master", "Auctioneer", "Banker",
 			"Flight Master", "Battlemaster", "Barber", "Spirit Healer", "Moonwell", "Meeting Stones", "Stable Master",
 			"Rare mobs", "Available Quest", "Trivial Quest", "Objective", "Profession Trainers", "Vendor" }

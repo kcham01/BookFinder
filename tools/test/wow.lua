@@ -619,7 +619,9 @@ Menu = strict("Menu", {
 
 --- A menu description as the client's: records rows; World.OpenMenu(tag) runs every modifier on a fresh one.
 local function newDescription(kind, text)
-	local d = { kind = kind, text = text, rows = {}, initializers = {} }
+	local d = { kind = kind, text = text, initializers = {} }
+	d.elementDescriptions = {}
+	d.rows = d.elementDescriptions
 	function d:CreateCheckbox(label, isSelected, setSelected)
 		local row = newDescription("checkbox", label)
 		row.isSelected, row.setSelected = isSelected, setSelected
@@ -639,6 +641,10 @@ local function newDescription(kind, text)
 end
 function World.OpenMenu(tag)
 	local root = newDescription("root")
+	-- The game's own entries come first, as in the client.
+	for _, label in ipairs(World.gameMenuEntries or { "Low-Level Quests", "Quest Objectives" }) do
+		root:CreateCheckbox(label, function() return true end, function() end)
+	end
 	for _, fn in ipairs(World.menuModifiers[tag] or {}) do fn(nil, root) end
 	return root
 end
