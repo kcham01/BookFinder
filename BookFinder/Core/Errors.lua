@@ -13,10 +13,12 @@ local MAX = 50
 local list = {}      -- this session's view of the kept errors (newest last)
 local told = false   -- the chat line, once per session
 
+-- Kept under errorLog: older BookFinder builds (1.x) kept a list of their own under "errors", in another shape.
 local function store()
 	if not BookFinderDB then return list end
-	BookFinderDB.errors = BookFinderDB.errors or {}
-	return BookFinderDB.errors
+	BookFinderDB.errors = nil
+	BookFinderDB.errorLog = BookFinderDB.errorLog or {}
+	return BookFinderDB.errorLog
 end
 
 local function record(message, stack, locals)
