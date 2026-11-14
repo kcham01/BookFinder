@@ -1,4 +1,83 @@
 # Notes (your words, as given)
 
 Note-taking mode: everything you say goes here as you say it. Nothing is built or changed until you say so.
+Your document is kept whole in `docs/notes/map-items-and-settings.docx`, its pictures as `docs/notes/image1.png` to
+`image8.png`.
 
+## 1. The map's dropdown (your document)
+
+> "This is the list of map items for questie and open map. These are the items that should show up in the in game
+> drop down menu with no duplicates. I want it in the style and layout of the questie one on the list. It currently
+> resembles openmaps with the unneeded category headers. Dungeons is the only think I want under its own section
+> within the dropdown. Something to keep in mind for icons. Questie and open maps both ship icons. Don't overlap them.
+> We will deal with advance search, quest by zone and faction, my journey and options further down. They should not
+> show in the dropdown though."
+
+- **image1**: Questie's own dropdown: Repair, Innkeeper, Mailbox, Class Trainer, Weapon Master, Auctioneer, Banker,
+  Flight Master, Battlemaster, Portal Trainer, Barber, Transmogrifier, Spirit Healer, Moonwell, Available Quest,
+  Trivial Quest, Objective, Profession Trainers ▸, Vendor ▸; then QuestieTrace, Advanced Search, Quests by Zone,
+  Quests by Faction, Questie Options, My Journey, Cancel. Each row: tick box left, label, icon right.
+- **image2**: OpenMap's map items: Dungeons (Dungeon maps, Level ranges, Dungeon bosses, Dungeon quests, Entrances
+  open Dungeon Journal), Townsfolk (Vendors, Repair, Innkeepers, Bankers, Mailboxes, Auctioneers, Stable masters,
+  Class trainers, Profession trainers, Spirit healers, Rare mobs), Places (Dungeons and raids, Boats, Zeppelins,
+  Flight masters, Only places you've found, Boat and zeppelin routes, Your arrow, Party and raid members, Friends on
+  the map, Guild members on the map, Your drawings, Quests from every zone, Questie icons, Fade icons while zooming).
+
+## 2. Settings (your document)
+
+> "I'm a big fan of this settings page and would like it to serve as the core for all settings. (openmaps settings
+> panel.)"
+
+- **image3**: OpenMap's panel (v0.8.8): search "Find a place", tiles (Find me, Drop a pin, Pins, Quill, Quest log,
+  Report a problem, What's new) with stars, tabs On the map / Look / More, two columns of tick rows with icons and
+  stars.
+
+> "For example do you see those tabs on the right hand side of questies settings? We could add those to the open maps
+> settings pane. One tab for openmaps settings, 1 tab for quest settings, 1 tab for book settings, 1 tab that has
+> questis journey, quest window features. Pictured below"
+
+- **image4**: Questie's settings window, with its column of icon tabs down the right side.
+- **image5**: Questie's Journey window: tabs My Journey, Quests by Zone, Quests by Faction, Advanced Search.
+
+> "Then those separate tabs from questie and books could be put under tabs like this."
+
+- **image6**: OpenMap's tabs: On the map / Look / More.
+- **image7**: Books on map Forever 2.3.0's window: Progress bar (10, 20, 25, 38), Settings (Show on the map, Show books
+  on the minimap, Show the minimap button, Notify when a book is collected, Alert when a book is nearby, Map icon
+  size, Minimap icon size), Filters (Hide collected books, Only sets for my level, Also show the books my group is
+  missing), the sets list with tick boxes, Show all / Hide all / Optimized route.
+- **image8**: Books' Rewards panel: 10 books necklace, 20 ring, 25 bow, crest or light, 38 necklace or shield.
+
+## 3. Newest versions (you sent)
+
+> "I'm going to send the most up to date versions of those 3 addons too before you start."
+
+| Addon | In BookFinder now | You sent |
+|---|---|---|
+| Questie | 12.8.0 | 12.9.0 |
+| QuestieDB | 1.1.0 | 1.1.1 |
+| QuestieTrace | not in BookFinder | 1.11.0 (in the Questie zip) |
+| Books on map Forever | 2.2.6 | 2.3.0 (38 books, a 38-book reward) |
+| OpenMap | v0.8.7 (commit 91c84b3) | latest at https://github.com/openmap-world/openmap (your picture shows v0.8.8) |
+
+Kept unpacked, untouched, outside the build. Not merged yet.
+
+## How I read it (for you to correct before anything is built)
+
+1. **Dropdown**: the map's Show dropdown holds every map item from image1 and image2, each once, as one flat list in
+   Questie's layout (tick box, label, icon at right). Only **Dungeons** gets its own section in it. No category
+   headers otherwise. Each item uses one icon, never both parts' icons for the same thing. Advanced Search, Quests by
+   Zone and Faction, My Journey and Options are not in the dropdown.
+2. **Settings**: OpenMap's panel (image3) is the one settings window for everything, with a column of tabs down its
+   right side like Questie's (image4): OpenMap, Quests, Books, Journey (My Journey, Quests by Zone, Quests by
+   Faction, Advanced Search: image5). Inside each, the part's own pages become sub-tabs along the top like
+   On the map / Look / More (image6).
+3. **Before starting**: update to the versions above.
+
+## Questions (only what I can't tell from your notes)
+
+- QuestieTrace is in Questie's zip and in its dropdown (image1). Should it be part of BookFinder?
+- In the Books tab (right side), is image7 and image8's content what goes there: progress, settings, filters, sets,
+  rewards?
+- The settings window I built in 2.2.0 (BookFinder's own dialog box): replace it with OpenMap's panel as you
+  describe?
