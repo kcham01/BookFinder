@@ -1,6 +1,7 @@
 # BookFinder: directive for any agent working here
 
-Read this first, then `docs/NOTES.md` (the owner's notes, in their words) and `docs/WANTS.md` (every wish and decision,
+Read this first, then `docs/CHECKLIST.md` (the gate every build passes before the owner gets a zip), `docs/NOTES.md`
+(the owner's notes) and `docs/WANTS.md` (every wish and decision,
 newest last). They override anything you assume.
 
 ## What BookFinder is
