@@ -1,6 +1,7 @@
 -- tools/test/runner.lua: see run.sh. Each test file gets a fresh client: wow.lua, then the add-on, then the test.
 --
--- A test file is a list of cases: return { ["name"] = function(BF) ... end, ... }. Each case runs in a fresh world.
+-- A test file is a list of cases: return { ["name"] = function(BF) ... end, ... } (and before = fn, run ahead of the
+-- add-on's files in every case: other add-ons). Each case runs in a fresh world.
 -- Helpers available to tests: Fire(event, ...), Tick(seconds), World (see wow.lua), expect(cond, message),
 -- equal(actual, expected, message), Login() (fires ADDON_LOADED, PLAYER_LOGIN, PLAYER_ENTERING_WORLD).
 
@@ -29,7 +30,7 @@ local passed, failed = 0, 0
 local helpers = {} -- test helpers, put back into each fresh client
 local plainXpcall = xpcall -- wow.lua wraps it the client's way; each client starts from the plain one
 
-local function freshClient()
+local function freshClient(before)
 	-- Every global from the last case goes, except Lua's own.
 	local keep = {}
 	for _, k in ipairs({ "string", "table", "math", "os", "io", "debug", "coroutine", "package", "pairs", "ipairs",
@@ -43,6 +44,7 @@ local function freshClient()
 	xpcall = plainXpcall
 	dofile("tools/test/wow.lua")
 	for name, fn in pairs(helpers) do rawset(_G, name, fn) end
+	if before then before() end   -- (a case's other add-ons, loaded ahead of BookFinder as the TOC's OptionalDeps)
 	local BF = {}
 	for _, file in ipairs(readToc()) do
 		local chunk, err = loadfile(file)
@@ -81,12 +83,14 @@ end
 for _, file in ipairs(testFiles()) do
 	local cases = dofile(file)
 	local names = {}
+	local before = cases.before
+	cases.before = nil
 	for name in pairs(cases) do names[#names + 1] = name end
 	table.sort(names)
 	for _, name in ipairs(names) do
 		local label = file:match("test_(.-)%.lua") .. ": " .. name
 		if not filter or label:find(filter, 1, true) then
-			local BF = freshClient()
+			local BF = freshClient(before)
 			local ok, err = xpcall(function() cases[name](BF) end, debug.traceback)
 			if ok and #World.errors > 0 then
 				ok, err = false, "handler error: " .. World.errors[1]

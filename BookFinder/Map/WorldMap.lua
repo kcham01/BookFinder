@@ -59,6 +59,16 @@ local function isExplored(map, x, y)
 end
 BF:On("MAP_EXPLORATION_UPDATED", function() wipe(explored) end)
 
+-- A pin that is only a flight master, while OpenMap draws its own flight masters on the world map: left to OpenMap
+-- (one icon for one thing; BookFinder's still shows on the minimap).
+local function leftToOpenMap(pin)
+	if not (BF.OpenMap and BF.OpenMap:DrawsFlightMasters()) then return false end
+	for _, r in ipairs(pin.roles or {}) do
+		if r.role ~= "townsfolk" or not r.kind or r.kind.key ~= "flightMaster" then return false end
+	end
+	return true
+end
+
 -- The provider ---------------------------------------------------------------------------------------------------
 
 local Provider = CreateFromMixins(MapCanvasDataProviderMixin)
@@ -107,7 +117,8 @@ function Provider:RefreshAllData()
 		local placed = 0
 		for source in pairs(Marks.byMap) do
 			for _, pin in ipairs(Marks:On(source)) do
-				local u, v = api.WorldFromMap(source, pin.x, pin.y)
+				local u, v
+				if not leftToOpenMap(pin) then u, v = api.WorldFromMap(source, pin.x, pin.y) end
 				local x, y
 				if u then x, y = api.MapFromWorld(map, u, v) end
 				if x and x > -1 and x < 2 and y > -1 and y < 2 then
@@ -123,7 +134,8 @@ function Provider:RefreshAllData()
 	local placed = 0
 	for _, source in ipairs(sourcesOf(map)) do
 		for _, pin in ipairs(Marks:On(source)) do
-			local x, y = Zones:Translate(source, pin.x, pin.y, map)
+			local x, y
+			if not leftToOpenMap(pin) then x, y = Zones:Translate(source, pin.x, pin.y, map) end
 			if x and x >= 0 and x <= 1 and y >= 0 and y <= 1 and (not hideUnexplored or isExplored(map, x, y)) then
 				self:GetMap():AcquirePin(TEMPLATE, pin, x, y, source)
 				placed = placed + 1
@@ -223,6 +235,6 @@ BF:At("login", function()
 	end
 	BF:Listen("BF_MARKS_CHANGED", refresh)
 	BF:Listen("BF_SETTING_CHANGED", function(_, key)
-		if key:find("^icons%.") or key == "quests.map" then refresh() end
+		if key:find("^icons%.") or key == "quests.map" or key == "openmap.flight" then refresh() end
 	end)
 end, 70)

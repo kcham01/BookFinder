@@ -147,6 +147,8 @@ BF:At("login", function()
 	if not canvas then return end
 	canvas:HookScript("OnMouseUp", function(self, button)
 		if button ~= "LeftButton" or not IsControlKeyDown() or not BF:Get("map.ctrlClickPin") then return end
+		-- With OpenMap the map, its own Ctrl-click pin is the one (it sets the game's map pin, which the arrow follows).
+		if BF.OpenMap and BF.OpenMap:Present() then return end
 		if not self.GetNormalizedCursorPosition then return end
 		local x, y = self:GetNormalizedCursorPosition()
 		local map = WorldMapFrame:GetMapID()

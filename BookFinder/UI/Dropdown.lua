@@ -155,7 +155,7 @@ local function paint(row, item)
 		row.Icon:SetPoint("RIGHT", row.Arrow, "LEFT", -2, 0)
 	end
 	if icon then
-		if BF.Icons.kinds[icon] then BF.Icons:Apply(row.Icon, icon) else row.Icon:SetTexture(icon) row.Icon:SetTexCoord(0, 1, 0, 1) end
+		BF.Icons:Set(row.Icon, icon)
 		row.Icon:Show()
 	else
 		row.Icon:Hide()

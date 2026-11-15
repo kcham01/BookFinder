@@ -22,6 +22,8 @@ local DEFAULT_PROFILE = "Default"
 local db, profile, profileName
 
 --- Declares a setting. spec: { default = v, min = n, max = n, step = n, choices = {...} }
+--- spec.external = { get = fn() -> value, set = fn(value) }: a setting kept by someone else (OpenMap's, Map/OpenMap.lua),
+--- read and written through them, never stored in BookFinder's profiles.
 function Settings:Define(key, spec)
 	assert(not definitions[key], "setting defined twice: " .. key)
 	assert(spec.default ~= nil, "setting needs a default: " .. key)
@@ -53,6 +55,11 @@ end
 --- The setting's value (its default until changed).
 function BF:Get(key)
 	local def = check(key)
+	if def.external then
+		local ok, v = pcall(def.external.get)
+		if ok and v ~= nil and type(v) == type(def.default) then return v end
+		return def.default
+	end
 	if profile then
 		local v = profile[key]
 		if v ~= nil then return v end
@@ -86,6 +93,12 @@ function BF:Set(key, value)
 	end
 	value = clamp(def, value)
 	local old = BF:Get(key)
+	if def.external then
+		local ok, err = pcall(def.external.set, value)
+		if not ok then geterrorhandler()(err) end
+		if not same(old, value) then BF:Send("BF_SETTING_CHANGED", key, value, old) end
+		return
+	end
 	if profile then
 		if same(value, def.default) then profile[key] = nil else profile[key] = value end
 	end

@@ -32,41 +32,99 @@ local function townsfolkItems()
 	return items
 end
 
+-- OpenMap's settings (Map/OpenMap.lua) where OpenMap offers them; else BookFinder's own map's.
+local function om(key, icon)
+	local k = BF.OpenMap and BF.OpenMap:Key(key)
+	if k then return icon and { key = k, icon = icon } or k end
+end
+local function hasOpenMap() return BF.OpenMap ~= nil and BF.OpenMap:Present() end
+--- A list without the gaps that settings OpenMap doesn't offer leave.
+local function pack(...)
+	local out = {}
+	for i = 1, select("#", ...) do
+		local v = select(i, ...)
+		if v then out[#out + 1] = v end
+	end
+	return out
+end
+local function either(openMapKey, ownKey, icon)
+	if hasOpenMap() then return om(openMapKey, icon) end
+	return icon and { key = ownKey, icon = icon } or ownKey
+end
+
+local function iconOf(list, key)
+	for _, e in ipairs(list or {}) do if e[1] == key then return e[2] end end
+end
+local function showIcon(key)
+	local m = BF.ShowMenu
+	return m and (iconOf(m.OPENMAP_ITEMS, key) or iconOf(m.OPENMAP_DUNGEONS, key)) or nil
+end
+local function omShow(key) return om(key, showIcon(key) or "Interface\\Icons\\INV_Misc_Map_01") end
+
 Panel.tabs = {
 	{
 		key = "openmap", label = "OpenMap", icon = "Interface\\Icons\\INV_Misc_Map_01", tiles = true,
 		pages = {
 			{ key = "onMap", label = "On the map", sections = function()
 				return {
-					{ title = "Quests", items = {
+					{ title = "Quests", items = pack(
 						{ key = "quests.map", icon = "available" }, { key = "quests.minimap", icon = "available" },
 						{ key = "quests.available", icon = "available" }, { key = "quests.turnins", icon = "complete" },
 						{ key = "quests.objectives", icon = "slay" }, { key = "paths.map", icon = "object" },
-					} },
+						omShow("allQuests")) },
 					{ title = "Townsfolk", items = townsfolkItems() },
-					{ title = "Places", items = {
+					{ title = "Places", items = pack(
 						{ key = "books.map", icon = "book" }, { key = "books.minimap", icon = "book" },
-					} },
+						omShow("boats"), omShow("zeppelins"),
+						om("flight", { atlas = "TaxiNode_Neutral", texture = "Interface\\Icons\\Ability_Mount_Wyvern_01" }),
+						omShow("routes"), omShow("foundOnly")) },
+					{ title = "People", items = pack(omShow("playerArrow"), omShow("group"), omShow("friends"), omShow("guild"),
+						omShow("sketchShown")) },
+					{ title = "Dungeons", items = pack(omShow("icons"), omShow("dungeonMaps"), omShow("dungeonMinimap"),
+						omShow("dungeonLevels"), omShow("dungeonBosses"), omShow("dungeonQuests"),
+						BF.OpenMap and BF.OpenMap.journal and omShow("entranceClick") or nil) },
+					{ title = "Icons on the map", items = pack(omShow("hideWorldPinsInInstances"), omShow("zoomHidePins")) },
 				}
-			end },
+			end, sliders = function() return pack(om("iconsFrom"), om("iconScale")) end,
+				choices = function() return pack(om("questSource")) end },
 			{ key = "look", label = "Look", sections = function()
+				local mapItems = hasOpenMap() and pack(om("chart"), om("gapFills"), om("hoverHighlight"), om("zoneLevels"),
+					om("tabRail"), om("mapButtons"), om("minimapButton"), om("fullWidth"), om("chatOverMap"), om("padView"))
+					or { "map.seamless", "map.smooth" }
 				return {
-					{ title = "The map", items = { "map.seamless", "map.smooth" } },
-					{ title = "Coordinates", items = { "coords.map", "coords.minimap" } },
+					{ title = "The map", items = mapItems },
+					{ title = "Unexplored areas", items = pack(om("unexploredOwn")) },
+					{ title = "Up close", items = pack(om("minimap"), om("cityMinimap"), om("gapMinimap"), om("soften"), om("underground")) },
+					{ title = "Coordinates", items = pack(either("coords", "coords.map"), "coords.minimap") },
 					{ title = "Icons", items = { "icons.glowMap", "icons.glowMinimap", "icons.colorsMap", "icons.colorsMinimap",
 						"icons.hideOnContinents", "icons.hideUnexplored" } },
 				}
-			end, sliders = { "map.deepestZoom", "coords.precision", "icons.mapScale", "icons.minimapScale", "icons.townsfolkMapScale",
-				"icons.townsfolkMinimapScale" } },
+			end, sliders = function()
+				return pack(om("brightness"), om("colorMatch"), om("desaturate"), om("darkening"), either("maxZoom", "map.deepestZoom"),
+					om("windowScale"), om("minimapMix"), om("minimapFrom"), om("minimapDeep"), om("moveFade"), om("mapFpsCap"),
+					"coords.precision", "icons.mapScale", "icons.minimapScale", "icons.townsfolkMapScale", "icons.townsfolkMinimapScale")
+			end, choices = function() return pack(om("unexplored")) end,
+				colors = function() return pack(om("darkenColor")) end,
+				buttons = function()
+					if not hasOpenMap() then return nil end
+					return { BF.OpenMap.buttons[1], BF.OpenMap.buttons[2], BF.OpenMap.buttons[3] }
+				end },
 			{ key = "more", label = "More", sections = function()
 				return {
-					{ title = "Map pin", items = { "map.ctrlClickPin" } },
+					{ title = "Map pin", items = pack(either("ctrlClickPin", "map.ctrlClickPin"), om("pinsFollowNew")) },
+					{ title = "Moving about", items = pack(om("autoSwitch")) },
+					{ title = "Sharing", items = pack(om("pinsShared"), om("pinsShareGroup"), om("pinsGroupAdd"), om("friendsShare")) },
 					{ title = "Arrow and compass", items = { "guide.arrow", "guide.compass", "guide.compassBand",
 						"guide.metres", "guide.arrivalSound" } },
 				}
 			end, sliders = { "guide.arrival", "guide.arrowScale", "guide.compassScale", "guide.compassWidth" },
-				buttons = { { label = "Move the arrow and compass", run = function() BF.Guide:ToggleMoving() end },
-					{ label = "Reset their places", run = function() BF.Guide:ResetPlaces() end } } },
+				choices = function() return pack(om("reopenView")) end,
+				buttons = function()
+					local list = { { label = "Move the arrow and compass", run = function() BF.Guide:ToggleMoving() end },
+						{ label = "Reset their places", run = function() BF.Guide:ResetPlaces() end } }
+					if hasOpenMap() then list[#list + 1] = BF.OpenMap.buttons[4] end
+					return list
+				end },
 			{ key = "profiles", label = "Profiles" },
 		},
 	},
@@ -148,6 +206,12 @@ Panel.tabs = {
 	},
 }
 
+--- A page's list of sliders, choices, colours or buttons: a list, or a function making one (OpenMap's come and go).
+function Panel.List(v)
+	if type(v) == "function" then return v() end
+	return v
+end
+
 --- A page built by its own module: build(content, width) fills `content` and returns its height; refresh optional.
 function Panel:RegisterPage(tab, page, build, refresh)
 	Panel.pages[tab .. "/" .. page] = { build = build, refresh = refresh }
@@ -188,7 +252,7 @@ local function tickRow(parent, item, width)
 		row.icon = row:CreateTexture(nil, "ARTWORK")
 		row.icon:SetSize(16, 16)
 		row.icon:SetPoint("LEFT", row.check, "RIGHT", 4, 0)
-		BF.Icons:Apply(row.icon, item.icon)
+		BF.Icons:Set(row.icon, item.icon)
 		textLeft = row.icon
 	end
 	row.label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -227,6 +291,7 @@ local function sliderRow(parent, key, width)
 	if s.SetValueStep then s:SetValueStep(step) end
 	if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
 	local function show(v)
+		if def.percent then f.Value:SetText(("%d%%"):format(math.floor(v * 100 + 0.5))) return end
 		if step < 1 then f.Value:SetText(("%.2f"):format(v)) else f.Value:SetText(tostring(math.floor(v + 0.5))) end
 	end
 	s:SetScript("OnValueChanged", function(_, v)
@@ -368,15 +433,17 @@ local function buildSettingsPage(page, holder, width)
 		end
 		y = y + math.ceil(i / 2) * h + 6
 	end
-	grid(page.choices, choiceRow, 46)
-	grid(page.sliders, sliderRow, 46)
-	grid(page.colors, colorRow, ROW_H + 4)
-	if page.buttons then
+	grid(Panel.List(page.choices), choiceRow, 46)
+	grid(Panel.List(page.sliders), sliderRow, 46)
+	grid(Panel.List(page.colors), colorRow, ROW_H + 4)
+	local buttons = Panel.List(page.buttons)
+	if buttons and #buttons > 0 then
 		local x = 0
-		for _, spec in ipairs(page.buttons) do
+		for _, spec in ipairs(buttons) do
 			local b = CreateFrame("Button", nil, holder, "UIPanelButtonTemplate")
 			b:SetText(L[spec.label])
 			b:SetSize(math.max(140, (b:GetFontString() and b:GetFontString():GetStringWidth() or 100) + 30), 22)
+			if x > 0 and x + b:GetWidth() > width then x, y = 0, y + 28 end
 			b:SetPoint("TOPLEFT", x, -y)
 			b:SetScript("OnClick", spec.run)
 			x = x + b:GetWidth() + 8
@@ -402,11 +469,21 @@ Panel.actions = {
 		run = function() BF.BookRoute:Toggle() end, lit = function() return BF.BookRoute:IsOn() end },
 }
 
+--- The tiles: BookFinder's actions, then OpenMap's (its own menu's: Pins, Quill, Map notes, What's new).
+function Panel:Actions()
+	local list = {}
+	for _, a in ipairs(Panel.actions) do list[#list + 1] = a end
+	if BF.OpenMap and BF.OpenMap:Present() then
+		for _, a in ipairs(BF.OpenMap.actions) do list[#list + 1] = a end
+	end
+	return list
+end
+
 local tiles = {}
 local function buildTiles(holder, width)
-	local perRow, gap, h = 4, 8, 70
+	local perRow, gap, h = 5, 8, 70
 	local tw = (width - gap * (perRow - 1)) / perRow
-	for i, a in ipairs(Panel.actions) do
+	for i, a in ipairs(Panel:Actions()) do
 		local t = W:Tile(holder, tw, h, 30)
 		t:SetPoint("TOPLEFT", ((i - 1) % perRow) * (tw + gap), -math.floor((i - 1) / perRow) * (h + gap))
 		t.icon:SetTexture(a.icon)
@@ -421,7 +498,7 @@ local function buildTiles(holder, width)
 		end)
 		tiles[#tiles + 1] = t
 	end
-	return math.ceil(#Panel.actions / perRow) * (h + gap)
+	return math.ceil(#Panel:Actions() / perRow) * (h + gap)
 end
 
 -- Showing a page ---------------------------------------------------------------------------------------------------
@@ -586,6 +663,7 @@ end
 
 --- Updates every row and tile to the settings now.
 function Panel:Refresh()
+	if BF.MapButton then BF.MapButton.Refresh() end
 	if not frame then return end
 	for _, r in ipairs(rows) do if r.Refresh then r:Refresh() end end
 	for _, t in ipairs(tiles) do
@@ -626,6 +704,19 @@ end
 
 function Panel:IsShown() return frame ~= nil and frame:IsShown() end
 
+--- The icon a setting has in the panel's lists (for its button on the map), or nil.
+function Panel:IconOf(key)
+	for _, tab in ipairs(Panel.tabs) do
+		for _, page in ipairs(tab.pages) do
+			for _, section in ipairs(page.sections and page.sections() or {}) do
+				for _, item in ipairs(section.items) do
+					if type(item) == "table" and item.key == key then return item.icon end
+				end
+			end
+		end
+	end
+end
+
 --- Every setting key placed somewhere in the layout (the offline test checks none is left out).
 function Panel:PlacedKeys()
 	local placed = {}
@@ -634,7 +725,7 @@ function Panel:PlacedKeys()
 			for _, section in ipairs(page.sections and page.sections() or {}) do
 				for _, item in ipairs(section.items) do placed[type(item) == "table" and item.key or item] = true end
 			end
-			for _, list in ipairs({ page.sliders or {}, page.choices or {}, page.colors or {} }) do
+			for _, list in ipairs({ Panel.List(page.sliders) or {}, Panel.List(page.choices) or {}, Panel.List(page.colors) or {} }) do
 				for _, key in ipairs(list) do placed[key] = true end
 			end
 		end

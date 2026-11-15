@@ -183,6 +183,28 @@ function Icons:Apply(texture, kind)
 	texture:SetAlpha(c.grey and 0.7 or 1)
 end
 
+--- Any icon onto a texture: an icon kind of ours, a texture path or file ID, or { atlas =, texture = } (the atlas
+--- where the client has it, else the texture: OpenMap's items).
+function Icons:Set(texture, icon)
+	if type(icon) == "string" and kinds[icon] then return Icons:Apply(texture, icon) end
+	roundOff(texture, false)
+	texture:SetVertexColor(1, 1, 1, 1)
+	if texture.SetDesaturated then texture:SetDesaturated(false) end
+	texture:SetAlpha(1)
+	if type(icon) == "table" then
+		local atlas = icon.atlas
+		if atlas and C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas) then
+			texture:SetAtlas(atlas)
+			return
+		end
+		icon = icon.texture
+	end
+	texture:SetTexture(icon)
+	local square = type(icon) == "string" and icon:find("^Interface\\Icons\\") ~= nil
+	roundOff(texture, square)
+	if square then texture:SetTexCoord(0.08, 0.92, 0.08, 0.92) else texture:SetTexCoord(0, 1, 0, 1) end
+end
+
 --- The texture string for text ("|T...|t"), for tooltips and lists.
 function Icons:Inline(kind, size)
 	local c = Icons:Resolve(kind)

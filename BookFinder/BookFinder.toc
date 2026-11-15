@@ -5,6 +5,7 @@
 ## Version: 3.0.0-dev
 ## SavedVariables: BookFinderDB
 ## SavedVariablesPerCharacter: BookFinderCharDB
+## OptionalDeps: OpenMap
 ## IconTexture: Interface\Icons\INV_Misc_Book_09
 ## X-License: GPL-3.0 (data from QuestieDB: see Data\CREDITS.md)
 
@@ -59,6 +60,7 @@ Map\Minimap.lua
 Map\Guide.lua
 Map\Townsfolk.lua
 Map\Seamless.lua
+Map\OpenMap.lua
 
 Books\List.lua
 Books\Books.lua
@@ -71,4 +73,5 @@ UI\MapActions.lua
 UI\Panel.lua
 UI\Pages.lua
 UI\JourneyPages.lua
+UI\MapButton.lua
 Core\Commands.lua
