@@ -51,11 +51,12 @@ Panel.tabs = {
 			end },
 			{ key = "look", label = "Look", sections = function()
 				return {
+					{ title = "The map", items = { "map.seamless", "map.smooth" } },
 					{ title = "Coordinates", items = { "coords.map", "coords.minimap" } },
 					{ title = "Icons", items = { "icons.glowMap", "icons.glowMinimap", "icons.colorsMap", "icons.colorsMinimap",
 						"icons.hideOnContinents", "icons.hideUnexplored" } },
 				}
-			end, sliders = { "coords.precision", "icons.mapScale", "icons.minimapScale", "icons.townsfolkMapScale",
+			end, sliders = { "map.deepestZoom", "coords.precision", "icons.mapScale", "icons.minimapScale", "icons.townsfolkMapScale",
 				"icons.townsfolkMinimapScale" } },
 			{ key = "more", label = "More", sections = function()
 				return {

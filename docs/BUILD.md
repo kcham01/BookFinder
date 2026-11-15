@@ -181,3 +181,11 @@ See the log. Current phase is the first unchecked one.
   own and calls the pin's OnMouseEnter/OnMouseLeave, OnMouseUp(button, upInside) and then OnMouseClickAction(button).
   The stand-in now asserts the same. Item-start quests: dropper spawns merged into packs (8% of the map, at most 3 per
   quest per map, droppers under 5% left out): "Crystal in the Mountains" put 519 "!" on Arathi before.
+- **Seamless map, step 1** (`Map/Seamless.lua`): our own view over WorldMapFrame.ScrollContainer (game's buttons
+  raised above it); surface in Azeroth (947) units, each map placed by GetMapRectOnMap(map, 947); art from
+  GetMapArtLayers/GetMapArtLayerTextures (last row/col cut by texcoord) and GetExploredMapTextures (256 tiles,
+  power-of-two texcoords); maps fade in by on-screen width (continent 380 px, zone 160, city 220); smooth zoom/pan
+  (exp ease), wheel toward cursor, drag, click in, right-click out, middle = find me, Ctrl = pin; game map synced to the
+  zone in view after 0.35 s rest; our pins + books + arrow + coords on an overlay at constant size.
+  **Not yet**: minimap detail up close (no API lists minimap tiles), unexplored areas shown, other addons' pins on
+  the seamless view (they are on the game's canvas underneath), party/friends, dungeons, boats, flight paths, quill.
