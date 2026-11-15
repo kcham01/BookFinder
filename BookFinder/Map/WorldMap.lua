@@ -12,7 +12,7 @@ BF.WorldMap = WorldMap
 
 local Marks, Look, Icons, Zones = BF.Marks, BF.Look, BF.Icons, BF.Zones
 local TEMPLATE = "BookFinderMapPinTemplate"
-local BASE_SIZE = 24
+local BASE_SIZE = 16 -- (Questie's: 16 times the icon's scale times the map's)
 
 -- Which maps' marks a map shows --------------------------------------------------------------------------------
 

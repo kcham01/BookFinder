@@ -89,7 +89,7 @@ Panel.tabs = {
 				choices = function() return pack(om("questSource")) end },
 			{ key = "look", label = "Look", sections = function()
 				local mapItems = hasOpenMap() and pack(om("chart"), om("gapFills"), om("hoverHighlight"), om("zoneLevels"),
-					om("tabRail"), om("mapButtons"), om("minimapButton"), om("fullWidth"), om("chatOverMap"), om("padView"))
+					om("fullWidth"), om("chatOverMap"), om("padView"))
 					or {}
 				return {
 					{ title = "The map", items = mapItems },

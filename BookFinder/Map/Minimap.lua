@@ -16,7 +16,7 @@ local sqrt, sin, cos, floor, abs = math.sqrt, math.sin, math.cos, math.floor, ma
 -- The minimap's width in yards at each zoom level (0 = widest), outdoors and indoors.
 local OUTDOOR = { [0] = 466 + 2 / 3, 400, 333 + 1 / 3, 266 + 2 / 3, 200, 133 + 1 / 3 }
 local INDOOR = { [0] = 300, 240, 180, 120, 80, 50 }
-local BASE_SIZE = 24
+local BASE_SIZE = 16 -- (Questie's: 16 times the icon's scale times the map's)
 local CELL = 200 -- yards per index cell
 
 -- Indoors is told by which zoom setting the minimap follows: the game keeps one for each.

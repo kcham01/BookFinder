@@ -168,8 +168,6 @@ if present() then
 	toggle("zoneLevels", "Zone levels")
 	toggle("coords", "Coordinates")
 	toggle("tabRail", "Buttons as edge tabs", false)
-	toggle("mapButtons", "OpenMap button on the map")
-	toggle("minimapButton", "OpenMap minimap button")
 	toggle("fullWidth", "Full-screen map fills the width", false)
 	toggle("chatOverMap", "Chat over the full-screen map", false)
 	toggle("padView", "OpenMap's map with the Gamepad UI (test)", false)
@@ -286,15 +284,18 @@ end
 BF:At("login", function()
 	if not present() then return end
 	if not adopt() then BF:After(1, adopt) end
-	-- OpenMap's own button on the map would be a second menu: BookFinder's map button is the one (UI/MapButton.lua).
-	-- Turned off once; the panel's Look page turns it back on.
-	-- Its first-run "how should the map start" card is OpenMap's own welcome: BookFinder starts it as OpenMap comes.
+	-- OpenMap's own buttons (its button and favourites on the map's edge, its minimap button) would be a second menu:
+	-- BookFinder's are the ones (UI/MapButton.lua, UI/MinimapButton.lua), so OpenMap's stay off, every login.
 	local t = db()
-	if t and t.presetAsked == false then t.presetAsked = true end
-	local state = BF:AccountState("openmap")
-	if not state.buttonHidden then
-		state.buttonHidden = true
-		if OM:Key("mapButtons") then BF:Set("openmap.mapButtons", false) end
-		if OM:Key("minimapButton") then BF:Set("openmap.minimapButton", false) end
+	if t then
+		-- Its first-run "how should the map start" card is OpenMap's own welcome: BookFinder starts it as OpenMap comes.
+		if t.presetAsked == false then t.presetAsked = true end
+		if t.mapButtons ~= false then
+			t.mapButtons = false   -- (written straight: its own setter would print a note about its button)
+			redraw()
+		end
+		if t.minimapButton ~= false then
+			if has("minimapButton") then pcall(field, "minimapButton", "set", false) else t.minimapButton = false end
+		end
 	end
 end, 79)
