@@ -1,7 +1,8 @@
--- The quest tracker on the screen, Questie's way (the game's own tracker is hidden): tracked quests by zone, each with
--- its menu button ("...") and its fold button, its title with its level in its difficulty colour ("[33D]"), its
--- objectives as "0/1 Name", "Quest Complete!" / "Quest Failed!", a usable-item button at the right; clicks as chosen
--- (Quests > Quest list), the menu on right-click or "...". No background; drag the header to move it, click it to fold.
+-- The quest list, Questie's way, in the quest log's Quests tab beside the map (UI/LogTabs.lua): nothing on the screen
+-- (the game's own tracker is hidden too). Every quest in the log by zone, each with its menu button ("...") and its
+-- fold button, its title with its level in its difficulty colour ("[33D]"), its objectives as "0/1 Name",
+-- "Quest Complete!" / "Quest Failed!", a usable-item button at the right; untracked quests dimmed; clicks as chosen
+-- (Quests > Quest list), the menu on right-click or "...". The header folds every zone; right-click: the settings.
 
 local _, BF = ...
 local L = BF.L
@@ -92,7 +93,10 @@ local function itemButton()
 	itemUsed = itemUsed + 1
 	local b = itemButtons[itemUsed]
 	if not b then
-		b = CreateFrame("Button", nil, content, "SecureActionButtonTemplate")
+		-- (a secure button must not sit inside the map: the map could not then open or close in combat. It lives on
+		-- the screen, laid over its row, and hides with the map.)
+		b = CreateFrame("Button", nil, UIParent, "SecureActionButtonTemplate")
+		b:SetFrameStrata("FULLSCREEN_DIALOG")
 		b:SetSize(22, 22)
 		b:RegisterForClicks("AnyUp", "AnyDown")
 		b:SetAttribute("type", "item")
@@ -171,10 +175,15 @@ local function menu(anchor, id)
 		{ text = (C_QuestLog.GetQuestWatchType and C_QuestLog.GetQuestWatchType(id) ~= nil) and L["Untrack"] or L["Track"],
 			onClick = function() untrack(id) end },
 		{ text = L["Show on map"], onClick = function()
-			if BF.Seamless and BF:Get("map.seamless") then
-				for map in pairs(BF.Marks.byMap) do
-					for _, pin in ipairs(BF.Marks:On(map)) do
-						for _, r in ipairs(pin.roles) do if r.quest == id then BF.Seamless:ShowMap(pin.map) return end end
+			-- The map opens on the first map that marks this quest.
+			for map in pairs(BF.Marks.byMap) do
+				for _, pin in ipairs(BF.Marks:On(map)) do
+					for _, r in ipairs(pin.roles) do
+						if r.quest == id then
+							if not WorldMapFrame:IsShown() then ToggleWorldMap() end
+							WorldMapFrame:SetMapID(pin.map)
+							return
+						end
 					end
 				end
 			end
@@ -231,14 +240,13 @@ local function fill()
 	local s = state()
 	s.folded = s.folded or {}
 	-- Measured now (at login the map window had no size yet: every row came out 0 wide).
-	local width = math.max(160, (frame:GetWidth() or 0) - 4)
+	local width = math.max(160, (scroll:GetWidth() or 0) - 2)
 	content:SetWidth(width)
 	local y = 0
 	local quests = {}
-	-- The tracked quests (as the game tracks them).
+	-- Every quest in the log (untracked ones dimmed).
 	for id, q in pairs(Log.quests) do
-		local tracked = not C_QuestLog.GetQuestWatchType or C_QuestLog.GetQuestWatchType(id) ~= nil
-		if tracked and (BF:Get("list.showComplete") or not Log:IsComplete(id)) then quests[#quests + 1] = q end
+		if BF:Get("list.showComplete") or not Log:IsComplete(id) then quests[#quests + 1] = q end
 	end
 	local byZone, zones = {}, {}
 	local mode = BF:Get("list.sort")
@@ -251,6 +259,7 @@ local function fill()
 		table.insert(byZone[zone], q)
 	end
 	table.sort(zones)
+	List.zones = zones
 	header:SetText(L["Quests: %d/%d"]:format(Log:Count(), C_QuestLog.GetMaxNumQuestsCanAccept and C_QuestLog.GetMaxNumQuestsCanAccept() or 20))
 	local pad = BF:Get("list.padding")
 	for _, zone in ipairs(zones) do
@@ -378,69 +387,66 @@ function List:Refresh() fill() end
 
 -- The frame over the game's list ---------------------------------------------------------------------------------
 
-BF.Settings:Define("list.enabled", { default = true, page = "Quests/List", label = "Quest tracker on the screen" })
-BF.Settings:Define("list.locked", { default = false, page = "Quests/List", label = "Lock the tracker in place" })
-BF.Settings:Define("list.maxHeight", { default = 520, min = 150, max = 1200, step = 10, page = "Quests/List", label = "Tracker height" })
-BF.Settings:Define("list.width", { default = 290, min = 180, max = 500, step = 5, page = "Quests/List", label = "Tracker width" })
-
 local collapsedAll = false
 
-local function build()
-	frame = CreateFrame("Frame", "BookFinderTracker", UIParent)
-	frame:SetSize(BF:Get("list.width"), BF:Get("list.maxHeight"))
-	frame:SetClampedToScreen(true)
-	frame:SetMovable(true)
-	frame:SetFrameStrata("MEDIUM")
-	local place = BF:AccountState("tracker").place
-	if place then frame:SetPoint(place[1], UIParent, place[2], place[3], place[4])
-	else frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -90, -220) end
+-- Built into the quest log's Quests tab (UI/LogTabs.lua): the page is the list's frame.
+local function build(page)
+	frame = page
 
-	-- The header: "Quests: 13/40"; click folds the whole tracker, drag moves it (unless locked).
+	-- The header: "Quests: 13/40"; click folds every zone (or unfolds them), right-click: the list's settings.
 	local head = CreateFrame("Button", nil, frame)
-	head:SetHeight(18)
-	head:SetPoint("TOPLEFT")
-	head:SetPoint("TOPRIGHT")
-	head:RegisterForDrag("LeftButton")
+	head:SetHeight(22)
+	head:SetPoint("TOPLEFT", 8, -8)
+	head:SetPoint("TOPRIGHT", -8, -8)
 	head:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-	header = head:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	header = head:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	header:SetPoint("LEFT", 4, 0)
-	head:SetScript("OnDragStart", function() if not BF:Get("list.locked") then frame:StartMoving() end end)
-	head:SetScript("OnDragStop", function()
-		frame:StopMovingOrSizing()
-		local p, _, rp, x, y = frame:GetPoint(1)
-		BF:AccountState("tracker").place = { p, rp, math.floor(x + 0.5), math.floor(y + 0.5) }
-	end)
 	head:SetScript("OnClick", function(_, button)
 		if button == "RightButton" then BF.Panel:Open("quests", "list") return end
 		collapsedAll = not collapsedAll
-		scroll:SetShown(not collapsedAll)
+		local s = state()
+		s.folded = s.folded or {}
+		for _, zone in ipairs(List.zones or {}) do s.folded[zone] = collapsedAll or nil end
+		fill()
 	end)
 
-	scroll = CreateFrame("ScrollFrame", nil, frame)
-	scroll:SetPoint("TOPLEFT", 0, -20)
-	scroll:SetPoint("BOTTOMRIGHT", 0, 0)
-	scroll:EnableMouseWheel(true)
-	scroll:SetScript("OnMouseWheel", function(self, delta)
-		local maxScroll = math.max(0, content:GetHeight() - self:GetHeight())
-		self:SetVerticalScroll(math.max(0, math.min(maxScroll, self:GetVerticalScroll() - delta * 40)))
-	end)
+	scroll = CreateFrame("ScrollFrame", nil, frame, "ScrollFrameTemplate")
+	scroll:SetPoint("TOPLEFT", 8, -34)
+	scroll:SetPoint("BOTTOMRIGHT", -26, 8)
 	content = CreateFrame("Frame", nil, scroll)
-	content:SetSize(BF:Get("list.width"), 10)
+	content:SetSize(200, 10)
 	scroll:SetScrollChild(content)
-	frame:SetScript("OnShow", fill)
-	return true
+	scroll:SetScript("OnSizeChanged", function(_, w) content:SetWidth(w) if frame:IsVisible() then fill() end end)
+	-- The item buttons go with the page (in combat they can't be hidden: they turn invisible until it ends).
+	frame:HookScript("OnHide", function()
+		for _, b in ipairs(itemButtons) do
+			if InCombatLockdown() then b:SetAlpha(0) else b:Hide() end
+		end
+	end)
+	frame:HookScript("OnShow", function() for _, b in ipairs(itemButtons) do b:SetAlpha(1) end end)
+	BF:On("PLAYER_REGEN_ENABLED", function()
+		if not frame:IsVisible() then for _, b in ipairs(itemButtons) do b:Hide() b:SetAlpha(1) end end
+	end)
 end
 
+BF.LogTabs:Add({
+	key = "quests", order = 1, icon = "available",
+	tip = function(tip)
+		tip:AddLine(L["Quests"], 1, 1, 1)
+		tip:AddLine(("%d / %d"):format(Log:Count(), C_QuestLog.GetMaxNumQuestsCanAccept and C_QuestLog.GetMaxNumQuestsCanAccept() or 20), 1, 0.82, 0)
+	end,
+	build = build,
+	refresh = function() fill() end,
+})
+
 BF:At("login", function()
-	if not build() then return end
-	frame:SetShown(BF:Get("list.enabled"))
 	-- Questie tracks every quest: so do we at login when auto-tracking (new ones as they are accepted).
 	if BF:Get("list.autoTrack") and C_QuestLog.AddQuestWatch then
 		for id in pairs(Log.quests) do
 			if C_QuestLog.GetQuestWatchType and C_QuestLog.GetQuestWatchType(id) == nil then C_QuestLog.AddQuestWatch(id) end
 		end
 	end
-	local soon = BF:Debounce(0.1, function() if frame:IsVisible() then fill() end end)
+	local soon = BF:Debounce(0.1, function() if frame and frame:IsVisible() then fill() end end)
 	BF:Listen("BF_QUEST_LOG_CHANGED", soon)
 	BF:Listen("BF_QUEST_PROGRESS", soon)
 	BF:Listen("BF_QUEST_LIST_CHANGED", soon)
@@ -454,8 +460,6 @@ BF:At("login", function()
 	BF:On("QUEST_WATCH_LIST_CHANGED", soon)
 	BF:On("PLAYER_REGEN_ENABLED", soon)
 	BF:Listen("BF_SETTING_CHANGED", function(_, key)
-		if key == "list.enabled" then frame:SetShown(BF:Get("list.enabled")) end
-		if key == "list.width" or key == "list.maxHeight" then frame:SetSize(BF:Get("list.width"), BF:Get("list.maxHeight")) end
 		if key:find("^list%.") then soon() end
 	end)
 	-- Auto-track quests as they are accepted.

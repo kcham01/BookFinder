@@ -72,7 +72,6 @@ def("paths.color", { 1, 0.72, 0, 0.5 }, P, "Path colour", { color = true })
 def("paths.hostileColor", { 1, 0.2, 0, 0.7 }, P, "Hostile path colour", { color = true })
 def("paths.highlight", true, P, "Highlight a path on hover")
 def("paths.highlightColor", { 0.93, 0.46, 0.13, 0.8 }, P, "Highlight colour", { color = true })
-def("coords.map", true, P, "Coordinates on the map")
 def("coords.minimap", false, P, "Coordinates on the minimap")
 def("coords.precision", 1, P, "Coordinate decimals", { min = 0, max = 2, step = 1 })
 

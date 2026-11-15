@@ -225,3 +225,12 @@ See the log. Current phase is the first unchecked one.
   separate OpenMap install don't carry over (they were saved under OpenMap). The test runner can load the packaged
   folder (`BF_ADDON_DIR=... BF_LENIENT=1`), but the stand-ins can't run the Ace libraries, so OpenMap itself is only
   checked by compiling every file and checking every TOC/XML path exists.
+- **Quests and Books tabs** (`UI/LogTabs.lua`): Forever's QuestMapFrame has no side tabs (the owner's screenshot:
+  only our book tab, at the fallback spot). LogTabs owns a column at the quest log's right edge (QuestLogTabButtonTemplate
+  if it exists), each tab a page over the log; the game's quest details hide the page (hooks on
+  QuestMapFrame_ShowQuestDetails / _ReturnFromQuestDetails). The quest list (`Quests/List.lua`) is built into the Quests
+  page; nothing on screen (list.enabled/locked/width/maxHeight gone). Its item buttons are secure: parented to UIParent
+  (FULLSCREEN_DIALOG) and laid over their rows, hidden with the page (alpha 0 in combat).
+- **BookFinder's own map removed** (`Map/Seamless.lua`, coords.map): the owner's "map still broken the same way" was it
+  (continent art greyed and stretched under zones). OpenMap is the only map. If the map is ever Blizzard's plain one,
+  OpenMap failed to load: ask for `/bf errors`.

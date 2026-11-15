@@ -90,17 +90,17 @@ Panel.tabs = {
 			{ key = "look", label = "Look", sections = function()
 				local mapItems = hasOpenMap() and pack(om("chart"), om("gapFills"), om("hoverHighlight"), om("zoneLevels"),
 					om("tabRail"), om("mapButtons"), om("minimapButton"), om("fullWidth"), om("chatOverMap"), om("padView"))
-					or { "map.seamless", "map.smooth" }
+					or {}
 				return {
 					{ title = "The map", items = mapItems },
 					{ title = "Unexplored areas", items = pack(om("unexploredOwn")) },
 					{ title = "Up close", items = pack(om("minimap"), om("cityMinimap"), om("gapMinimap"), om("soften"), om("underground")) },
-					{ title = "Coordinates", items = pack(either("coords", "coords.map"), "coords.minimap") },
+					{ title = "Coordinates", items = pack(om("coords"), "coords.minimap") },
 					{ title = "Icons", items = { "icons.glowMap", "icons.glowMinimap", "icons.colorsMap", "icons.colorsMinimap",
 						"icons.hideOnContinents", "icons.hideUnexplored" } },
 				}
 			end, sliders = function()
-				return pack(om("brightness"), om("colorMatch"), om("desaturate"), om("darkening"), either("maxZoom", "map.deepestZoom"),
+				return pack(om("brightness"), om("colorMatch"), om("desaturate"), om("darkening"), om("maxZoom"),
 					om("windowScale"), om("minimapMix"), om("minimapFrom"), om("minimapDeep"), om("moveFade"), om("mapFpsCap"),
 					"coords.precision", "icons.mapScale", "icons.minimapScale", "icons.townsfolkMapScale", "icons.townsfolkMinimapScale")
 			end, choices = function() return pack(om("unexplored")) end,
@@ -158,10 +158,10 @@ Panel.tabs = {
 			end, sliders = { "nameplates.x", "nameplates.y", "nameplates.scale", "nameplates.targetX", "nameplates.targetY",
 				"nameplates.targetScale" } },
 			{ key = "list", label = "Quest list", sections = function()
-				return { { title = "The quest list", items = { "list.enabled", "list.locked", "list.hideGameTracker", "list.autoTrack", "list.showComplete", "list.questLevel",
+				return { { title = "The quest list", items = { "list.hideGameTracker", "list.autoTrack", "list.showComplete", "list.questLevel",
 					"list.collapseComplete", "list.focusButtons", "list.playButtons", "list.hideDoneObjectives",
 					"list.hideCompletionText", "list.followSuperTrack" } } }
-			end, sliders = { "list.width", "list.maxHeight", "list.padding", "list.fontSizeZone", "list.fontSizeQuest", "list.fontSizeObjective" },
+			end, sliders = { "list.padding", "list.fontSizeZone", "list.fontSizeQuest", "list.fontSizeObjective" },
 				choices = { "list.objectiveColors", "list.sort", "list.clickPin", "list.clickOpenLog", "list.clickUntrack" } },
 			{ key = "auto", label = "Automation", sections = function()
 				return {
