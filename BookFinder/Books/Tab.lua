@@ -6,9 +6,7 @@
 --   box (ticked: collected, off the map). Click a row: the map opens on its zone; right-click: the map pin on it.
 --   Hover: the book's card (every place, the group). At the foot: Show all, Hide all, Optimized route, Settings.
 --
--- The quest log's tabs are the game's (QuestMapFrame's, switched by SetDisplayMode): the book tab sits under them
--- and switches the same way, the game's own lists of tabs left untouched. If this client's quest log has no such tabs, the tab sits on the map's right
--- edge and shows its page over the quest log the same way.
+-- The tab itself is one of the quest log's side tabs (UI/LogTabs.lua), under Quests.
 
 local _, BF = ...
 local L = BF.L
@@ -18,10 +16,9 @@ local Books = BF.Books
 local Tab = {}
 BF.BooksTab = Tab
 
-local MODE = "BookFinderBooks"
 local ROW_H, HEAD_H = 34, 24
 
-local tab, page, scroll, content, bar, count, footer
+local page, scroll, content, bar, count, footer
 local rows, heads = {}, {}
 local folded = {}   -- [set] = true
 
@@ -185,19 +182,8 @@ local function footerButton(text, onClick)
 	return b
 end
 
-local function buildPage(parent)
-	page = CreateFrame("Frame", "BookFinderBooksTabPage", parent)
-	page:SetAllPoints(parent.ContentsAnchor or parent)
-	page.displayMode = MODE
-	page:Hide()
-	-- The quest log's own parchment behind it.
-	local bg = page:CreateTexture(nil, "BACKGROUND")
-	bg:SetAllPoints()
-	if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo("QuestLog-main-background") then
-		bg:SetAtlas("QuestLog-main-background", false)
-	else
-		bg:SetColorTexture(0.06, 0.05, 0.04, 0.95)
-	end
+local function buildPage(p)
+	page = p
 	count = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	count:SetPoint("TOPLEFT", 12, -12)
 	bar = CreateFrame("StatusBar", nil, page)
@@ -280,119 +266,24 @@ local function buildPage(parent)
 	return page
 end
 
--- The tab ------------------------------------------------------------------------------------------------------------
-
-local function setChecked(self, on)
-	self.checked = on and true or false
-	if self.SelectedTexture then self.SelectedTexture:SetShown(self.checked) end
-	if self.Icon then
-		self.Icon:SetTexture("Interface\\Icons\\INV_Misc_Book_09")
-		self.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-		self.Icon:SetDesaturated(not self.checked)
-		self.Icon:SetAlpha(self.checked and 1 or 0.8)
-	end
-end
-
-local function makeTab(parent, anchor)
-	local ok, b = pcall(CreateFrame, "Button", "BookFinderBooksTab", parent, "QuestLogTabButtonTemplate")
-	if not ok or not b then
-		b = CreateFrame("Button", "BookFinderBooksTab", parent)
-		b:SetSize(32, 32)
-		local bg = b:CreateTexture(nil, "BACKGROUND")
-		bg:SetAllPoints()
-		bg:SetTexture("Interface\\SpellBook\\SpellBook-SkillLineTab")
-		b.SelectedTexture = b:CreateTexture(nil, "OVERLAY")
-		b.SelectedTexture:SetAllPoints()
-		b.SelectedTexture:SetTexture("Interface\\Buttons\\CheckButtonHilight")
-		b.SelectedTexture:SetBlendMode("ADD")
-	end
-	if not b.Icon then
-		b.Icon = b:CreateTexture(nil, "ARTWORK")
-		b.Icon:SetPoint("CENTER")
-		b.Icon:SetSize(20, 20)
-	end
-	b.displayMode = MODE
-	b.tooltipText = L["Library books"]
-	b.activeAtlas, b.inactiveAtlas = nil, nil
-	b.SetChecked = setChecked
-	b:ClearAllPoints()
-	if anchor then b:SetPoint("TOP", anchor, "BOTTOM", 0, -3) else b:SetPoint("TOPLEFT", parent, "TOPRIGHT", -2, -40) end
-	b:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		GameTooltip:AddLine(L["Library books"], 1, 1, 1)
-		GameTooltip:AddLine(("%d / %d"):format(Books:DoneCount(), Books:Count()), 1, 0.82, 0)
-		GameTooltip:Show()
-	end)
-	b:SetScript("OnLeave", function() GameTooltip:Hide() end)
-	b:SetScript("OnMouseUp", nil)
-	b:SetScript("OnMouseDown", nil)
-	b:SetScript("OnClick", function() Tab:Select() end)
-	setChecked(b, false)
-	return b
-end
-
-local function questFrame() return rawget(_G, "QuestMapFrame") end
-
---- Shows the books (the quest log opened beside the map if it wasn't).
-function Tab:Select()
-	local qmf = questFrame()
-	if qmf and qmf.SetDisplayMode and pcall(qmf.SetDisplayMode, qmf, MODE) then
-		-- (shown by the hook)
-	elseif page then
-		-- (no game tabs: ours over the quest log)
-		page:Show()
-		tab:SetChecked(true)
-	end
-	Tab:Refresh()
-end
+-- The tab ----------------------------------------------------------------------------------------------------------
 
 --- Opens the map, the quest log beside it, and the Books tab.
-function Tab:Open()
-	if WorldMapFrame and not WorldMapFrame:IsShown() then
-		if ToggleWorldMap then ToggleWorldMap() else WorldMapFrame:Show() end
-	end
-	local qmf = questFrame()
-	if qmf and not qmf:IsShown() and WorldMapFrame and WorldMapFrame.HandleUserActionToggleSidePanel then
-		pcall(WorldMapFrame.HandleUserActionToggleSidePanel, WorldMapFrame)
-	end
-	Tab:Select()
-end
-
-function Tab:Install()
-	if tab then return true end
-	local qmf = questFrame()
-	if not qmf then return false end
-	buildPage(qmf)
-	local last
-	for _, t in ipairs(qmf.TabButtons or {}) do
-		if t:IsShown() and (not last or (t:GetBottom() or 0) < (last:GetBottom() or 0)) then last = t end
-	end
-	last = last or qmf.MapLegendTab or qmf.QuestsTab
-	tab = makeTab(qmf, last)
-	-- (the game's own tab lists are left as they are: its SetDisplayMode with our mode shows none of its pages and
-	-- lights none of its tabs, and the hook below shows ours)
-	if not qmf.SetDisplayMode then
-		for _, t in ipairs({ qmf.QuestsTab, qmf.MapLegendTab, qmf.EventsTab }) do
-			if t then t:HookScript("OnMouseUp", function() page:Hide() tab:SetChecked(false) end) end
-		end
-	end
-	if qmf.SetDisplayMode then
-		hooksecurefunc(qmf, "SetDisplayMode", function(_, mode)
-			local mine = mode == MODE
-			page:SetShown(mine)
-			tab:SetChecked(mine)
-			if mine then Tab:Refresh() end
-		end)
-	end
-	return true
-end
-
+function Tab:Open() BF.LogTabs:Open("books") end
+function Tab:Select() BF.LogTabs:Select("books") end
 function Tab:IsShown() return page ~= nil and page:IsVisible() end
 
+BF.LogTabs:Add({
+	key = "books", order = 2, icon = "Interface\\Icons\\INV_Misc_Book_09",
+	tip = function(tip)
+		tip:AddLine(L["Library books"], 1, 1, 1)
+		tip:AddLine(("%d / %d"):format(Books:DoneCount(), Books:Count()), 1, 0.82, 0)
+	end,
+	build = buildPage,
+	refresh = function() Tab:Refresh() end,
+})
+
 BF:At("login", function()
-	if not Tab:Install() and WorldMapFrame then
-		WorldMapFrame:HookScript("OnShow", function() Tab:Install() end)
-	end
 	local soon = BF:Debounce(0.1, function() Tab:Refresh() end)
 	for _, m in ipairs({ "BF_BOOKS_CHANGED", "BF_BOOKS_GROUP_CHANGED", "BF_BOOK_ROUTE_CHANGED" }) do BF:Listen(m, soon) end
 	BF:On("GET_ITEM_INFO_RECEIVED", soon)

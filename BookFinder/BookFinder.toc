@@ -28,6 +28,7 @@ Core\Settings.lua
 Core\Data.lua
 Core\Zones.lua
 Core\Player.lua
+UI\LogTabs.lua
 
 Quests\Options.lua
 Quests\Events.lua
@@ -63,7 +64,6 @@ Map\Minimap.lua
 Map\Guide.lua
 Map\Townsfolk.lua
 Map\Paths.lua
-Map\Seamless.lua
 Map\OpenMap.lua
 
 Books\List.lua

@@ -1,6 +1,6 @@
-# Notes (your words, as given)
+# Notes (what you've asked for and decided)
 
-Everything you say goes here as you say it. **The build has started** ("start the build"); its working notes are
+Your requests and decisions, in short; quoted only where the wording matters. **The build has started** ("start the build"); its working notes are
 `docs/BUILD.md`.
 Your document and its pictures (image1 to image8 below) are kept on the session's machine for review only, never in
 the repository.
@@ -189,6 +189,12 @@ Kept unpacked, untouched, outside the build. Not merged yet.
 - **"Why did you just ship me the OpenMap addon? It's still all supposed to be one addon."** So the download is one
   folder, BookFinder, with OpenMap's map inside it (BookFinder\OpenMap): one addon in the list, its settings saved
   with BookFinder's, its key bindings under BookFinder, its messages signed BookFinder.
+
+- **After the one-addon zip (screenshot, Arathi Highlands):** no Quests tab where the Books tab is; the map "still
+  broken the same way"; a quest log on the screen at the right. So: the quest log's right edge has a **Quests tab and a
+  Books tab** (Forever's quest log has no tabs of its own); the quest list lives **in the Quests tab, nothing on the
+  screen** (as decided back in 1.7.0); BookFinder's own map (the greyed, pixelated half in the screenshot) is
+  **removed**: OpenMap's is the only map. (Not word for word: you said you never asked for that.)
 
 ## Questions (only what I can't tell from your notes)
 

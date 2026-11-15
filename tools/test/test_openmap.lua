@@ -91,7 +91,6 @@ return {
 		expect(placed["openmap.unexplored"], "unexplored on the panel")
 		expect(placed["openmap.darkenColor"], "darkening colour on the panel")
 		expect(not placed["openmap.gapMinimap"], "a setting OpenMap hides isn't")
-		expect(not placed["map.seamless"], "BookFinder's own map's switch steps aside")
 		BF:Set("openmap.unexplored", "dim")
 		equal(OpenMapDB.worldmap.unexplored, "dim", "a choice reaches OpenMap")
 		BF:Set("openmap.darkenColor", { 1, 0, 0, 1 })
