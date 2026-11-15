@@ -46,6 +46,8 @@ Quests\Tooltips.lua
 Quests\Nameplates.lua
 Quests\HideTracker.lua
 Quests\List.lua
+Quests\Automation.lua
+Quests\Announce.lua
 
 UI\Dropdown.lua
 UI\Widgets.lua
