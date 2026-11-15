@@ -214,7 +214,9 @@ function Zones:AreaName(area)
 	return nil
 end
 
---- "45.2, 67.8": one decimal, the way the game's own coordinates read.
+--- "45.2, 67.8": the decimals the coords.precision setting asks for (one, as the game's own coordinates read).
 function Zones:FormatCoords(x, y)
-	return ("%.1f, %.1f"):format(floor(x * 1000 + 0.5) / 10, floor(y * 1000 + 0.5) / 10)
+	local d = BF.Settings:Definition("coords.precision") and BF:Get("coords.precision") or 1
+	local f = ("%%.%df, %%.%df"):format(d, d)
+	return f:format(x * 100, y * 100)
 end

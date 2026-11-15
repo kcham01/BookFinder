@@ -241,6 +241,10 @@ function Region:GetLeft() return 0 end
 function Region:GetTop() return 0 end
 function Region:CreateTexture(name) return newRegion("Texture", name, self) end
 function Region:CreateFontString(name) return newRegion("FontString", name, self) end
+function Region:CreateLine(name) local l = newRegion("Line", name, self) World.lines = (World.lines or 0) + 1 return l end
+function Region:SetStartPoint(...) self.startPoint = { ... } end
+function Region:SetEndPoint(...) self.endPoint = { ... } end
+function Region:SetThickness(t) self.thickness = t end
 function Region:CreateAnimationGroup() return newRegion("AnimationGroup", nil, self) end
 function Region:CreateAnimation(kind) return newRegion(kind or "Animation", nil, self) end
 function Region:SetTexture(t) self.texture = t end

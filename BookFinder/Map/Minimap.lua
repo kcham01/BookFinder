@@ -227,3 +227,32 @@ BF:At("world", function()
 		end
 	end)
 end)
+
+-- Coordinates on the minimap (coords.minimap): the player's position at the minimap's foot, in the chosen decimals.
+local coordFrame
+local function updateCoords()
+	if not coordFrame then return end
+	if not BF:Get("coords.minimap") then coordFrame:Hide() return end
+	local map, x, y = Zones:PlayerPosition()
+	if map and x then coordFrame.text:SetText(Zones:FormatCoords(x, y)) else coordFrame.text:SetText("") end
+	coordFrame:Show()
+end
+
+BF:At("login", function()
+	coordFrame = CreateFrame("Frame", "BookFinderMinimapCoords", Minimap)
+	coordFrame:SetSize(80, 14)
+	coordFrame:SetPoint("BOTTOM", Minimap, "BOTTOM", 0, 2)
+	coordFrame:SetFrameStrata("MEDIUM")
+	coordFrame.text = coordFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallOutline")
+	coordFrame.text:SetPoint("CENTER")
+	local t = 0
+	local ticker = CreateFrame("Frame", nil, Minimap)
+	ticker:SetScript("OnUpdate", function(_, elapsed)
+		t = t + elapsed
+		if t < 0.2 then return end
+		t = 0
+		updateCoords()
+	end)
+	BF:Listen("BF_SETTING_CHANGED", function(_, key) if key:find("^coords%.") then updateCoords() end end)
+	updateCoords()
+end, 73)
