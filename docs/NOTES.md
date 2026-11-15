@@ -181,6 +181,11 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   map is OpenMap's own (MIT licence, credited), shipped beside BookFinder in the download as the `OpenMap` folder,
   unchanged; BookFinder turns its own map off when OpenMap is there and puts its pins on OpenMap's map.
 
+- **"I want the full thing as I asked for in my doc."** So all three of the document's items, with OpenMap shipped
+  as the map: OpenMap's map items in the map's Show list (one flat list, Dungeons the one section, one icon per
+  thing), all of OpenMap's settings on BookFinder's panel (its OpenMap tab: On the map, Look, More), BookFinder's
+  button on the map in place of OpenMap's, and the Books tab beside the quest log.
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)
