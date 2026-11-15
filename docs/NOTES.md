@@ -186,6 +186,10 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   thing), all of OpenMap's settings on BookFinder's panel (its OpenMap tab: On the map, Look, More), BookFinder's
   button on the map in place of OpenMap's, and the Books tab beside the quest log.
 
+- **"Why did you just ship me the OpenMap addon? It's still all supposed to be one addon."** So the download is one
+  folder, BookFinder, with OpenMap's map inside it (BookFinder\OpenMap): one addon in the list, its settings saved
+  with BookFinder's, its key bindings under BookFinder, its messages signed BookFinder.
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)

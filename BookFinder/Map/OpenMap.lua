@@ -1,4 +1,4 @@
--- OpenMap, shipped beside BookFinder, is the world map. Its switches and settings live in BookFinder's own places so the
+-- OpenMap, folded into BookFinder's download (BookFinder\OpenMap, tools/openmap_merge.py), is the world map. Its switches and settings live in BookFinder's own places so the
 -- two read as one product (docs/NOTES.md 1 and 2):
 --
 --   * every map item of OpenMap's is in the map's Show dropdown, once, in the one flat list (Map/ShowMenu.lua), its
@@ -288,6 +288,9 @@ BF:At("login", function()
 	if not adopt() then BF:After(1, adopt) end
 	-- OpenMap's own button on the map would be a second menu: BookFinder's map button is the one (UI/MapButton.lua).
 	-- Turned off once; the panel's Look page turns it back on.
+	-- Its first-run "how should the map start" card is OpenMap's own welcome: BookFinder starts it as OpenMap comes.
+	local t = db()
+	if t and t.presetAsked == false then t.presetAsked = true end
 	local state = BF:AccountState("openmap")
 	if not state.buttonHidden then
 		state.buttonHidden = true
