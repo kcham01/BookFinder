@@ -99,7 +99,7 @@ Panel.tabs = {
 			end, sliders = { "nameplates.x", "nameplates.y", "nameplates.scale", "nameplates.targetX", "nameplates.targetY",
 				"nameplates.targetScale" } },
 			{ key = "list", label = "Quest list", sections = function()
-				return { { title = "The quest list", items = { "list.hideGameTracker", "list.autoTrack", "list.showComplete", "list.questLevel",
+				return { { title = "The quest list", items = { "list.inMap", "list.hideGameTracker", "list.autoTrack", "list.showComplete", "list.questLevel",
 					"list.collapseComplete", "list.focusButtons", "list.playButtons", "list.hideDoneObjectives",
 					"list.hideCompletionText", "list.followSuperTrack" } } }
 			end, sliders = { "list.padding", "list.fontSizeZone", "list.fontSizeQuest", "list.fontSizeObjective" },

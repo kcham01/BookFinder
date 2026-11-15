@@ -38,11 +38,13 @@ Quests\Reward.lua
 Quests\Sounds.lua
 Quests\Journey.lua
 Quests\QuestTip.lua
+Quests\Links.lua
 Quests\Search.lua
 Quests\Needs.lua
 Quests\Tooltips.lua
 Quests\Nameplates.lua
 Quests\HideTracker.lua
+Quests\List.lua
 
 UI\Dropdown.lua
 UI\Widgets.lua
