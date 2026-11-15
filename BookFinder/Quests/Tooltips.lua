@@ -51,6 +51,27 @@ local function addNeeds(tip, needs)
 	return true
 end
 
+-- Party members' progress on what this counts for (Quests/Party.lua): the quest, then "Name: 3/10 Kobold Vermin".
+local function addParty(tip, kind, id, added)
+	local list = BF.Party and BF.Party:For(kind, id)
+	if not list then return added end
+	local shown = {}
+	for _, e in ipairs(list) do
+		local key = e.quest .. ":" .. e.player .. ":" .. (e.objective.index or 0)
+		if not shown[key] then
+			shown[key] = true
+			if not shown["q" .. e.quest] then
+				shown["q" .. e.quest] = true
+				if not added then tip:AddLine(" ") added = true end
+				tip:AddLine(questTitle(e.quest))
+			end
+			local done = e.objective.finished
+			tip:AddLine("   " .. e.player .. L[": "] .. BF.Party:Text(e.objective), done and 0.3 or 0.6, done and 1 or 0.8, done and 0.3 or 1)
+		end
+	end
+	return added
+end
+
 local function addNpc(tip, npc)
 	local added = false
 	if BF:Get("tooltips.npcQuests") then
@@ -78,6 +99,7 @@ local function addNpc(tip, npc)
 		addNeeds(tip, needs)
 		added = true
 	end
+	added = addParty(tip, "m", npc, added)
 	if BF:Get("tooltips.ids.npc") then tip:AddLine("NPC ID: " .. npc, 0.5, 0.5, 0.5) added = true end
 	return added
 end
@@ -99,6 +121,7 @@ local function addItem(tip, item)
 		tip:AddDoubleLine(L["Starts a quest"], BF:QuestName(starts) or "", 1, 0.82, 0, 1, 1, 1)
 		added = true
 	end
+	added = addParty(tip, "i", item, added)
 	if BF:Get("tooltips.ids.item") then tip:AddLine("Item ID: " .. item, 0.5, 0.5, 0.5) added = true end
 	return added
 end
@@ -125,6 +148,7 @@ local function onObject(tip, data)
 	local added = false
 	local needs = Needs:ForObject(data.id)
 	if needs then added = addNeeds(tip, needs) end
+	added = addParty(tip, "o", data.id, added)
 	if BF:Get("tooltips.ids.object") then tip:AddLine("Object ID: " .. data.id, 0.5, 0.5, 0.5) added = true end
 	if added then tip:Show() end
 end

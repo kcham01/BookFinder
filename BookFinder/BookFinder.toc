@@ -50,6 +50,7 @@ Quests\List.lua
 Quests\Automation.lua
 Quests\Announce.lua
 Quests\FrameIcons.lua
+Quests\Party.lua
 
 UI\Dropdown.lua
 UI\Widgets.lua

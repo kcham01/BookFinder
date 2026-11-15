@@ -169,7 +169,7 @@ Panel.tabs = {
 						"auto.pvp", "auto.rejectInBattleground", "auto.abandonBreadcrumb" } },
 					{ title = "Announce", items = { "announce.items", "announce.accepted", "announce.abandoned",
 						"announce.objectives", "announce.completed", "announce.incompleteBreadcrumb", "announce.quiet",
-						"party.objectives" } },
+						"party.objectives", "party.share" } },
 					{ title = "Sounds", items = { "sounds.questComplete", "sounds.objectiveComplete", "sounds.objectiveProgress" } },
 				}
 			end, sliders = { "sounds.delay" }, choices = { "auto.modifier", "announce.channel", "sounds.channel",
