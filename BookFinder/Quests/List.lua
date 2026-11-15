@@ -1,7 +1,7 @@
--- The quest list in the map's Quests tab (Questie's tracker, there instead of on the screen): quests by zone, folding,
--- each title with its level in its difficulty colour, its objectives with their progress, "Quest Complete!" /
--- "Quest Failed!", a usable-item button and a focus button; clicks as chosen (Quests > Quest list), a right-click menu.
--- It lies over the game's own list; a quest's details (the game's) still open over it.
+-- The quest tracker on the screen, Questie's way (the game's own tracker is hidden): tracked quests by zone, each with
+-- its menu button ("...") and its fold button, its title with its level in its difficulty colour ("[33D]"), its
+-- objectives as "0/1 Name", "Quest Complete!" / "Quest Failed!", a usable-item button at the right; clicks as chosen
+-- (Quests > Quest list), the menu on right-click or "...". No background; drag the header to move it, click it to fold.
 
 local _, BF = ...
 local L = BF.L
@@ -68,6 +68,8 @@ local function row()
 	r:Show()
 	r.Toggle:Hide()
 	r.Focus:Hide()
+	if r.Menu then r.Menu:Hide() end
+	if r.Fold then r.Fold:Hide() end
 	r.Right:SetText("")
 	r:SetScript("OnEnter", nil)
 	r:SetScript("OnClick", nil)
@@ -204,6 +206,13 @@ local function sortKey(q)
 	return q.index or 0
 end
 
+-- "Kobold Vermin slain: 4/10" -> "4/10 Kobold Vermin slain" (Questie's way round).
+local function objectiveText(text)
+	local name, count = (text or ""):match("^(.-):%s*(%d+%s*/%s*%d+)$")
+	if name then return count .. " " .. name end
+	return text
+end
+
 local function fill()
 	if not frame then return end
 	used = 0
@@ -214,13 +223,14 @@ local function fill()
 	local s = state()
 	s.folded = s.folded or {}
 	-- Measured now (at login the map window had no size yet: every row came out 0 wide).
-	local width = math.max(160, (scroll:GetWidth() or 0) - 4)
+	local width = math.max(160, (frame:GetWidth() or 0) - 4)
 	content:SetWidth(width)
 	local y = 0
 	local quests = {}
-	-- Every quest in the log (this is the Quests tab: the log itself); untracked ones dimmed.
+	-- The tracked quests (as the game tracks them).
 	for id, q in pairs(Log.quests) do
-		if BF:Get("list.showComplete") or not Log:IsComplete(id) then quests[#quests + 1] = q end
+		local tracked = not C_QuestLog.GetQuestWatchType or C_QuestLog.GetQuestWatchType(id) ~= nil
+		if tracked and (BF:Get("list.showComplete") or not Log:IsComplete(id)) then quests[#quests + 1] = q end
 	end
 	local byZone, zones = {}, {}
 	local mode = BF:Get("list.sort")
@@ -238,7 +248,7 @@ local function fill()
 	for _, zone in ipairs(zones) do
 		local zr = row()
 		zr.Text:SetFontObject("GameFontNormal")
-		zr.Text:SetTextColor(1, 0.82, 0)
+		zr.Text:SetTextColor(0.8, 0.8, 0.8)
 		zr.Text:SetText(zone)
 		zr.Text:ClearAllPoints()
 		zr.Text:SetPoint("LEFT", 4, 0)
@@ -261,8 +271,24 @@ local function fill()
 				qr.Text:SetFontObject("GameFontNormal")
 				qr.Text:SetText(Rules:ColoredTitle(q.id, q.title, BF:Get("list.questLevel")))
 				qr.Text:ClearAllPoints()
-				qr.Text:SetPoint("LEFT", 14, 0)
-				qr.Text:SetPoint("RIGHT", -52, 0)
+				qr.Text:SetPoint("LEFT", 40, 0)
+				qr.Text:SetPoint("RIGHT", -28, 0)
+				-- Questie's two small buttons before the title: the menu, and fold/unfold.
+				qr.Menu = qr.Menu or CreateFrame("Button", nil, qr)
+				qr.Menu:SetSize(14, 14)
+				qr.Menu:SetPoint("LEFT", 6, 0)
+				qr.Menu:SetNormalFontObject("GameFontHighlightSmall")
+				qr.Menu:SetText("...")
+				qr.Menu:SetScript("OnClick", function(self) menu(self, q.id) end)
+				qr.Menu:Show()
+				qr.Fold = qr.Fold or CreateFrame("Button", nil, qr)
+				qr.Fold:SetSize(14, 14)
+				qr.Fold:SetPoint("LEFT", 22, 0)
+				s.foldedQuests = s.foldedQuests or {}
+				local isFolded = s.foldedQuests[q.id]
+				qr.Fold:SetNormalTexture(isFolded and "Interface\\Buttons\\UI-PlusButton-Up" or "Interface\\Buttons\\UI-MinusButton-Up")
+				qr.Fold:SetScript("OnClick", function() s.foldedQuests[q.id] = not s.foldedQuests[q.id] or nil fill() end)
+				qr.Fold:Show()
 				qr:SetScript("OnClick", onQuestClick)
 				qr:SetScript("OnEnter", function(self) BF.QuestTip:Show(self, q.id) end)
 				qr:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -291,14 +317,14 @@ local function fill()
 					b:Show()
 				end
 				y = y + ROW
-				local foldThis = complete and BF:Get("list.collapseComplete")
+				local foldThis = (complete and BF:Get("list.collapseComplete")) or (s.foldedQuests and s.foldedQuests[q.id])
 				if complete then
 					local r = row()
 					r.Text:SetFontObject("GameFontHighlightSmall")
 					r.Text:SetText(L["Quest Complete!"])
 					r.Text:SetTextColor(0.3, 1, 0.3)
 					r.Text:ClearAllPoints()
-					r.Text:SetPoint("LEFT", 26, 0)
+					r.Text:SetPoint("LEFT", 52, 0)
 					r:ClearAllPoints()
 					r:SetPoint("TOPLEFT", 0, -y)
 					r:SetWidth(width)
@@ -309,7 +335,7 @@ local function fill()
 					r.Text:SetText(L["Quest Failed!"])
 					r.Text:SetTextColor(1, 0.3, 0.3)
 					r.Text:ClearAllPoints()
-					r.Text:SetPoint("LEFT", 26, 0)
+					r.Text:SetPoint("LEFT", 52, 0)
 					r:ClearAllPoints()
 					r:SetPoint("TOPLEFT", 0, -y)
 					r:SetWidth(width)
@@ -320,10 +346,10 @@ local function fill()
 						if not (o.finished and BF:Get("list.hideDoneObjectives")) and not (complete and BF:Get("list.hideCompletionText")) then
 							local r = row()
 							r.Text:SetFontObject("GameFontHighlightSmall")
-							r.Text:SetText("- " .. o.text)
+							r.Text:SetText(objectiveText(o.text))
 							r.Text:SetTextColor(objectiveColour(o))
 							r.Text:ClearAllPoints()
-							r.Text:SetPoint("LEFT", 26, 0)
+							r.Text:SetPoint("LEFT", 52, 0)
 							r.Text:SetPoint("RIGHT", -8, 0)
 							r:ClearAllPoints()
 							r:SetPoint("TOPLEFT", 0, -y)
@@ -344,37 +370,68 @@ function List:Refresh() fill() end
 
 -- The frame over the game's list ---------------------------------------------------------------------------------
 
-BF.Settings:Define("list.inMap", { default = true, page = "Quests/List", label = "BookFinder's list in the map's Quests tab" })
+BF.Settings:Define("list.enabled", { default = true, page = "Quests/List", label = "Quest tracker on the screen" })
+BF.Settings:Define("list.locked", { default = false, page = "Quests/List", label = "Lock the tracker in place" })
+BF.Settings:Define("list.maxHeight", { default = 520, min = 150, max = 1200, step = 10, page = "Quests/List", label = "Tracker height" })
+BF.Settings:Define("list.width", { default = 290, min = 180, max = 500, step = 5, page = "Quests/List", label = "Tracker width" })
+
+local collapsedAll = false
 
 local function build()
-	local host = QuestScrollFrame
-	if not host then return false end
-	frame = CreateFrame("Frame", "BookFinderQuestList", host:GetParent())
-	frame:SetAllPoints(host)
-	frame:SetFrameLevel(host:GetFrameLevel() + 10)
-	local bg = frame:CreateTexture(nil, "BACKGROUND")
-	bg:SetAllPoints()
-	bg:SetColorTexture(0.05, 0.04, 0.03, 0.97)
-	header = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	header:SetPoint("TOPLEFT", 8, -6)
-	scroll = CreateFrame("ScrollFrame", nil, frame, "ScrollFrameTemplate")
-	scroll:SetPoint("TOPLEFT", 4, -26)
-	scroll:SetPoint("BOTTOMRIGHT", -24, 4)
+	frame = CreateFrame("Frame", "BookFinderTracker", UIParent)
+	frame:SetSize(BF:Get("list.width"), BF:Get("list.maxHeight"))
+	frame:SetClampedToScreen(true)
+	frame:SetMovable(true)
+	frame:SetFrameStrata("MEDIUM")
+	local place = BF:AccountState("tracker").place
+	if place then frame:SetPoint(place[1], UIParent, place[2], place[3], place[4])
+	else frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -90, -220) end
+
+	-- The header: "Quests: 13/40"; click folds the whole tracker, drag moves it (unless locked).
+	local head = CreateFrame("Button", nil, frame)
+	head:SetHeight(18)
+	head:SetPoint("TOPLEFT")
+	head:SetPoint("TOPRIGHT")
+	head:RegisterForDrag("LeftButton")
+	head:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	header = head:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	header:SetPoint("LEFT", 4, 0)
+	head:SetScript("OnDragStart", function() if not BF:Get("list.locked") then frame:StartMoving() end end)
+	head:SetScript("OnDragStop", function()
+		frame:StopMovingOrSizing()
+		local p, _, rp, x, y = frame:GetPoint(1)
+		BF:AccountState("tracker").place = { p, rp, math.floor(x + 0.5), math.floor(y + 0.5) }
+	end)
+	head:SetScript("OnClick", function(_, button)
+		if button == "RightButton" then BF.Panel:Open("quests", "list") return end
+		collapsedAll = not collapsedAll
+		scroll:SetShown(not collapsedAll)
+	end)
+
+	scroll = CreateFrame("ScrollFrame", nil, frame)
+	scroll:SetPoint("TOPLEFT", 0, -20)
+	scroll:SetPoint("BOTTOMRIGHT", 0, 0)
+	scroll:EnableMouseWheel(true)
+	scroll:SetScript("OnMouseWheel", function(self, delta)
+		local maxScroll = math.max(0, content:GetHeight() - self:GetHeight())
+		self:SetVerticalScroll(math.max(0, math.min(maxScroll, self:GetVerticalScroll() - delta * 40)))
+	end)
 	content = CreateFrame("Frame", nil, scroll)
-	content:SetSize(host:GetWidth() - 30, 10)
+	content:SetSize(BF:Get("list.width"), 10)
 	scroll:SetScrollChild(content)
 	frame:SetScript("OnShow", fill)
-	-- A quest's details (the game's) open over the list; the list returns after.
-	if QuestMapFrame and QuestMapFrame.DetailsFrame then
-		QuestMapFrame.DetailsFrame:HookScript("OnShow", function() frame:Hide() end)
-		QuestMapFrame.DetailsFrame:HookScript("OnHide", function() if BF:Get("list.inMap") then frame:Show() end end)
-	end
 	return true
 end
 
 BF:At("login", function()
 	if not build() then return end
-	frame:SetShown(BF:Get("list.inMap"))
+	frame:SetShown(BF:Get("list.enabled"))
+	-- Questie tracks every quest: so do we at login when auto-tracking (new ones as they are accepted).
+	if BF:Get("list.autoTrack") and C_QuestLog.AddQuestWatch then
+		for id in pairs(Log.quests) do
+			if C_QuestLog.GetQuestWatchType and C_QuestLog.GetQuestWatchType(id) == nil then C_QuestLog.AddQuestWatch(id) end
+		end
+	end
 	local soon = BF:Debounce(0.1, function() if frame:IsVisible() then fill() end end)
 	BF:Listen("BF_QUEST_LOG_CHANGED", soon)
 	BF:Listen("BF_QUEST_PROGRESS", soon)
@@ -382,7 +439,8 @@ BF:At("login", function()
 	BF:On("QUEST_WATCH_LIST_CHANGED", soon)
 	BF:On("PLAYER_REGEN_ENABLED", soon)
 	BF:Listen("BF_SETTING_CHANGED", function(_, key)
-		if key == "list.inMap" then frame:SetShown(BF:Get("list.inMap")) end
+		if key == "list.enabled" then frame:SetShown(BF:Get("list.enabled")) end
+		if key == "list.width" or key == "list.maxHeight" then frame:SetSize(BF:Get("list.width"), BF:Get("list.maxHeight")) end
 		if key:find("^list%.") then soon() end
 	end)
 	-- Auto-track quests as they are accepted.

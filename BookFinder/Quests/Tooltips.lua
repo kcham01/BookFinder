@@ -56,16 +56,18 @@ local function addNpc(tip, npc)
 	if BF:Get("tooltips.npcQuests") then
 		local n = BF:Npc(npc)
 		if n then
+			-- As Questie: the quest's own icon, then its title ("! [30] Melor Sends Word").
 			for _, q in ipairs(n[N.questEnds] or {}) do
 				if Log:Has(q) and Log:IsComplete(q) then
-					if not added then tip:AddLine(" ") added = true end
-					tip:AddDoubleLine(questTitle(q), L["Complete"], 1, 1, 1, 0.3, 1, 0.3)
+					tip:AddLine(BF.Icons:Inline("complete", 14) .. " " .. questTitle(q))
+					added = true
 				end
 			end
 			for _, q in ipairs(n[N.questStarts] or {}) do
 				if Rules:IsShown(q) then
-					if not added then tip:AddLine(" ") added = true end
-					tip:AddDoubleLine(Rules:ColoredTitle(q, nil, BF:Get("tooltips.questLevel")), L["Available"], 1, 1, 1, 1, 0.82, 0)
+					local kind = Rules:IsTrivial(q) and "availableTrivial" or "available"
+					tip:AddLine(BF.Icons:Inline(kind, 14) .. " " .. Rules:ColoredTitle(q, nil, BF:Get("tooltips.questLevel")))
+					added = true
 				end
 			end
 		end
