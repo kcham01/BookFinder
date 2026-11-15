@@ -42,6 +42,7 @@ Quests\Search.lua
 Quests\Needs.lua
 Quests\Tooltips.lua
 Quests\Nameplates.lua
+Quests\HideTracker.lua
 
 UI\Dropdown.lua
 UI\Widgets.lua
