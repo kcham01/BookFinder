@@ -61,6 +61,7 @@ Map\WorldMap.lua
 Map\Minimap.lua
 Map\Guide.lua
 Map\Townsfolk.lua
+Map\Paths.lua
 Map\Seamless.lua
 Map\OpenMap.lua
 

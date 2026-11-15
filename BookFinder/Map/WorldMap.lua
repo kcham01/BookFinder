@@ -202,10 +202,13 @@ end
 
 function BookFinderMapPinMixin:OnMouseEnter()
 	BF.PinTooltip:Show(self, pinsUnderCursor(self), false)
+	local s = self.pin and self.pin.source
+	if BF.Paths and s and s.type == "npc" then BF.Paths:Highlight(s.id) end
 end
 
 function BookFinderMapPinMixin:OnMouseLeave()
 	BF.PinTooltip:Hide()
+	if BF.Paths then BF.Paths:Highlight(nil) end
 end
 
 function BookFinderMapPinMixin:OnMouseClickAction(button)
