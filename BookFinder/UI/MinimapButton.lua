@@ -16,12 +16,38 @@ local button
 
 local function state() return BF:AccountState("minimapButton") end
 
+-- Round, square or any mix of corners (SexyMap and other minimap addons say which with GetMinimapShape): on a round
+-- quarter the button rides the rim; on a square one it follows the edge out to the corner.
+local SHAPES = {   -- which quarters are round: top-right, top-left, bottom-right, bottom-left
+	ROUND = { true, true, true, true }, SQUARE = { false, false, false, false },
+	["CORNER-TOPLEFT"] = { false, false, false, true }, ["CORNER-TOPRIGHT"] = { false, false, true, false },
+	["CORNER-BOTTOMLEFT"] = { false, true, false, false }, ["CORNER-BOTTOMRIGHT"] = { true, false, false, false },
+	["SIDE-LEFT"] = { false, true, false, true }, ["SIDE-RIGHT"] = { true, false, true, false },
+	["SIDE-TOP"] = { false, false, true, true }, ["SIDE-BOTTOM"] = { true, true, false, false },
+	["TRICORNER-TOPLEFT"] = { false, true, true, true }, ["TRICORNER-TOPRIGHT"] = { true, false, true, true },
+	["TRICORNER-BOTTOMLEFT"] = { true, true, false, true }, ["TRICORNER-BOTTOMRIGHT"] = { true, true, true, false },
+}
+
 local function place()
 	local angle = math.rad(state().angle or 200)
-	local r = (Minimap:GetWidth() / 2) + 5
+	local x, y = math.cos(angle), math.sin(angle)
+	local q = 1
+	if x < 0 then q = q + 1 end
+	if y > 0 then q = q + 2 end
+	local shape = GetMinimapShape and GetMinimapShape() or "ROUND"
+	local round = (SHAPES[shape] or SHAPES.ROUND)[q]
+	local w, h = Minimap:GetWidth() / 2 + 5, Minimap:GetHeight() / 2 + 5
+	if round then
+		x, y = x * w, y * h
+	else
+		local dw, dh = math.sqrt(2 * w * w) - 10, math.sqrt(2 * h * h) - 10
+		x = math.max(-w, math.min(x * dw, w))
+		y = math.max(-h, math.min(y * dh, h))
+	end
 	button:ClearAllPoints()
-	button:SetPoint("CENTER", Minimap, "CENTER", math.cos(angle) * r, math.sin(angle) * r)
+	button:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
+Button.Place = place
 
 local function nearestBook()
 	local best, bestYards
@@ -116,6 +142,9 @@ end
 BF:At("login", function()
 	build()
 	button:SetShown(BF:Get("minimap.button"))
+	-- A minimap addon may change the shape or size after login (SexyMap does): placed again then.
+	BF:After(2, place)
+	Minimap:HookScript("OnSizeChanged", function() place() end)
 	BF:Listen("BF_SETTING_CHANGED", function(_, key) if key == "minimap.button" then button:SetShown(BF:Get(key)) end end)
 	-- The minimap's AddOns list (the client's compartment), where there is one.
 	local compartment = rawget(_G, "AddonCompartmentFrame")
