@@ -411,8 +411,9 @@ local function build(page)
 	end)
 
 	scroll = CreateFrame("ScrollFrame", nil, frame, "ScrollFrameTemplate")
-	scroll:SetPoint("TOPLEFT", 8, -34)
-	scroll:SetPoint("BOTTOMRIGHT", -26, 8)
+	-- Inside the parchment's own border: below its top ornament, the scroll bar within its right edge.
+	scroll:SetPoint("TOPLEFT", 8, -48)
+	scroll:SetPoint("BOTTOMRIGHT", -32, 12)
 	content = CreateFrame("Frame", nil, scroll)
 	content:SetSize(200, 10)
 	scroll:SetScrollChild(content)

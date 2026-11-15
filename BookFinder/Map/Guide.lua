@@ -1,12 +1,13 @@
--- The arrow and the compass: they guide the player to the map pin (docs/study/arrow-and-compass.md). No lines are
--- drawn on any map.
+-- The arrow and the compass: they guide the player to the map pin (docs/study/arrow-and-compass.md), the way 2.0's
+-- did. No lines are drawn on any map.
 --
--- The arrow, under the top of the screen, turns (easing, not snapping) toward the pin, with the distance under it.
--- Within the arrival distance it becomes the gold pin with what to do there; the game's map pin is then taken away,
--- and the gold pin stays until the player walks off. The compass is a thin strip of the game's parchment ticks and the
--- letters N, E, S, W across the top of the screen, fading out at both ends, the pin marked on it with its distance.
--- With the pin behind the player both dim; on arrival the strip turns quietly green. In instances (no position)
--- nothing is drawn. Both can be moved (drag, or the arrow keys to the pixel) and sized.
+-- The arrow, under the top of the screen: the gold map pin with the game's tracking arrow going round it to point the
+-- way (easing, not snapping), the distance and the pin's title under it. While the game draws its own marker for the
+-- pin in the world, that leads and the arrow steps aside. Within the arrival distance the arrow becomes the pin with
+-- what to do there; the game's map pin is then taken away, and the pin stays until the player walks off.
+-- The compass: a thin ribbon of parchment ticks and N, E, S, W across the top of the screen, no panel, fading out at
+-- both ends, the pin on it with its distance. With the pin well behind the player both dim; on arrival the ribbon turns
+-- quietly green. In instances (no position) nothing is drawn. Both can be moved (drag, or the arrow keys) and sized.
 
 local _, BF = ...
 local L = BF.L
@@ -25,7 +26,7 @@ local P = "Map/Guide"
 S:Define("guide.arrow", { default = true, page = P, label = "Arrow to the map pin" })
 S:Define("guide.compass", { default = true, page = P, label = "Compass at the top of the screen" })
 S:Define("guide.arrowScale", { default = 1, min = 0.5, max = 2, step = 0.05, page = P, label = "Arrow size" })
-S:Define("guide.compassWidth", { default = 420, min = 200, max = 900, step = 10, page = P, label = "Compass width" })
+S:Define("guide.compassWidth", { default = 360, min = 200, max = 900, step = 10, page = P, label = "Compass width" })
 S:Define("guide.compassScale", { default = 1, min = 0.5, max = 2, step = 0.05, page = P, label = "Compass size" })
 S:Define("guide.compassBand", { default = false, page = P, label = "Dark band behind the compass" })
 S:Define("guide.metres", { default = false, page = P, label = "Distances in metres" })
@@ -50,56 +51,94 @@ local function shortestTurn(a, b) -- from a to b, in -pi..pi
 end
 
 -- The arrow -------------------------------------------------------------------------------------------------------
+--
+-- The game's own look for a tracked place off to one side: the gold map pin, with the game's tracking arrow going
+-- round it on a circle to point the way. When the game draws its own marker for the pin in the world (its navigation
+-- marker, on with "showInGameNavigation"), that leads and this arrow steps aside; the compass stays.
 
-local GOLD = { 1, 0.82, 0 }
-local PARCHMENT = { 0.93, 0.84, 0.62 }
-local ARRIVED = { 0.55, 0.85, 0.45 }
+local RADIUS = 36          -- the arrow's circle round the pin, as the game's marker has it
+local EASE = 18            -- how quickly the drawn bearing catches up (frame-rate independent)
+local BEHIND_FROM, BEHIND_UNTIL = math.rad(100), math.rad(80)   -- dims past 100 degrees, back under 80
+local BEHIND_ALPHA = 0.45
+
+local TICK = { 0.72, 0.67, 0.55 }
+local TICK_ARRIVED = { 0.6, 0.76, 0.58 }
+local CENTER = { 1, 0.82, 0, 0.85 }
+local CENTER_ARRIVED = { 0.62, 0.9, 0.55, 0.85 }
+
+local function hasAtlas(name) return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) ~= nil end
+
+local function pinArt(texture, size)
+	if hasAtlas("Waypoint-MapPin-Tracked") then
+		texture:SetAtlas("Waypoint-MapPin-Tracked")
+	else
+		Icons:Apply(texture, "waypoint")
+	end
+	texture:SetSize(size, size)
+end
 
 local arrow = CreateFrame("Frame", "BookFinderArrow", UIParent)
-arrow:SetSize(56, 76)
-arrow:SetFrameStrata("MEDIUM")
+arrow:SetSize(100, 100)
+arrow:SetFrameStrata("BACKGROUND")
 arrow:SetClampedToScreen(true)
 arrow:Hide()
 
-arrow.Pointer = arrow:CreateTexture(nil, "ARTWORK")
-arrow.Pointer:SetSize(42, 42)
-arrow.Pointer:SetPoint("TOP")
+arrow.Pin = arrow:CreateTexture(nil, "ARTWORK")
+arrow.Pin:SetPoint("CENTER")
 
-arrow.Goal = arrow:CreateTexture(nil, "ARTWORK")
-arrow.Goal:SetSize(30, 38)
-arrow.Goal:SetPoint("TOP", 0, -2)
-arrow.Goal:Hide()
+arrow.Pointer = arrow:CreateTexture(nil, "OVERLAY")
 
-arrow.Distance = arrow:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-arrow.Distance:SetPoint("TOP", arrow.Pointer, "BOTTOM", 0, -1)
+arrow.Distance = arrow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+arrow.Distance:SetPoint("TOP", arrow.Pin, "BOTTOM", 0, -8)
 
-arrow.Title = arrow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-arrow.Title:SetPoint("TOP", arrow.Distance, "BOTTOM", 0, -2)
-arrow.Title:SetWidth(220)
+arrow.Title = arrow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+arrow.Title:SetPoint("TOP", arrow.Distance, "BOTTOM", 0, -4)
+arrow.Title:SetWidth(240)
+arrow.Title:SetMaxLines(2)
 
 arrow.Lines = arrow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-arrow.Lines:SetPoint("TOP", arrow.Title, "BOTTOM", 0, -2)
+arrow.Lines:SetPoint("TOP", arrow.Title, "BOTTOM", 0, -4)
 arrow.Lines:SetWidth(240)
 arrow.Lines:SetJustifyH("CENTER")
+arrow.Lines:SetMaxLines(3)
+
+local function drawPointer(angle)
+	arrow.Pointer:SetRotation(angle)
+	arrow.Pointer:ClearAllPoints()
+	arrow.Pointer:SetPoint("CENTER", arrow.Pin, "CENTER", -math.sin(angle) * RADIUS, math.cos(angle) * RADIUS)
+end
 
 local function pointerArt()
-	if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo("Navigation-Tracked-Arrow") then
-		arrow.Pointer:SetAtlas("Navigation-Tracked-Arrow")
+	if hasAtlas("Navigation-Tracked-Arrow") then
+		arrow.Pointer:SetAtlas("Navigation-Tracked-Arrow", true)
 	else
 		arrow.Pointer:SetTexture("Interface\\Minimap\\MinimapArrow")
+		arrow.Pointer:SetSize(32, 32)
 	end
-	Icons:Apply(arrow.Goal, "waypoint")
+	pinArt(arrow.Pin, 36)
+	drawPointer(0)
+end
+
+--- Whether the game draws its own marker for our pin in the world (then it leads and the arrow steps aside).
+local function gameMarkerShown()
+	if not (C_Navigation and C_Navigation.GetFrame and C_Navigation.GetFrame()) then return false end
+	if not (GetCVarBool and GetCVarBool("showInGameNavigation")) then return false end
+	return C_SuperTrack and C_SuperTrack.IsSuperTrackingUserWaypoint and C_SuperTrack.IsSuperTrackingUserWaypoint() or false
 end
 
 -- The compass ----------------------------------------------------------------------------------------------------
+--
+-- A thin ribbon of parchment ticks with N, E, S and W, no panel: half a turn across its width, east to the right,
+-- the ticks fading away towards both ends so it floats in the world. Straight ahead is a small gold mark; the pin
+-- is the gold map pin with its distance under it.
 
-local FOV = pi -- the strip spans half a turn: 90 degrees either side of where the player faces
-local TICK_STEP = pi / 12 -- 15 degrees
-local FADE_PIXELS = 70
+local FOV = pi
+local FADE_PIXELS = 80
+local HEIGHT = 60
 
 local compass = CreateFrame("Frame", "BookFinderCompass", UIParent)
-compass:SetSize(420, 34)
-compass:SetFrameStrata("MEDIUM")
+compass:SetSize(360, HEIGHT)
+compass:SetFrameStrata("LOW")
 compass:SetClampedToScreen(true)
 compass:Hide()
 
@@ -107,49 +146,47 @@ compass.Band = compass:CreateTexture(nil, "BACKGROUND")
 compass.Band:SetAllPoints()
 compass.Band:SetColorTexture(0, 0, 0, 0.35)
 
-compass.Center = compass:CreateTexture(nil, "ARTWORK")
-compass.Center:SetColorTexture(1, 1, 1, 0.9)
-compass.Center:SetSize(2, 10)
-compass.Center:SetPoint("TOP", 0, 0)
+compass.Center = compass:CreateTexture(nil, "OVERLAY")
+compass.Center:SetSize(1, 6)
+compass.Center:SetPoint("TOP", compass, "TOP", 0, -3)
 
-compass.ticks, compass.letters = {}, {}
-local LETTERS = { [0] = "N", [6] = "W", [12] = "S", [18] = "E", [3] = "NW", [9] = "SW", [15] = "SE", [21] = "NE" }
+compass.ticks = {}
+local DIRECTIONS = { [0] = "N", [6] = "W", [12] = "S", [18] = "E" }
 for i = 0, 23 do
 	local t = compass:CreateTexture(nil, "ARTWORK")
+	t.major = i % 6 == 0
 	t:SetColorTexture(1, 1, 1, 1)
-	local major = i % 6 == 0
-	t:SetSize(major and 2 or 1, major and 10 or 6)
-	t.angle = i * TICK_STEP -- counter-clockwise from north, like the facing
-	compass.ticks[#compass.ticks + 1] = t
-	if LETTERS[i] then
-		local f = compass:CreateFontString(nil, "OVERLAY", major and "GameFontNormal" or "GameFontNormalSmall")
-		f:SetText(L[LETTERS[i]])
-		f.angle = t.angle
-		f.major = major
-		compass.letters[#compass.letters + 1] = f
+	t:SetSize(1, t.major and 5 or 3)
+	t.angle = i * TWO_PI / 24 -- counter-clockwise from north, like the facing
+	if DIRECTIONS[i] then
+		t.label = compass:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+		t.label:SetText(L[DIRECTIONS[i]])
+		t.label:SetPoint("TOP", t, "BOTTOM", 0, -1)
 	end
+	compass.ticks[#compass.ticks + 1] = t
 end
 
 compass.Goal = compass:CreateTexture(nil, "OVERLAY")
-compass.Goal:SetSize(16, 20)
 compass.Distance = compass:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+compass.Distance:SetPoint("TOP", compass.Goal, "BOTTOM", 0, -2)
 
 local function stripX(angleFromFacing, width)
 	-- Left of centre is counter-clockwise (positive), so it goes to negative x.
 	return -angleFromFacing / (FOV / 2) * (width / 2)
 end
 
+-- A smooth ramp at both ends instead of a cut: the ribbon has no edges of its own.
 local function fade(x, width)
-	local edge = width / 2 - abs(x)
-	if edge <= 0 then return 0 end
-	return math.min(1, edge / FADE_PIXELS)
+	local edge = math.max(0, math.min(1, (width / 2 - abs(x)) / FADE_PIXELS))
+	return edge * edge
 end
 
 -- Following ------------------------------------------------------------------------------------------------------
 
 local state = {
-	angle = nil,      -- the arrow's drawn bearing (relative), easing toward the true one
-	arrived = false,  -- in the pin's area: the gold pin shows
+	angle = nil,      -- the drawn bearing (relative to facing), easing toward the true one
+	behind = false,   -- the pin behind the player (with some give, so it doesn't flicker at the edge)
+	arrived = false,  -- in the pin's area: the gold pin shows with what to do there
 	arrivedAt = nil,  -- where the player arrived (the pin, kept after the game's pin is cleared)
 	moving = false,   -- the move mode (settings): shown without a pin, taking the mouse
 }
@@ -159,18 +196,10 @@ local function objectiveLines(waypoint)
 	if waypoint and waypoint.quest and BF.Log:Has(waypoint.quest) then
 		for _, o in ipairs(BF.Objectives:For(waypoint.quest)) do
 			if not o.finished and o.text and o.text ~= "" and o.kind ~= "extra" then lines[#lines + 1] = o.text end
-			if #lines >= 4 then break end
+			if #lines >= 3 then break end
 		end
 	end
 	return table.concat(lines, "\n")
-end
-
-local function colourCompass(c, alpha)
-	for _, t in ipairs(compass.ticks) do t:SetVertexColor(c[1], c[2], c[3]) end
-	for _, f in ipairs(compass.letters) do
-		if f.major then f:SetTextColor(GOLD[1], GOLD[2], GOLD[3]) else f:SetTextColor(c[1], c[2], c[3]) end
-	end
-	compass:SetAlpha(alpha)
 end
 
 local function hideAll()
@@ -183,7 +212,7 @@ end
 local function update(elapsed)
 	local waypoint = state.arrivedAt or BF.Waypoint:Get()
 	if not waypoint then
-		state.arrived, state.angle = false, nil
+		state.arrived, state.angle, state.behind = false, nil, false
 		return hideAll()
 	end
 	local yards, bearing = Zones:DistanceTo(waypoint.map, waypoint.x, waypoint.y)
@@ -206,29 +235,31 @@ local function update(elapsed)
 
 	local relative = shortestTurn(facing, bearing) -- positive: the pin is to the left (counter-clockwise)
 	if state.angle == nil then state.angle = relative end
-	state.angle = state.angle + shortestTurn(state.angle, relative) * (1 - exp(-(elapsed or 0.05) * 10))
-	local behind = abs(relative) > FOV / 2
+	local delta = shortestTurn(state.angle, relative)
+	state.angle = (state.angle + delta * (1 - exp(-EASE * (elapsed or 0)))) % TWO_PI
+	if state.angle > pi then state.angle = state.angle - TWO_PI end
+	if state.behind then state.behind = abs(relative) > BEHIND_UNTIL else state.behind = abs(relative) > BEHIND_FROM end
+	local dim = state.behind and not state.arrived and BEHIND_ALPHA or 1
 
-	-- The arrow
-	if BF:Get("guide.arrow") then
+	-- The arrow (stepping aside while the game's own marker leads)
+	if BF:Get("guide.arrow") and (state.arrived or not gameMarkerShown()) then
 		arrow:SetScale(BF:Get("guide.arrowScale"))
+		arrow.Pin:Show()
 		if state.arrived then
 			arrow.Pointer:Hide()
-			arrow.Goal:Show()
-			arrow.Distance:SetText("")
-			arrow.Title:SetText(waypoint.title or "")
+			arrow.Distance:SetText(waypoint.title or "")
+			arrow.Title:SetText("")
 			arrow.Lines:SetText(objectiveLines(waypoint))
 		else
-			arrow.Goal:Hide()
 			arrow.Pointer:Show()
-			arrow.Pointer:SetRotation(state.angle)
+			drawPointer(state.angle)
 			arrow.Distance:SetText(distanceText(yards))
 			arrow.Title:SetText(waypoint.title or "")
-			arrow.Lines:SetText("")
+			arrow.Lines:SetText(objectiveLines(waypoint))
 		end
-		arrow:SetAlpha(behind and not state.arrived and 0.55 or 1)
+		arrow:SetAlpha(dim)
 		arrow:Show()
-	else
+	elseif not state.moving then
 		arrow:Hide()
 	end
 
@@ -237,36 +268,34 @@ local function update(elapsed)
 		local width = BF:Get("guide.compassWidth")
 		compass:SetWidth(width)
 		compass:SetScale(BF:Get("guide.compassScale"))
-		compass.Band:SetShown(BF:Get("guide.compassBand"))
+		compass.Band:SetShown(BF:Get("guide.compassBand") or state.moving)
+		local tc = state.arrived and TICK_ARRIVED or TICK
 		for _, t in ipairs(compass.ticks) do
 			local x = stripX(shortestTurn(facing, t.angle), width)
-			local a = fade(x, width)
+			local a = fade(x, width) * (t.major and 0.85 or 0.5)
 			t:SetShown(a > 0)
 			t:ClearAllPoints()
-			t:SetPoint("TOP", compass, "TOP", x, -2)
+			t:SetPoint("TOP", compass, "TOP", x, -6)
+			t:SetVertexColor(tc[1], tc[2], tc[3], 1)
 			t:SetAlpha(a)
+			if t.label then
+				t.label:SetShown(a > 0)
+				t.label:SetAlpha(a)
+			end
 		end
-		for _, f in ipairs(compass.letters) do
-			local x = stripX(shortestTurn(facing, f.angle), width)
-			local a = fade(x, width)
-			f:SetShown(a > 0)
-			f:ClearAllPoints()
-			f:SetPoint("TOP", compass, "TOP", x, -13)
-			f:SetAlpha(a)
-		end
+		local cc = state.arrived and CENTER_ARRIVED or CENTER
+		compass.Center:SetColorTexture(cc[1], cc[2], cc[3], cc[4])
 		local gx = stripX(state.angle, width)
-		local edge = width / 2 - 10
+		local edge = width / 2
 		if gx > edge then gx = edge elseif gx < -edge then gx = -edge end
-		Icons:Apply(compass.Goal, "waypoint")
+		pinArt(compass.Goal, 18)
 		compass.Goal:ClearAllPoints()
-		compass.Goal:SetPoint("BOTTOM", compass, "TOP", gx, -14)
-		compass.Distance:ClearAllPoints()
-		compass.Distance:SetPoint("TOP", compass.Goal, "BOTTOM", 0, -16)
+		compass.Goal:SetPoint("CENTER", compass, "CENTER", gx, -6)
+		compass.Goal:SetAlpha(dim)
 		compass.Distance:SetText(state.arrived and "" or distanceText(yards))
-		colourCompass(state.arrived and ARRIVED or PARCHMENT, behind and not state.arrived and 0.55 or 1)
-		compass.Goal:SetAlpha(behind and 0.6 or 1)
+		compass.Distance:SetAlpha(dim)
 		compass:Show()
-	else
+	elseif not state.moving then
 		compass:Hide()
 	end
 end
@@ -275,15 +304,15 @@ local driver = CreateFrame("Frame")
 local since = 0
 driver:SetScript("OnUpdate", function(_, elapsed)
 	since = since + elapsed
-	-- Every frame while there is a pin (the arrow eases); otherwise a slow look for one.
-	if not (arrow:IsShown() or compass:IsShown()) and since < 0.25 then return end
+	-- Every frame while something shows (it eases as you turn); otherwise a look for a pin a few times a second.
+	if not (arrow:IsShown() or compass:IsShown()) and since < 0.1 then return end
 	local dt = since
 	since = 0
 	update(dt)
 end)
 
 BF:Listen("BF_WAYPOINT_CHANGED", function(_, waypoint)
-	if waypoint then state.arrived, state.arrivedAt, state.angle = false, nil, nil end
+	if waypoint then state.arrived, state.arrivedAt, state.angle, state.behind = false, nil, nil, false end
 	update(0)
 end)
 
@@ -342,8 +371,9 @@ function Guide:ToggleMoving()
 		if state.moving then f:Show() end
 	end
 	if state.moving then
+		arrow.Pin:Show()
 		arrow.Pointer:Show()
-		arrow.Pointer:SetRotation(0)
+		drawPointer(0)
 		arrow.Distance:SetText(L["Drag to move"])
 		compass.Band:Show()
 		BF:Print(L["Drag the arrow and the compass where you like (the arrow keys move them by a pixel). Again to finish."])
@@ -354,7 +384,7 @@ end
 
 function Guide:ResetPlaces()
 	BF:AccountState("guide").arrow, BF:AccountState("guide").compass = nil, nil
-	savedPlace(arrow, "arrow", { "TOP", UIParent, "TOP", 0, -96 })
+	savedPlace(arrow, "arrow", { "TOP", UIParent, "TOP", 0, -120 })
 	savedPlace(compass, "compass", { "TOP", UIParent, "TOP", 0, -24 })
 end
 
@@ -362,7 +392,7 @@ BF:At("login", function()
 	pointerArt()
 	makeMovable(arrow, "arrow")
 	makeMovable(compass, "compass")
-	savedPlace(arrow, "arrow", { "TOP", UIParent, "TOP", 0, -96 })
+	savedPlace(arrow, "arrow", { "TOP", UIParent, "TOP", 0, -120 })
 	savedPlace(compass, "compass", { "TOP", UIParent, "TOP", 0, -24 })
 	BF:Listen("BF_SETTING_CHANGED", function(_, key) if key:find("^guide%.") then update(0) end end)
 end)
