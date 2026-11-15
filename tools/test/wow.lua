@@ -648,3 +648,4 @@ C_CVar = strict("C_CVar", { GetCVar = function(k) return World.cvars[k] end, Set
 World.units = {}
 UnitGUID = function(unit) if unit == "player" then return World.player.guid end return World.units[unit] end
 UnitExists = function(unit) return unit == "player" or World.units[unit] ~= nil end
+ObjectiveTrackerFrame = CreateFrame("Frame", "ObjectiveTrackerFrame", UIParent)
