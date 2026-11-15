@@ -12,6 +12,14 @@ BF.QuestList = List
 local Log, Rules = BF.Log, BF.Rules
 local ROW = 16
 
+-- The text sizes the list's settings choose (zone, quest, objective), in the font the row already has.
+local function sized(fs, object, key)
+	fs:SetFontObject(object)
+	local face, _, flags = fs:GetFont()
+	if face then fs:SetFont(face, BF:Get(key), flags) end
+end
+local function rowFor(key) return math.max(ROW, BF:Get(key) + 6) end
+
 local frame, scroll, content, header
 local rows, used = {}, 0
 local folded = {}  -- zones folded (per character)
@@ -247,7 +255,7 @@ local function fill()
 	local pad = BF:Get("list.padding")
 	for _, zone in ipairs(zones) do
 		local zr = row()
-		zr.Text:SetFontObject("GameFontNormal")
+		sized(zr.Text, "GameFontNormal", "list.fontSizeZone")
 		zr.Text:SetTextColor(0.8, 0.8, 0.8)
 		zr.Text:SetText(zone)
 		zr.Text:ClearAllPoints()
@@ -256,11 +264,11 @@ local function fill()
 		zr.Toggle:SetTexture(s.folded[zone] and "Interface\\Buttons\\UI-PlusButton-Up" or "Interface\\Buttons\\UI-MinusButton-Up")
 		zr.Toggle:Show()
 		zr:SetScript("OnClick", function() s.folded[zone] = not s.folded[zone] fill() end)
-		zr:SetHeight(ROW + 2)
+		zr:SetHeight(rowFor("list.fontSizeZone") + 2)
 		zr:ClearAllPoints()
 		zr:SetPoint("TOPLEFT", 0, -y)
 		zr:SetWidth(width)
-		y = y + ROW + 4
+		y = y + rowFor("list.fontSizeZone") + 4
 		if not s.folded[zone] then
 			local list = byZone[zone]
 			table.sort(list, function(a, b) return sortKey(a) < sortKey(b) end)
@@ -268,7 +276,7 @@ local function fill()
 				local complete, failed = Log:IsComplete(q.id), Log:IsFailed(q.id)
 				local qr = row()
 				qr.quest = q.id
-				qr.Text:SetFontObject("GameFontNormal")
+				sized(qr.Text, "GameFontNormal", "list.fontSizeQuest")
 				qr.Text:SetText(Rules:ColoredTitle(q.id, q.title, BF:Get("list.questLevel")))
 				qr.Text:ClearAllPoints()
 				qr.Text:SetPoint("LEFT", 40, 0)
@@ -300,7 +308,7 @@ local function fill()
 				end
 				local tracked = not C_QuestLog.GetQuestWatchType or C_QuestLog.GetQuestWatchType(q.id) ~= nil
 				if (focused and focused ~= q.id) or not tracked then qr:SetAlpha(0.5) end
-				qr:SetHeight(ROW)
+				qr:SetHeight(rowFor("list.fontSizeQuest"))
 				qr:ClearAllPoints()
 				qr:SetPoint("TOPLEFT", 0, -y)
 				qr:SetWidth(width)
@@ -316,11 +324,11 @@ local function fill()
 					b:SetPoint("TOPRIGHT", content, "TOPRIGHT", -4, -y - 1)
 					b:Show()
 				end
-				y = y + ROW
+				y = y + rowFor("list.fontSizeQuest")
 				local foldThis = (complete and BF:Get("list.collapseComplete")) or (s.foldedQuests and s.foldedQuests[q.id])
 				if complete then
 					local r = row()
-					r.Text:SetFontObject("GameFontHighlightSmall")
+					sized(r.Text, "GameFontHighlightSmall", "list.fontSizeObjective")
 					r.Text:SetText(L["Quest Complete!"])
 					r.Text:SetTextColor(0.3, 1, 0.3)
 					r.Text:ClearAllPoints()
@@ -328,10 +336,10 @@ local function fill()
 					r:ClearAllPoints()
 					r:SetPoint("TOPLEFT", 0, -y)
 					r:SetWidth(width)
-					y = y + ROW - 2
+					y = y + rowFor("list.fontSizeObjective") - 2
 				elseif failed then
 					local r = row()
-					r.Text:SetFontObject("GameFontHighlightSmall")
+					sized(r.Text, "GameFontHighlightSmall", "list.fontSizeObjective")
 					r.Text:SetText(L["Quest Failed!"])
 					r.Text:SetTextColor(1, 0.3, 0.3)
 					r.Text:ClearAllPoints()
@@ -339,13 +347,13 @@ local function fill()
 					r:ClearAllPoints()
 					r:SetPoint("TOPLEFT", 0, -y)
 					r:SetWidth(width)
-					y = y + ROW - 2
+					y = y + rowFor("list.fontSizeObjective") - 2
 				end
 				if not foldThis then
 					for _, o in ipairs(q.objectives) do
 						if not (o.finished and BF:Get("list.hideDoneObjectives")) and not (complete and BF:Get("list.hideCompletionText")) then
 							local r = row()
-							r.Text:SetFontObject("GameFontHighlightSmall")
+							sized(r.Text, "GameFontHighlightSmall", "list.fontSizeObjective")
 							r.Text:SetText(objectiveText(o.text))
 							r.Text:SetTextColor(objectiveColour(o))
 							r.Text:ClearAllPoints()
@@ -354,7 +362,7 @@ local function fill()
 							r:ClearAllPoints()
 							r:SetPoint("TOPLEFT", 0, -y)
 							r:SetWidth(width)
-							y = y + ROW - 2
+							y = y + rowFor("list.fontSizeObjective") - 2
 						end
 					end
 				end
@@ -436,6 +444,13 @@ BF:At("login", function()
 	BF:Listen("BF_QUEST_LOG_CHANGED", soon)
 	BF:Listen("BF_QUEST_PROGRESS", soon)
 	BF:Listen("BF_QUEST_LIST_CHANGED", soon)
+	-- Following the game's focused quest (the one its map pin and objective arrow point at): it is the list's focus.
+	BF:On("SUPER_TRACKING_CHANGED", function()
+		if not BF:Get("list.followSuperTrack") or not (C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID) then return end
+		local id = C_SuperTrack.GetSuperTrackedQuestID()
+		focused = id and id > 0 and Log:Has(id) and id or nil
+		soon()
+	end)
 	BF:On("QUEST_WATCH_LIST_CHANGED", soon)
 	BF:On("PLAYER_REGEN_ENABLED", soon)
 	BF:Listen("BF_SETTING_CHANGED", function(_, key)

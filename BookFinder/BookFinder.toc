@@ -48,6 +48,7 @@ Quests\HideTracker.lua
 Quests\List.lua
 Quests\Automation.lua
 Quests\Announce.lua
+Quests\FrameIcons.lua
 
 UI\Dropdown.lua
 UI\Widgets.lua
@@ -78,4 +79,5 @@ UI\Panel.lua
 UI\Pages.lua
 UI\JourneyPages.lua
 UI\MapButton.lua
+UI\MinimapButton.lua
 Core\Commands.lua
