@@ -1,4 +1,14 @@
 return {
+	["map button: on the map, a starred setting becomes a button beside it"] = function(BF)
+		Login()
+		BF.Panel:SetFavourite("books.map", true)
+		BF.Panel:SetFavourite("action:findMe", true)
+		BF.MapButton.Refresh()
+		BF.ShowMenu.Open(nil)
+		expect(BF.Dropdown:IsOpen(), "right-click's Show list opens")
+		equal(#World.errors, 0, "no errors")
+	end,
+
 	["panel: every setting has a place (or is a Show-menu-only switch)"] = function(BF)
 		Login()
 		local placed = BF.Panel:PlacedKeys()

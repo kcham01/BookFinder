@@ -100,8 +100,56 @@ local function switch(text, key, icon, extra)
 end
 
 local function townsfolkKind(kind)
-	return switch(kind.label, "townsfolk." .. kind.key, kind.icon)
+	local item = switch(kind.label, "townsfolk." .. kind.key, kind.icon)
+	-- Flight masters are one switch for both maps: BookFinder's (the minimap, Questie's icon) and OpenMap's.
+	if kind.key == "flightMaster" then
+		item.onClick = function(_, on)
+			BF:Set("townsfolk.flightMaster", on)
+			if BF.OpenMap and BF.OpenMap:Key("flight") then BF:Set("openmap.flight", on) end
+		end
+	end
+	return item
 end
+
+-- OpenMap's map items (Map/OpenMap.lua), each with OpenMap's own icon.
+local OPENMAP_ITEMS = {
+	{ "boats", { atlas = "Ships_CargoShip-Map", texture = "Interface\\Icons\\INV_Misc_Spyglass_02" } },
+	{ "zeppelins", { atlas = "vehicle-air-horde", texture = "Interface\\Vehicles\\SeatIndicator\\Vehicle-HordeZeppelin" } },
+	{ "routes", { atlas = "Ships_CargoShip-Map", texture = "Interface\\Icons\\INV_Misc_Spyglass_02" } },
+	{ "foundOnly", "Interface\\Icons\\INV_Misc_Spyglass_03" },
+	{ "playerArrow", "Interface\\Minimap\\MinimapArrow" },
+	{ "group", "Interface\\Icons\\Spell_Holy_PrayerOfFortitude" },
+	{ "friends", "Interface\\Icons\\INV_Misc_GroupNeedMore" },
+	{ "guild", "Interface\\Icons\\INV_Shirt_GuildTabard_01" },
+	{ "sketchShown", "Interface\\Icons\\INV_Feather_04" },
+	{ "allQuests", { atlas = "UI-QuestPoi-QuestNumber", texture = "Interface\\GossipFrame\\ActiveQuestIcon" } },
+	{ "hideWorldPinsInInstances", "Interface\\Icons\\INV_Misc_Map_01" },
+	{ "zoomHidePins", "Interface\\Icons\\Ability_Stealth" },
+}
+local OPENMAP_DUNGEONS = {
+	{ "icons", { atlas = "dungeon", texture = "Interface\\Icons\\INV_Misc_Key_13" } },
+	{ "dungeonMaps", "Interface\\Icons\\INV_Misc_Map_01" },
+	{ "dungeonMinimap", "Interface\\Icons\\Spell_Nature_FarSight" },
+	{ "dungeonLevels", "Interface\\Icons\\Spell_ChargePositive" },
+	{ "dungeonBosses", "Interface\\Icons\\INV_Misc_Bone_ElfSkull_01" },
+	{ "dungeonQuests", "Interface\\GossipFrame\\ActiveQuestIcon" },
+	{ "entranceClick", "Interface\\Icons\\INV_Misc_Book_09", journal = true },
+}
+
+local function openMapItems(list)
+	local items = {}
+	local OM = BF.OpenMap
+	if not (OM and OM:Present()) then return items end
+	for _, e in ipairs(list) do
+		local key = OM:Key(e[1])
+		if key and (not e.journal or OM.journal) then
+			local def = BF.Settings:Definition(key)
+			items[#items + 1] = switch(def.label, key, e[2])
+		end
+	end
+	return items
+end
+ShowMenu.OpenMapItems, ShowMenu.OPENMAP_ITEMS, ShowMenu.OPENMAP_DUNGEONS = openMapItems, OPENMAP_ITEMS, OPENMAP_DUNGEONS
 
 local function professionItems()
 	local items = {
@@ -167,7 +215,15 @@ function ShowMenu:Items()
 	for _, kind in ipairs(BF.Townsfolk.kinds) do
 		if kind.key == "stableMaster" or kind.key == "rare" then add(townsfolkKind(kind)) end
 	end
+	for _, i in ipairs(openMapItems(OPENMAP_ITEMS)) do add(i) end
 	add(switch("Library books", "books.map", "book"))
+	-- Dungeons, the one section.
+	local dungeons = openMapItems(OPENMAP_DUNGEONS)
+	if #dungeons > 0 then
+		add({ divider = true })
+		add({ text = L["Dungeons"], title = true })
+		for _, i in ipairs(dungeons) do add(i) end
+	end
 	for _, e in ipairs(extraItems) do
 		local item = type(e.item) == "function" and e.item() or e.item
 		if item then
@@ -201,21 +257,26 @@ local function findButton()
 	return nil
 end
 
-local function open()
+local function open(anchor)
+	if type(anchor) ~= "table" or not anchor.GetObjectType then anchor = nil end
 	local items = {}
-	local game = convert(describe(gameButton), 1)
+	local game = gameButton and convert(describe(gameButton), 1) or {}
 	if #game > 0 then
 		for _, i in ipairs(game) do items[#items + 1] = i end
 	else
 		-- The game's entries couldn't be read: its own menu, a click away, rather than lost.
-		items[1] = { text = L["Game map filters..."], onClick = function()
-			BF:After(0, function() if gameButton.OpenMenu then gameButton:OpenMenu() end end)
-		end }
+		if gameButton then
+			items[1] = { text = L["Game map filters..."], onClick = function()
+				BF:After(0, function() if gameButton.OpenMenu then gameButton:OpenMenu() end end)
+			end }
+		end
 	end
 	items[#items + 1] = { divider = true }
+	if #items == 1 then items = {} end   -- (no game entries: no divider above ours)
 	for _, i in ipairs(ShowMenu:Items()) do items[#items + 1] = i end
-	BF.Dropdown:Open(cover, items)
+	BF.Dropdown:Open(anchor or cover, items)
 end
+ShowMenu.Open = open
 
 local function install()
 	if cover then return true end
