@@ -103,11 +103,10 @@ return {
 		end
 	end,
 
-	["openmap: its own map button goes once, BookFinder's panel being the menu"] = function(BF)
+	["openmap: its own map and minimap buttons stay off, BookFinder's being the ones"] = function(BF)
 		Login()
 		equal(OpenMapDB.worldmap.mapButtons, false, "OpenMap's map button off")
-		BF:Set("openmap.mapButtons", true)
-		Fire("PLAYER_LOGIN")
-		equal(OpenMapDB.worldmap.mapButtons, true, "and left as the player sets it after")
+		equal(OpenMapDB.worldmap.minimapButton, false, "OpenMap's minimap button off")
+		expect(BF.Settings:Definition("openmap.mapButtons") == nil, "no switch for it on the panel")
 	end,
 }
