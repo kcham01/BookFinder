@@ -47,7 +47,7 @@ local function makeHead(i)
 	h.fold = h:CreateTexture(nil, "ARTWORK")
 	h.fold:SetSize(14, 14)
 	h.fold:SetPoint("LEFT", 2, 0)
-	h.text = h:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
+	h.text = h:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	h.text:SetPoint("LEFT", h.fold, "RIGHT", 4, 0)
 	h.count = h:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	h.count:SetPoint("RIGHT", -6, 0)
@@ -172,6 +172,7 @@ function Tab:Refresh()
 	for i = hi + 1, #heads do heads[i]:Hide() end
 	content:SetHeight(math.max(1, y))
 	footer.route:SetText(BF.BookRoute:IsOn() and L["Route: on"] or L["Optimized route"])
+	if Tab.LayoutFooter then Tab.LayoutFooter() end
 end
 
 local function footerButton(text, onClick)
@@ -248,21 +249,39 @@ local function buildPage(p)
 	footer.route = footerButton("Optimized route", function() BF.BookRoute:Toggle() end)
 	footer.settings = footerButton("Settings", function() BF.Panel:Open("books") end)
 	local buttons = { footer.show, footer.hide, footer.route, footer.settings }
-	footer:SetScript("OnSizeChanged", function(self, w)
-		local each = (w - 3 * 4) / 4
+	-- Each button as wide as its words need, the room left shared out evenly (one long label never spills over).
+	local function layoutFooter(w)
+		w = w or footer:GetWidth()
+		if not w or w <= 0 then return end
+		local gap, need = 4, {}
+		local total = gap * (#buttons - 1)
+		for i, b in ipairs(buttons) do
+			local fs = b:GetFontString()
+			need[i] = math.ceil((fs and fs:GetStringWidth() or 60) + 16)
+			total = total + need[i]
+		end
+		local extra = math.max(0, (w - total) / #buttons)
+		local x = 0
 		for i, b in ipairs(buttons) do
 			b:ClearAllPoints()
-			b:SetWidth(each)
-			b:SetPoint("LEFT", (i - 1) * (each + 4), 0)
+			b:SetWidth(need[i] + extra)
+			b:SetPoint("LEFT", x, 0)
+			x = x + need[i] + extra + gap
 		end
-	end)
+	end
+	Tab.LayoutFooter = layoutFooter
+	footer:SetScript("OnSizeChanged", function(_, w) layoutFooter(w) end)
 
 	scroll, content = W:Scroll(page)
 	scroll:SetPoint("TOPLEFT", 8, -66)
 	scroll:SetPoint("BOTTOMRIGHT", -26, 34)
 	content:SetWidth(200)
 	scroll:SetScript("OnSizeChanged", function(self, w) content:SetWidth(w) Tab:Refresh() end)
-	page:SetScript("OnShow", function() placeNotches() Tab:Refresh() end)
+	page:SetScript("OnShow", function()
+		placeNotches()
+		scroll:SetVerticalScroll(0)   -- (opens at the top: the first set's heading in view)
+		Tab:Refresh()
+	end)
 	return page
 end
 
