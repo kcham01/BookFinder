@@ -666,3 +666,18 @@ C_Map.GetMapArtLayers = function() return { { layerWidth = 1002, layerHeight = 6
 C_Map.GetMapArtLayerTextures = function(map) local t = {} for i = 1, 12 do t[i] = map * 100 + i end return t end
 C_MapExplorationInfo.GetExploredMapTextures = function() return {} end
 function WorldMapFrame:OnMapChanged() end
+QuestScrollFrame = CreateFrame("ScrollFrame", "QuestScrollFrame", WorldMapFrame)
+QuestScrollFrame.width = 300
+QuestMapFrame = CreateFrame("Frame", "QuestMapFrame", WorldMapFrame)
+QuestMapFrame.DetailsFrame = CreateFrame("Frame", nil, QuestMapFrame)
+GetQuestLogSpecialItemInfo = function(index) return World.questItems and World.questItems[index] end
+C_QuestLog.GetMaxNumQuestsCanAccept = function() return 20 end
+ChatFrame_AddMessageEventFilter = function(e, fn) World.chatFilters = World.chatFilters or {} World.chatFilters[e] = fn end
+LinkUtil = { RegisterLinkHandler = function(kind, fn) World.linkHandlers = World.linkHandlers or {} World.linkHandlers[kind] = fn end }
+ItemRefTooltip = CreateFrame("GameTooltip", "ItemRefTooltip", UIParent)
+ItemRefTooltip.lines = {}
+function ItemRefTooltip:AddLine(t) self.lines[#self.lines + 1] = t end
+function ItemRefTooltip:AddDoubleLine(a, b) self.lines[#self.lines + 1] = tostring(a) .. " | " .. tostring(b) end
+function ItemRefTooltip:ClearLines() self.lines = {} end
+function ItemRefTooltip:SetOwner() self.lines = {} end
+GetQuestLink = function() return nil end
