@@ -682,7 +682,13 @@ local function build()
 	view:Hide()
 end
 
-local function active() return BF:Get("map.seamless") end
+-- OpenMap (shipped beside BookFinder) is the map when it is there: BookFinder's own steps aside.
+local function openMapThere()
+	return C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("OpenMap") or false
+end
+Seamless.OpenMapThere = openMapThere
+
+local function active() return BF:Get("map.seamless") and not openMapThere() end
 
 -- The game's map moved (its zone menu, the quest log, another addon): the view flies there, unless it was us.
 local function onGameMap()
