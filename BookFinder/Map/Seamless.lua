@@ -136,7 +136,7 @@ local function buildArt(entry, sub)
 				local wPix = (col < cols) and layer.tileWidth or (layer.layerWidth - layer.tileWidth * (cols - 1))
 				local hPix = (row < rows) and layer.tileHeight or (layer.layerHeight - layer.tileHeight * (rows - 1))
 				t:SetTexCoord(0, wPix / layer.tileWidth, 0, hPix / layer.tileHeight)
-				t:SetSize(wPix * px, hPix * py)
+				t:SetSize(wPix * px + px, hPix * py + py) -- one art pixel over the next tile: no seam between tiles
 				t:SetPoint("TOPLEFT", surface, "TOPLEFT", entry.x0 * BASE + (col - 1) * layer.tileWidth * px,
 					-(entry.y0 * BASE * RATIO + (row - 1) * layer.tileHeight * py))
 				list[#list + 1] = t
@@ -169,7 +169,7 @@ local function buildExplored(entry, sub)
 					local t = newTexture("BORDER", sub)
 					t:SetTexture(file, "CLAMP", "CLAMP", "TRILINEAR")
 					t:SetTexCoord(0, wPix / nextPow2(wPix), 0, hPix / nextPow2(hPix))
-					t:SetSize(wPix * entry.pixelX, hPix * entry.pixelY)
+					t:SetSize(wPix * entry.pixelX + entry.pixelX, hPix * entry.pixelY + entry.pixelY)
 					t:SetPoint("TOPLEFT", surface, "TOPLEFT",
 						entry.x0 * BASE + (info.offsetX + 256 * (k - 1)) * entry.pixelX,
 						-(entry.y0 * BASE * RATIO + (info.offsetY + 256 * (j - 1)) * entry.pixelY))
@@ -216,7 +216,14 @@ local function alphaFor(entry)
 	local w = screenWidth(entry)
 	local vw = view:GetWidth()
 	if entry.type == Enum.UIMapType.Continent then
-		return max(0, min(1, (w - vw * 1.25) / (vw * 0.5)))
+		-- Only once the whole view lies inside the continent's picture: its painted frame never shows.
+		local vh = view:GetHeight()
+		local sc = scaleNow()
+		local halfU, halfV = (vw / 2) / (sc * BASE), (vh / 2) / (sc * BASE * RATIO)
+		local inside = min(state.u - halfU - entry.x0, entry.x1 - (state.u + halfU),
+			state.v - halfV - entry.y0, entry.y1 - (state.v + halfV))
+		-- (a margin of a twentieth of the view to fade across)
+		return max(0, min(1, inside / (halfU * 0.1) + 1)) * max(0, min(1, (w - vw) / (vw * 0.3)))
 	end
 	if hasPieces(entry) then
 		return max(0, min(1, (w - 120) / 120))
@@ -251,6 +258,16 @@ local function updateArt()
 		if a then
 			setShown(a.base, visible, alpha)
 			setShown(a.explored, visible, alpha)
+			-- Close in, a continent's picture is the land not explored yet: greyed and dimmed, so the explored land
+			-- reads in full colour against it (and its big lettering fades away).
+			if entry.type == Enum.UIMapType.Continent and visible then
+				local close = max(0, min(1, (screenWidth(entry) / view:GetWidth() - 2.5) / 2.5))
+				local shade = 1 - 0.45 * close
+				for _, t in ipairs(a.base) do
+					if t.SetDesaturation then t:SetDesaturation(0.6 * close) end
+					t:SetVertexColor(shade, shade * 0.97, shade * 0.92)
+				end
+			end
 		end
 	end
 end
@@ -441,10 +458,15 @@ end
 
 -- Moving the view ------------------------------------------------------------------------------------------------------
 
+-- The view never leaves the world: centred while the world is smaller than the view, its edges held at the view's
+-- edges once it is larger.
 local function clampTargets()
 	state.tzoom = max(1, min(BF:Get("map.deepestZoom"), state.tzoom))
-	state.tu = max(0, min(1, state.tu))
-	state.tv = max(0, min(1, state.tv))
+	local w, h = view:GetSize()
+	local s = fitScale() * state.tzoom
+	local halfU, halfV = (w / 2) / (s * BASE), (h / 2) / (s * BASE * RATIO)
+	if halfU >= 0.5 then state.tu = 0.5 else state.tu = max(halfU, min(1 - halfU, state.tu)) end
+	if halfV >= 0.5 then state.tv = 0.5 else state.tv = max(halfV, min(1 - halfV, state.tv)) end
 end
 
 --- Glides to (u, v) at `zoom` (nil keeps it).
