@@ -661,3 +661,8 @@ UnitExists = function(unit) return unit == "player" or World.units[unit] ~= nil 
 ObjectiveTrackerFrame = CreateFrame("Frame", "ObjectiveTrackerFrame", UIParent)
 WorldMapFrame.ScrollContainer = CreateFrame("Frame", nil, WorldMapFrame)
 function WorldMapFrame.ScrollContainer:GetNormalizedCursorPosition() return World.cursorX or 0.5, World.cursorY or 0.5 end
+-- Map art (Azeroth 947: 4x3 tiles of 256; any other map 4x3 too).
+C_Map.GetMapArtLayers = function() return { { layerWidth = 1002, layerHeight = 668, tileWidth = 256, tileHeight = 256 } } end
+C_Map.GetMapArtLayerTextures = function(map) local t = {} for i = 1, 12 do t[i] = map * 100 + i end return t end
+C_MapExplorationInfo.GetExploredMapTextures = function() return {} end
+function WorldMapFrame:OnMapChanged() end
