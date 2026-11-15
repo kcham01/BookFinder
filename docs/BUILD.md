@@ -188,3 +188,31 @@ See the log. Current phase is the first unchecked one.
   zone in view after 0.35 s rest; our pins + books + arrow + coords on an overlay at constant size.
   **Not yet**: minimap detail up close (no API lists minimap tiles), unexplored areas shown, other addons' pins on
   the seamless view (they are on the game's canvas underneath), party/friends, dungeons, boats, flight paths, quill.
+- **The owner's document, in full** (all of it):
+  - `Map/OpenMap.lua`: every OpenMap setting is a BookFinder setting `openmap.<key>` with `spec.external = {get, set}`
+    (new in `Core/Settings.lua`: kept by someone else, never in our profiles). Read/written through OpenMap's own
+    AceConfig table (`LibStub("AceConfigRegistry-3.0"):GetOptionsTable("OpenMap", "dialog", ...)`, info built like
+    AceConfig's: `{key, type=, option=, options=, [0]="OpenMap"}`), so OpenMap's setters (SetDungeonMaps, SetMaxZoom,
+    ApplyExtras...) still run. Keys its table lacks (tabRail, unexploredOwn) go straight to `OpenMapDB.worldmap` /
+    `OpenMapCharDB.worldmap`, then `autoSwitch` is set to itself to make it Refresh. Slider ranges and select values
+    are adopted from its table at login. `## OptionalDeps: OpenMap` so it loads first. OpenMap's own map and minimap
+    buttons are turned off once (state `openmap.buttonHidden`); `UI/MapButton.lua` is BookFinder's map button (panel;
+    right-click: Show list) with starred favourites beside it; OpenMap's actions (Pins, Quill, Map notes, What's new)
+    are panel tiles run through `SlashCmdList.OPENMAP`.
+  - Show dropdown (`Map/ShowMenu.lua`): OpenMap's map items flat, Dungeons the only section; Flight Master is one
+    switch for both (BookFinder's flight-master pins step off the world map while OpenMap draws its own).
+  - Panel OpenMap tab: pages' sliders/choices/colours/buttons may be functions (`Panel.List`); OpenMap's settings
+    replace BookFinder's own-map ones (seamless, deepest zoom, coordinates, Ctrl-click) when OpenMap is there.
+  - `Books/Tab.lua`: the Books tab under the quest log's side tabs. Not added to QuestMapFrame.TabButtons /
+    ContentFrames (taint); `SetDisplayMode("BookFinderBooks")` + a hook shows ours and the game hides its own.
+    Unverified in game: whether Forever's QuestMapFrame has SetDisplayMode and QuestLogTabButtonTemplate (fallbacks
+    in place).
+- Settings that had no code are now built: automation (`Quests/Automation.lua`), announcements in Questie's words and
+  marker (`Quests/Announce.lua`), patrol paths (`Map/Paths.lua`, lines on a frame over the canvas, thickness divided
+  by the canvas scale; minimap lines inside the circle only), minimap coordinates and coordinate decimals, tracker
+  text sizes, follow the focused quest, spell IDs, quest icons in gossip (`Quests/FrameIcons.lua`, hooks the gossip
+  buttons' mixins' Setup), merging nearby spawns, a minimap button (`UI/MinimapButton.lua`, + the AddOns compartment).
+- **Still missing** (honest list): Questie's party protocol (questie / QuestieV1) and so party members' objectives
+  (`party.objectives`); the DBM HUD (`dbm.*`); the tracker's voice-over buttons (`list.playButtons`, needs the
+  VoiceOver addon's API); a dungeon-card quest section for OpenMap without Questie (OpenMapAPI.RegisterDungeonSection).
+  Test harness: a test file may set `before = fn` (other addons loaded ahead of BookFinder); chat filters chain.

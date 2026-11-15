@@ -43,10 +43,11 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
 - The repository holds no other addon's code, and none of the owner's review files, anywhere in its history: GitHub's
   history was rewritten (every branch; `main` matches this branch). Copies survive only behind the old pull requests
   #1 to #12; removing those needs the repository recreated.
-- **Study (first pass done)**: `docs/study/` holds, per addon, how it works from a player's side (in our words):
-  `books-on-map.md` (2.3.0), `openmap.md` (v0.8.9), `questie.md` (12.9.0 with QuestieDB 1.1.1), each ending with the
-  protocols BookFinder must speak. Waiting on the owner's review.
-- **Then**: the owner checks the study against their notes; then the build starts, from scratch.
+- **Study done** (`docs/study/`: books-on-map.md, openmap.md, questie.md, arrow-and-compass.md).
+- **Build under way** (3.0.0-dev): the document's three items are built (Show list with OpenMap's items, OpenMap's
+  settings on BookFinder's panel, the Books tab), plus quests, tooltips, nameplates, tracker, Journey, books,
+  automation, announcements, patrol paths. What is still missing is listed at the end of `docs/BUILD.md`'s log.
+  Nothing counts as working in game until the owner says so.
 - Newest reference versions (kept outside the repository): Questie 12.9.0, QuestieDB 1.1.1, Books on map 2.3.0,
   OpenMap v0.8.9 (https://github.com/openmap-world/openmap). QuestieTrace: ignored.
 
