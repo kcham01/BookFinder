@@ -101,13 +101,6 @@ end
 
 local function townsfolkKind(kind)
 	local item = switch(kind.label, "townsfolk." .. kind.key, kind.icon)
-	-- Flight masters are one switch for both maps: BookFinder's (the minimap, Questie's icon) and OpenMap's.
-	if kind.key == "flightMaster" then
-		item.onClick = function(_, on)
-			BF:Set("townsfolk.flightMaster", on)
-			if BF.OpenMap and BF.OpenMap:Key("flight") then BF:Set("openmap.flight", on) end
-		end
-	end
 	return item
 end
 
@@ -122,7 +115,6 @@ local OPENMAP_ITEMS = {
 	{ "friends", "Interface\\Icons\\INV_Misc_GroupNeedMore" },
 	{ "guild", "Interface\\Icons\\INV_Shirt_GuildTabard_01" },
 	{ "sketchShown", "Interface\\Icons\\INV_Feather_04" },
-	{ "allQuests", { atlas = "UI-QuestPoi-QuestNumber", texture = "Interface\\GossipFrame\\ActiveQuestIcon" } },
 	{ "hideWorldPinsInInstances", "Interface\\Icons\\INV_Misc_Map_01" },
 	{ "zoomHidePins", "Interface\\Icons\\Ability_Stealth" },
 }

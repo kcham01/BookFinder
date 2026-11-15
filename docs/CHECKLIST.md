@@ -31,5 +31,7 @@ bar), then better.** A line is ticked only when it is built AND checked against 
 - [ ] Automation, announcements, sounds, chat links, error catcher.
 - [ ] Questie-style dropdowns everywhere.
 - [ ] Nothing lines up badly: every page's content inside its frame's art, nothing overlapping or clipped.
+- [ ] No duplicates: where Questie and OpenMap both do a thing, Questie's only (OpenMap's off, no switch).
+- [ ] Minimap button follows the minimap's shape (SexyMap and others).
 - [ ] Nothing overwhelming: party objectives clustered and faint, no carpets of icons.
 - [ ] Every feature of Questie, OpenMap and Books on map present (`docs/study/`), none lost from 2.0.

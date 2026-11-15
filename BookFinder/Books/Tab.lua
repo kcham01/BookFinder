@@ -179,6 +179,11 @@ local function footerButton(text, onClick)
 	local b = CreateFrame("Button", nil, footer, "UIPanelButtonTemplate")
 	b:SetText(L[text])
 	b:SetHeight(22)
+	if b.SetNormalFontObject then
+		b:SetNormalFontObject("GameFontNormalSmall")
+		b:SetHighlightFontObject("GameFontHighlightSmall")
+		if b.SetDisabledFontObject then b:SetDisabledFontObject("GameFontDisableSmall") end
+	end
 	b:SetScript("OnClick", function() onClick() Tab:Refresh() end)
 	return b
 end
@@ -233,8 +238,8 @@ local function buildPage(p)
 	bar:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 	footer = CreateFrame("Frame", nil, page)
-	footer:SetPoint("BOTTOMLEFT", 14, 18)
-	footer:SetPoint("BOTTOMRIGHT", -18, 18)
+	footer:SetPoint("BOTTOMLEFT", 14, 18)   -- (the rows' icons' left edge)
+	footer:SetPoint("BOTTOMRIGHT", -30, 18)  -- (the scroll bar's right edge)
 	footer:SetHeight(24)
 	footer.show = footerButton("Show all", function()
 		for _, b in ipairs(Books.list) do if Books:How(b) == "ticked" then BF:CharacterState("books").ticked[b.key] = nil end end
@@ -259,6 +264,12 @@ local function buildPage(p)
 			local fs = b:GetFontString()
 			need[i] = math.ceil((fs and fs:GetStringWidth() or 60) + 16)
 			total = total + need[i]
+		end
+		-- More words than room: every button narrower by the same share (they never run past the list's edges).
+		if total > w then
+			local k = (w - gap * (#buttons - 1)) / (total - gap * (#buttons - 1))
+			for i = 1, #buttons do need[i] = math.floor(need[i] * k) end
+			total = w
 		end
 		local extra = math.max(0, (w - total) / #buttons)
 		local x = 0
