@@ -67,6 +67,7 @@ Books\Books.lua
 Books\Map.lua
 Books\Route.lua
 Books\Alerts.lua
+Books\Tab.lua
 Map\ShowMenu.lua
 
 UI\MapActions.lua
