@@ -213,7 +213,9 @@ local function fill()
 	end
 	local s = state()
 	s.folded = s.folded or {}
-	local width = content:GetWidth()
+	-- Measured now (at login the map window had no size yet: every row came out 0 wide).
+	local width = math.max(160, (scroll:GetWidth() or 0) - 4)
+	content:SetWidth(width)
 	local y = 0
 	local quests = {}
 	-- Every quest in the log (this is the Quests tab: the log itself); untracked ones dimmed.

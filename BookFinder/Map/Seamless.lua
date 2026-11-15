@@ -23,7 +23,7 @@ local exp, floor, max, min, abs = math.exp, math.floor, math.max, math.min, math
 
 local S = BF.Settings
 S:Define("map.seamless", { default = true, page = "Map/Look", label = "Seamless world map" })
-S:Define("map.deepestZoom", { default = 60, min = 10, max = 200, step = 5, page = "Map/Look", label = "Deepest zoom" })
+S:Define("map.deepestZoom", { default = 30, min = 10, max = 120, step = 5, page = "Map/Look", label = "Deepest zoom" })
 S:Define("map.smooth", { default = true, page = "Map/Look", label = "Smooth zoom and pan" })
 
 -- Geometry -----------------------------------------------------------------------------------------------------------
@@ -199,19 +199,52 @@ local function inView(entry)
 	return entry.x1 >= state.u - halfU and entry.x0 <= state.u + halfU and entry.y1 >= state.v - halfV and entry.y0 <= state.v + halfV
 end
 
-local FADE_FROM = { [Enum.UIMapType.Continent] = 380, [Enum.UIMapType.Zone] = 160, [Enum.UIMapType.Micro or 5] = 220 }
-local FADE_SPAN = 140
+-- What each map draws, so the world reads as one: the world's own picture always; a continent's picture once the
+-- continent is wider than the view (its painted frame then lies off-screen); a zone only its explored land, the pieces
+-- the game cuts to the land's shape (they blend into each other and into the continent, no frames, no rectangles);
+-- a map with no such pieces (a city) its own picture once it fills most of the view.
+local function hasPieces(entry)
+	if entry.pieces == nil then
+		local list = C_MapExplorationInfo and C_MapExplorationInfo.GetExploredMapTextures and C_MapExplorationInfo.GetExploredMapTextures(entry.id)
+		entry.pieces = (list and #list > 0) or false
+	end
+	return entry.pieces
+end
+
+local function alphaFor(entry)
+	if entry.id == AZEROTH then return 1 end
+	local w = screenWidth(entry)
+	local vw = view:GetWidth()
+	if entry.type == Enum.UIMapType.Continent then
+		return max(0, min(1, (w - vw * 1.25) / (vw * 0.5)))
+	end
+	if hasPieces(entry) then
+		return max(0, min(1, (w - 120) / 120))
+	end
+	return max(0, min(1, (w - vw * 0.8) / (vw * 0.4)))
+end
 
 local function updateArt()
 	for _, entry in ipairs(maps) do
 		local a = artByMap[entry.id]
-		local from = entry.id == AZEROTH and -1 or (FADE_FROM[entry.type] or 260)
-		local alpha = entry.id == AZEROTH and 1 or max(0, min(1, (screenWidth(entry) - from) / FADE_SPAN))
+		local alpha = alphaFor(entry)
 		local visible = alpha > 0 and inView(entry)
 		if visible and not a then
 			-- Sublayers keep the order: world, continents, zones, cities.
 			local sub = min(7, -8 + entry.depth * 3)
-			a = { base = buildArt(entry, sub) }
+			local piecesOnly = entry.type >= Enum.UIMapType.Zone and hasPieces(entry)
+			a = { base = {} }
+			if piecesOnly then
+				-- Pieces are placed in the base picture's pixels: its size only.
+				local layers = C_Map.GetMapArtLayers and C_Map.GetMapArtLayers(entry.id)
+				local layer = layers and layers[1]
+				if layer then
+					entry.pixelX = (entry.x1 - entry.x0) * BASE / layer.layerWidth
+					entry.pixelY = (entry.y1 - entry.y0) * BASE * RATIO / layer.layerHeight
+				end
+			else
+				a.base = buildArt(entry, sub)
+			end
 			a.explored = buildExplored(entry, min(7, sub + 1))
 			artByMap[entry.id] = a
 		end
@@ -402,8 +435,7 @@ local function updateCoords()
 		local e, x, y = mapAt(cursorUV())
 		if e then parts[#parts + 1] = ("%s: %s %s"):format(L["Cursor"], BF.Zones:MapName(e.id) or "", BF.Zones:FormatCoords(x, y)) end
 	end
-	local map, x, y = BF.Zones:PlayerPosition()
-	if map then parts[#parts + 1] = ("%s: %s"):format(L["Player"], BF.Zones:FormatCoords(x, y)) end
+	-- (the player's own coordinates: the game shows them on this map already)
 	coordText:SetText(table.concat(parts, "    "))
 end
 
@@ -621,7 +653,7 @@ local function build()
 	arrow.tex:SetTexture("Interface\\Minimap\\MinimapArrow")
 
 	coordText = overlay:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	coordText:SetPoint("BOTTOMLEFT", view, "BOTTOMLEFT", 10, 8)
+	coordText:SetPoint("BOTTOMRIGHT", view, "BOTTOMRIGHT", -48, 10)
 
 	collect()
 	place()
