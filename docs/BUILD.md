@@ -212,8 +212,7 @@ See the log. Current phase is the first unchecked one.
   by the canvas scale; minimap lines inside the circle only), minimap coordinates and coordinate decimals, tracker
   text sizes, follow the focused quest, spell IDs, quest icons in gossip (`Quests/FrameIcons.lua`, hooks the gossip
   buttons' mixins' Setup), merging nearby spawns, a minimap button (`UI/MinimapButton.lua`, + the AddOns compartment).
-- **Still missing** (honest list): Questie's party protocol (questie / QuestieV1) and so party members' objectives
-  (`party.objectives`); the DBM HUD (`dbm.*`); the tracker's voice-over buttons (`list.playButtons`, needs the
+- **Still missing** (honest list): Questie's yelled progress (13) and QuestieV1; the DBM HUD (`dbm.*`); the tracker's voice-over buttons (`list.playButtons`, needs the
   VoiceOver addon's API); a dungeon-card quest section for OpenMap without Questie (OpenMapAPI.RegisterDungeonSection).
   Test harness: a test file may set `before = fn` (other addons loaded ahead of BookFinder); chat filters chain.
 - **One addon** (owner: "it's still all supposed to be one addon"): `tools/package.sh` now folds OpenMap into
@@ -234,3 +233,12 @@ See the log. Current phase is the first unchecked one.
 - **BookFinder's own map removed** (`Map/Seamless.lua`, coords.map): the owner's "map still broken the same way" was it
   (continent art greyed and stretched under zones). OpenMap is the only map. If the map is ever Blizzard's plain one,
   OpenMap failed to load: ask for `/bf errors`.
+- **Questie party sharing** (`Quests/Party.lua`): BookFinder speaks Questie's "questie" prefix: its "1short" byte
+  encoding, typed values with djb2 string hashes, the common \001/\002/\003/\004 chunking; packets 1 (quest update),
+  2 (removed), 10 (whole log, ~200-byte blocks every 3 s), 11 (request: answered by whisper), 12 and 14 (Questie's
+  packed form; Questie answers our request with 12 because our `ver` "6.0.0" has major > 5). Checked offline against
+  Questie 12.9.0's own serializer (run in the scratchpad only, never committed): six packets byte-identical, each side
+  reads the other's. Theirs show in our NPC/object/item tooltips ("Name: 3/10 X") and, for quests not in our log, on
+  the map (party layer, role "objective" with `party = name`; up to 5-player groups). Settings: party.share,
+  party.objectives. Not spoken yet: 13 (yelled progress to nearby players, "b89" encoding) and QuestieV1 (which
+  objectives a member hides). Untested in game: needs two players, one with Questie.

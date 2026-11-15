@@ -159,13 +159,13 @@ local function addPin(pin, shift, seen)
 	end
 
 	for _, r in ipairs(objectives) do
-		local key = "o" .. r.quest .. tostring(r.objective and (r.objective.index or r.objective.name))
+		local key = "o" .. r.quest .. tostring(r.party or "") .. tostring(r.objective and (r.objective.index or r.objective.name))
 		if not seen[key] then
 			seen[key] = true
 			if not seen["t" .. r.quest] then
 				seen["t" .. r.quest] = true
 				line(" ")
-				double(plainTitle(r.quest), "(" .. L["Active"] .. ")", WHITE, YELLOW)
+				double(plainTitle(r.quest), "(" .. (r.party and L["Party"] or L["Active"]) .. ")", WHITE, YELLOW)
 			end
 			local rec = r.objective or {}
 			local names = {}

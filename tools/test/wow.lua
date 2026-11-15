@@ -317,6 +317,12 @@ UnitAffectingCombat = function() return false end
 InCombatLockdown = function() return false end
 IsInGroup = function() return false end
 IsInRaid = function() return false end
+UnitInBattleground = function() return nil end
+UnitInParty = function() return nil end
+UnitInRaid = function() return nil end
+GetUnitName = function(unit) if unit == "player" then return World.player.name end end
+Ambiguate = function(name) return name end
+LE_PARTY_CATEGORY_INSTANCE = 2
 IsInInstance = function() return false, "none" end
 GetNumGroupMembers = function() return 0 end
 GetRealmName = function() return World.player.realm end
