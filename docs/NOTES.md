@@ -196,6 +196,11 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   screen** (as decided back in 1.7.0); BookFinder's own map (the greyed, pixelated half in the screenshot) is
   **removed**: OpenMap's is the only map. (Not word for word: you said you never asked for that.)
 
+- **"I want BookFinder's own code with nothing lost, nothing looking cheap, every feature and everything I've asked
+  for. If you have to do a bit of both, do a bit of both."** 2.0 (the original addons' code) is the quality bar; the
+  originals are the starting points to match line for line in look and behaviour, then improve. No more handing over
+  small pieces with long explanations: whole surfaces, finished, short notes.
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)

@@ -185,6 +185,7 @@ function BookFinderMapPinMixin:OnAcquired(pin, x, y, sourceMap)
 end
 
 function BookFinderMapPinMixin:OnReleased()
+	self.Icon:SetVertexColor(1, 1, 1, 1)
 	self.pin, self.sourceMap = nil, nil
 end
 
@@ -207,14 +208,43 @@ local function pinsUnderCursor(self)
 	return list
 end
 
+-- Hovering an objective lights every icon of the same quest's objectives in Questie's hover blue (givers and turn-ins
+-- keep their own colour), so its spread across the map shows at a glance.
+local tinted = {}
+local function questOf(pin)
+	local lead = Look:Lead(pin)
+	return lead and lead.role == "objective" and lead.quest or nil
+end
+
+local function tintQuest(self)
+	local quest = questOf(self.pin)
+	if not quest then return end
+	for other in self:GetMap():EnumeratePinsByTemplate(TEMPLATE) do
+		if other.pin and questOf(other.pin) == quest then
+			other.Icon:SetVertexColor(0.6, 1, 1, 1)
+			tinted[#tinted + 1] = other
+		end
+	end
+end
+
+local function untint()
+	for i = #tinted, 1, -1 do
+		local other = tinted[i]
+		if other.pin then other.Icon:SetVertexColor(1, 1, 1, 1) end
+		tinted[i] = nil
+	end
+end
+
 function BookFinderMapPinMixin:OnMouseEnter()
 	BF.PinTooltip:Show(self, pinsUnderCursor(self), false)
+	tintQuest(self)
 	local s = self.pin and self.pin.source
 	if BF.Paths and s and s.type == "npc" then BF.Paths:Highlight(s.id) end
 end
 
 function BookFinderMapPinMixin:OnMouseLeave()
 	BF.PinTooltip:Hide()
+	untint()
 	if BF.Paths then BF.Paths:Highlight(nil) end
 end
 
