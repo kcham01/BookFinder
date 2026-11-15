@@ -94,11 +94,23 @@ function Provider:RefreshAllData()
 	if not map then return end
 	local info = C_Map.GetMapInfo(map)
 	local continent = info and info.mapType and Enum.UIMapType and info.mapType <= Enum.UIMapType.Continent
+	local api = rawget(_G, "OpenMapAPI")
+	local stitched = api and api.IsStitched and api.IsStitched() and api.WorldFromMap and api.MapFromWorld
 	for _, book in ipairs(Books.list) do
 		local shows = BookMap:Shows(book)
 		if shows then
 			for _, place in ipairs(Books:Places(book)) do
-				local x, y = BF.Zones:Translate(place.map, place.x, place.y, map)
+				local x, y
+				if stitched then
+					-- On OpenMap's stitched map: through its API, onto the map underneath (past its edges too).
+					local u, v = api.WorldFromMap(place.map, place.x, place.y)
+					if u then x, y = api.MapFromWorld(map, u, v) end
+					if x and (x < -1 or x > 2 or y < -1 or y > 2) then x = nil end
+					if x then self:GetMap():AcquirePin(TEMPLATE, book, place, x, y, shows, false) end
+					x = nil
+				else
+					x, y = BF.Zones:Translate(place.map, place.x, place.y, map)
+				end
 				if x and x >= 0 and x <= 1 and y >= 0 and y <= 1 then
 					self:GetMap():AcquirePin(TEMPLATE, book, place, x, y, shows, continent)
 				end

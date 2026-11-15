@@ -100,6 +100,24 @@ function Provider:RefreshAllData()
 	local map = self:GetMap():GetMapID()
 	if not map then return end
 	if BF:Get("icons.hideOnContinents") and isContinentOrWider(map) then return end
+	-- On OpenMap's stitched map: every zone's marks, placed through its API on the map underneath (past its edges too,
+	-- where the stitched view shows beyond it).
+	local api = rawget(_G, "OpenMapAPI")
+	if api and api.IsStitched and api.IsStitched() and api.WorldFromMap and api.MapFromWorld then
+		local placed = 0
+		for source in pairs(Marks.byMap) do
+			for _, pin in ipairs(Marks:On(source)) do
+				local u, v = api.WorldFromMap(source, pin.x, pin.y)
+				local x, y
+				if u then x, y = api.MapFromWorld(map, u, v) end
+				if x and x > -1 and x < 2 and y > -1 and y < 2 then
+					self:GetMap():AcquirePin(TEMPLATE, pin, x, y, source)
+					placed = placed + 1
+				end
+			end
+		end
+		return
+	end
 	local hideUnexplored = BF:Get("icons.hideUnexplored")
 	local limit = BF:Get("icons.limitEnabled") and BF:Get("icons.limit") or math.huge
 	local placed = 0
@@ -195,6 +213,13 @@ WorldMap.Refresh = refresh
 BF:At("login", function()
 	if WorldMapFrame and WorldMapFrame.AddDataProvider then
 		WorldMapFrame:AddDataProvider(Provider)
+	end
+	-- OpenMap's stitched view moved: the marks of the zones now in view (a few times a second at most).
+	local api = rawget(_G, "OpenMapAPI")
+	if api and api.RegisterCallback then
+		local soon = BF:Debounce(0.15, refresh)
+		pcall(api.RegisterCallback, WorldMap, "OpenMap_ViewChanged", soon)
+		pcall(api.RegisterCallback, WorldMap, "OpenMap_StitchedChanged", soon)
 	end
 	BF:Listen("BF_MARKS_CHANGED", refresh)
 	BF:Listen("BF_SETTING_CHANGED", function(_, key)
