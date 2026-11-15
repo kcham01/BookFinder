@@ -24,6 +24,8 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
    built from the **game's own map art**, by BookFinder (not OpenMap's prepared textures). The books list is written
    by BookFinder (names and places are facts, checked in game). **Questie's icon files are shipped too**
    (`BookFinder/Media/Questie`, credited): the owner asked for Questie's icons used the way Questie uses them.
+   **The map is OpenMap's own** (owner, after the first map attempts: "use the stuff from the other addons"): OpenMap
+   v0.8.9 (MIT) is shipped beside BookFinder in the download, unchanged, by `tools/package.sh`; not committed here.
    **Improve on every feature**: the owner wants each part better than the original (the map better-looking than
    OpenMap's), not a copy.
 4. **Talk to the other addons**: a party member using Questie, OpenMap or Books on map must still share with

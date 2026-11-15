@@ -176,6 +176,11 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   clean icons on the minimap. So: BookFinder's quest list is on the screen, Questie's way (the earlier "nothing on
   screen" meant: not the game's tracker); the map's Quests tab keeps the game's own log.
 
+- **"OK dude, I guess use the stuff from the other addons. We're getting nowhere near what I've asked for in raging
+  detail."** (With a screenshot of BookFinder's own map: zones half-explored, unexplored land greyed.) Decision: the
+  map is OpenMap's own (MIT licence, credited), shipped beside BookFinder in the download as the `OpenMap` folder,
+  unchanged; BookFinder turns its own map off when OpenMap is there and puts its pins on OpenMap's map.
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)
