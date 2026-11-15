@@ -32,6 +32,8 @@ local savedVariables = { BookFinderDB = true, BookFinderCharDB = true, NineSlice
 setmetatable(_G, {
 	__index = function(_, k)
 		if savedVariables[k] then return nil end
+		-- BF_LENIENT: unknown globals read as nil, as in the client (for loading the packaged add-on, OpenMap and all)
+		if os.getenv("BF_LENIENT") then return nil end
 		error("WoW API stand-in missing: " .. tostring(k), 2)
 	end,
 })

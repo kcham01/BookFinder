@@ -682,9 +682,10 @@ local function build()
 	view:Hide()
 end
 
--- OpenMap (shipped beside BookFinder) is the map when it is there: BookFinder's own steps aside.
+-- OpenMap (folded into BookFinder's download) is the map when it is there: BookFinder's own steps aside.
 local function openMapThere()
-	return C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("OpenMap") or false
+	-- (inside BookFinder's download, folded into BookFinder: its API global says it is there)
+	return rawget(_G, "OpenMapAPI") ~= nil or (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("OpenMap")) or false
 end
 Seamless.OpenMapThere = openMapThere
 

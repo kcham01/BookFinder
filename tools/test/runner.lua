@@ -7,12 +7,32 @@
 
 local filter = arg[1]
 
+-- BF_ADDON_DIR: another copy of the add-on folder to load (the packaged one, OpenMap folded in: tools/package.sh).
+local ROOT = os.getenv("BF_ADDON_DIR") or "BookFinder"
+
+-- An XML file's <Script file=> and <Include file=> entries, in order, relative to the XML's own folder.
+local function xmlFiles(path, out)
+	local dir = path:match("^(.*)/[^/]*$") or "."
+	local f = io.open(path)
+	if not f then return end
+	local text = f:read("*a")
+	f:close()
+	text = text:gsub("<!%-%-.-%-%->", "")
+	for tag, file in text:gmatch("<(%a+)%s+file=\"([^\"]+)\"") do
+		file = dir .. "/" .. file:gsub("\\", "/")
+		if tag == "Script" then out[#out + 1] = file elseif tag == "Include" then xmlFiles(file, out) end
+	end
+end
+
 local function readToc()
 	local files = {}
-	for line in io.lines("BookFinder/BookFinder.toc") do
-		line = line:gsub("\r", "")
-		if line ~= "" and not line:match("^#") and not line:lower():match("%.xml$") then
-			files[#files + 1] = "BookFinder/" .. line:gsub("\\", "/")
+	for line in io.lines(ROOT .. "/BookFinder.toc") do
+		line = line:gsub("\r", ""):gsub("%s*%[.-%]%s*$", "")
+		-- (a locale file loads only in its own client: the stand-in client is English)
+		local locale = line:match("Locales[\\/](%a%a%a%a)%.lua$")
+		if line ~= "" and not line:match("^#") and not locale then
+			local path = ROOT .. "/" .. line:gsub("\\", "/")
+			if line:lower():match("%.xml$") then xmlFiles(path, files) else files[#files + 1] = path end
 		end
 	end
 	return files

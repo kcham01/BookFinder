@@ -216,3 +216,12 @@ See the log. Current phase is the first unchecked one.
   (`party.objectives`); the DBM HUD (`dbm.*`); the tracker's voice-over buttons (`list.playButtons`, needs the
   VoiceOver addon's API); a dungeon-card quest section for OpenMap without Questie (OpenMapAPI.RegisterDungeonSection).
   Test harness: a test file may set `before = fn` (other addons loaded ahead of BookFinder); chat filters chain.
+- **One addon** (owner: "it's still all supposed to be one addon"): `tools/package.sh` now folds OpenMap into
+  BookFinder with `tools/openmap_merge.py` (BookFinder\OpenMap; each file's single `local X, ns = ...` line becomes
+  `local X, ns = "BookFinder\\OpenMap", <BF namespace>.openMap` so line numbers stay; Init's ADDON_LOADED name check
+  -> "BookFinder"; no OpenMap page in the game's settings; chat prefix BookFinder; Bindings.xml at BookFinder's root,
+  category BookFinder; OpenMapDB/OpenMapCharDB in BookFinder's TOC; OpenMap's files first in the TOC). Wrapping each
+  file in a function was tried and failed: Stitch.lua sits at Lua's 200-locals limit. Settings a player had in a
+  separate OpenMap install don't carry over (they were saved under OpenMap). The test runner can load the packaged
+  folder (`BF_ADDON_DIR=... BF_LENIENT=1`), but the stand-ins can't run the Ace libraries, so OpenMap itself is only
+  checked by compiling every file and checking every TOC/XML path exists.
