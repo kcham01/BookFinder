@@ -527,6 +527,8 @@ end
 
 -- Their objectives on the map (party.objectives): quests not in the player's own log, where their unfinished
 -- objectives are.
+local PARTY_MARKS_PER_MAP = 4
+
 BF.Marks:RegisterLayer("party", function(addRole)
 	if not BF:Get("party.objectives") or not IsInGroup() or GetNumGroupMembers() > 5 then return end
 	for questID, players in pairs(Party.quests) do
@@ -545,10 +547,33 @@ BF.Marks:RegisterLayer("party", function(addRole)
 						local rec = { name = Party:Text(o), text = player .. L[": "] .. Party:Text(o),
 							icon = o.type == "i" and "loot" or o.type == "o" and "object" or "slay" }
 						local role = { role = "objective", quest = questID, objective = rec, party = player }
+						-- Their spawns merged into a few marks per map (as the player's own objectives are, a little wider),
+						-- and only the biggest few of those: a party member's quest is a hint, not a carpet of icons.
+						local radius = math.max(0.04, BF:Get("icons.clusterObjectives") / 100 * 1.5)
+						local clusters = {}
 						for _, source in ipairs(sources) do
 							BF.Zones:EachSpawn(BF.Objectives:Spawns(source), function(map, x, y, inside)
-								if not inside then addRole(map, x, y, BF.Marks.SpotKey(source, map, x, y), role, source) end
+								if inside then return end
+								local list = clusters[map] or {}
+								clusters[map] = list
+								for _, c in ipairs(list) do
+									local dx, dy = c.x - x, c.y - y
+									if dx * dx + dy * dy <= radius * radius then
+										c.n = c.n + 1
+										c.sx, c.sy = c.sx + x, c.sy + y
+										c.x, c.y = c.sx / c.n, c.sy / c.n
+										return
+									end
+								end
+								list[#list + 1] = { x = x, y = y, sx = x, sy = y, n = 1, source = source }
 							end)
+						end
+						for map, list in pairs(clusters) do
+							table.sort(list, function(a, b) return a.n > b.n end)
+							for i = 1, math.min(#list, PARTY_MARKS_PER_MAP) do
+								local c = list[i]
+								addRole(map, c.x, c.y, "party:" .. questID .. ":" .. player .. ":" .. (o.index or 0) .. ":" .. i, role, nil)
+							end
 						end
 					end
 				end

@@ -68,6 +68,11 @@ local function acquire()
 		f.Glow = f:CreateTexture(nil, "BACKGROUND")
 		f.Glow:SetPoint("CENTER")
 		f.Icon = f:CreateTexture(nil, "ARTWORK")
+		-- (as Questie: no snapping to the pixel grid, so small icons scale smoothly instead of jagged)
+		for _, t in ipairs({ f.Icon, f.Glow }) do
+			if t.SetTexelSnappingBias then t:SetTexelSnappingBias(0) end
+			if t.SetSnapToPixelGrid then t:SetSnapToPixelGrid(false) end
+		end
 		f.Icon:SetAllPoints()
 		f:EnableMouse(true)
 		f:SetScript("OnEnter", function(self)
@@ -106,12 +111,14 @@ local function style(f, pin)
 	Icons:Apply(f.Icon, kind)
 	local size = scaleKey == "townsfolk" and BASE_SIZE * BF:Get("icons.townsfolkMinimapScale")
 		or BASE_SIZE * BF:Get("icons.minimapScale") * BF:Get("icons.scale." .. scaleKey)
+	f.party = Look:PartyOnly(pin)
+	if f.party then size = size * 0.85 end
 	f:SetSize(size, size)
 	local c = BF:Get("icons.glowMinimap") and Look:Glow(pin, true)
 	if c then
 		Icons:Apply(f.Glow, "glow")
 		f.Glow:SetVertexColor(c[1], c[2], c[3], 1)
-		f.Glow:SetSize(size * 1.4, size * 1.4)
+		f.Glow:SetSize(size * 1.13, size * 1.13)
 		f.Glow:Show()
 	else
 		f.Glow:Hide()
@@ -190,7 +197,7 @@ local function update()
 							alpha = 1 - (1 - fadeAlpha) * math.min(1, (dist - fadeFrom) / math.max(1, radius - fadeFrom))
 						end
 						if overPlayer and dist < overDistance then alpha = math.min(alpha, overAlpha) end
-						f:SetAlpha(alpha)
+						f:SetAlpha(f.party and alpha * 0.6 or alpha)
 					end
 				end
 			end

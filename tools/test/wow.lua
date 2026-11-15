@@ -576,6 +576,7 @@ C_SuperTrack = strict("C_SuperTrack", {
 	SetSuperTrackedUserWaypoint = function(v) World.superTracked = v end,
 	IsSuperTrackingUserWaypoint = function() return World.superTracked == true end,
 })
+C_Navigation = strict("C_Navigation", { GetFrame = function() return nil end })
 C_Texture = strict("C_Texture", { GetAtlasInfo = function(name) return World.atlases and World.atlases[name] or nil end })
 C_MapExplorationInfo = strict("C_MapExplorationInfo", { GetExploredAreaIDsAtPosition = function() return { 1 } end })
 GetQuestLogRewardMoney = function() return 0 end

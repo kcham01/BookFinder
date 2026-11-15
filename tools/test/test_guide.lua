@@ -21,9 +21,9 @@ return {
 		Tick(0.3)
 		World.player.y = 0.4005 -- 1.5 yards from it
 		Tick(0.3)
-		expect(not BookFinderArrow.Pointer.shown and BookFinderArrow.Goal.shown, "gold pin")
+		expect(not BookFinderArrow.Pointer.shown and BookFinderArrow.Pin.shown, "gold pin")
 		expect(World.waypoint == nil, "the game's pin cleared")
-		equal(BookFinderArrow.Title.text, "Marshal McBride", "what is here")
+		equal(BookFinderArrow.Distance.text, "Marshal McBride", "what is here")
 		World.player.y = 0.45 -- 150 yards away
 		Tick(0.3)
 		expect(not BookFinderArrow:IsShown(), "gone after walking off")

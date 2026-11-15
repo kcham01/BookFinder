@@ -82,8 +82,12 @@ local function buildPin(pin)
 	pin:SetSize(16, 16)
 	pin.Glow = pin:CreateTexture(nil, "BACKGROUND")
 	pin.Glow:SetPoint("CENTER")
-	pin.Glow:SetAlpha(0.55)
 	pin.Icon = pin:CreateTexture(nil, "ARTWORK")
+	-- (as Questie: no snapping to the pixel grid, so small icons scale smoothly instead of jagged)
+	for _, t in ipairs({ pin.Icon, pin.Glow }) do
+		if t.SetTexelSnappingBias then t:SetTexelSnappingBias(0) end
+		if t.SetSnapToPixelGrid then t:SetSnapToPixelGrid(false) end
+	end
 	pin.Icon:SetAllPoints()
 	BF.PinPool:Wire(pin)
 end
@@ -163,13 +167,16 @@ function BookFinderMapPinMixin:OnAcquired(pin, x, y, sourceMap)
 	Icons:Apply(self.Icon, kind)
 	local size = scaleKey == "townsfolk" and BASE_SIZE * BF:Get("icons.townsfolkMapScale")
 		or BASE_SIZE * BF:Get("icons.mapScale") * BF:Get("icons.scale." .. scaleKey)
+	local party = Look:PartyOnly(pin)
+	if party then size = size * 0.85 end
+	self:SetAlpha(party and 0.6 or 1)
 	self:SetSize(size, size)
 	if levelsReady then self:UseFrameLevelType(giver and LEVEL_GIVERS or LEVEL_OBJECTIVES) end
 	local c = BF:Get("icons.glowMap") and Look:Glow(pin, false)
 	if c then
 		Icons:Apply(self.Glow, "glow")
 		self.Glow:SetVertexColor(c[1], c[2], c[3], 1)
-		self.Glow:SetSize(size * 1.4, size * 1.4)
+		self.Glow:SetSize(size * 1.13, size * 1.13)
 		self.Glow:Show()
 	else
 		self.Glow:Hide()
