@@ -135,10 +135,11 @@ local function paint(row, item)
 	if item.checked ~= nil then
 		local on = value(item.checked, item)
 		row.Check:Show()
+		-- UI-DropDownRadioChecks: the top half holds the tick box (ticked, empty), the bottom half the radio dot.
 		if item.radio then
-			if on then row.Check:SetTexCoord(0, 0.5, 0, 0.5) else row.Check:SetTexCoord(0.5, 1, 0, 0.5) end
-		else
 			if on then row.Check:SetTexCoord(0, 0.5, 0.5, 1) else row.Check:SetTexCoord(0.5, 1, 0.5, 1) end
+		else
+			if on then row.Check:SetTexCoord(0, 0.5, 0, 0.5) else row.Check:SetTexCoord(0.5, 1, 0, 0.5) end
 		end
 		row.Check:SetDesaturated(disabled and true or false)
 	else
