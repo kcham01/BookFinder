@@ -48,8 +48,23 @@ local function markSource(source, role, limit)
 	local spawns = Objectives:Spawns(source)
 	if not spawns then return end
 	local count = 0
+	-- Spawns of the same creature or object closer than icons.clusterSpawns yards show as one icon.
+	local merge = BF:Get("icons.clusterSpawns")
+	local placed = {}
 	Zones:EachSpawn(spawns, function(map, x, y, inside)
 		if limit and count >= limit then return end
+		if merge > 0 and not inside then
+			local w, h = Zones:MapSize(map)
+			if w and h and w > 0 then
+				for _, p in ipairs(placed) do
+					if p[1] == map then
+						local dx, dy = (p[2] - x) * w, (p[3] - y) * h
+						if dx * dx + dy * dy <= merge * merge then return end
+					end
+				end
+			end
+			placed[#placed + 1] = { map, x, y }
+		end
 		count = count + 1
 		local pin = pinAt(map, x, y, spotKey(source, map, x, y, inside), not inside and source or nil, inside)
 		pin.roles[#pin.roles + 1] = role
@@ -337,7 +352,7 @@ BF:At("login", function()
 	end
 	BF:Listen("BF_SETTING_CHANGED", function(_, key)
 		if key:find("^quests%.") or key == "icons.hideUntracked" or key == "icons.availableLimit"
-			or key == "icons.clusterObjectives" then
+			or key == "icons.clusterObjectives" or key == "icons.clusterSpawns" then
 			allSoon()
 		end
 	end)

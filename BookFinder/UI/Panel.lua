@@ -113,6 +113,7 @@ Panel.tabs = {
 				return {
 					{ title = "Map pin", items = pack(either("ctrlClickPin", "map.ctrlClickPin"), om("pinsFollowNew")) },
 					{ title = "Moving about", items = pack(om("autoSwitch")) },
+					{ title = "Buttons", items = { "minimap.button" } },
 					{ title = "Sharing", items = pack(om("pinsShared"), om("pinsShareGroup"), om("pinsGroupAdd"), om("friendsShare")) },
 					{ title = "Arrow and compass", items = { "guide.arrow", "guide.compass", "guide.compassBand",
 						"guide.metres", "guide.arrivalSound" } },

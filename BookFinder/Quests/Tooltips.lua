@@ -129,6 +129,13 @@ local function onObject(tip, data)
 	if added then tip:Show() end
 end
 
+local function onSpell(tip, data)
+	if not BF:Get("tooltips.ids.spell") then return end
+	if not data or secret(data) or secret(data.id) or type(data.id) ~= "number" then return end
+	tip:AddLine("Spell ID: " .. data.id, 0.5, 0.5, 0.5)
+	tip:Show()
+end
+
 -- The game's own quest lines in tooltips: off while ours show.
 local function nativeLines()
 	if not (C_CVar and C_CVar.GetCVar and C_CVar.GetCVar("showQuestTrackingTooltips") ~= nil) then return end
@@ -143,6 +150,7 @@ BF:At("login", function()
 	if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum.TooltipDataType then
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, onUnit)
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, onItem)
+		if Enum.TooltipDataType.Spell then TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, onSpell) end
 		if Enum.TooltipDataType.Object then TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Object, onObject) end
 	end
 	nativeLines()
