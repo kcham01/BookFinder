@@ -94,8 +94,6 @@ function Provider:RefreshAllData()
 	if not map then return end
 	local info = C_Map.GetMapInfo(map)
 	local continent = info and info.mapType and Enum.UIMapType and info.mapType <= Enum.UIMapType.Continent
-	-- Not on the world map itself (no scaled picture of either continent: books would land in the sea).
-	if info and info.mapType and Enum.UIMapType and info.mapType <= Enum.UIMapType.World then return end
 	for _, book in ipairs(Books.list) do
 		local shows = BookMap:Shows(book)
 		if shows then

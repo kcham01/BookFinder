@@ -337,8 +337,18 @@ C_Map = strict("C_Map", {
 		local s = m and m.size or 1000
 		return map, { x = 1 - pos.y / s, y = 1 - pos.x / s, GetXY = function(p) return p.x, p.y end }
 	end,
-	GetMapChildrenInfo = function() return {} end,
+	GetMapChildrenInfo = function(map)
+		local list = {}
+		for _, id in ipairs(World.mapChildren and World.mapChildren[map] or {}) do list[#list + 1] = { mapID = id } end
+		return list
+	end,
 	GetAreaInfo = function(area) return "Area " .. area end,
+	-- How the game lays a map out on a bigger one (World.mapRects["from:to"] = {minX, maxX, minY, maxY}).
+	GetMapRectOnMap = function(from, to)
+		local r = World.mapRects and World.mapRects[from .. ":" .. to]
+		if r then return r[1], r[2], r[3], r[4] end
+		return nil
+	end,
 	GetMapInfoAtPosition = function() return nil end,
 	CanSetUserWaypointOnMap = function() return true end,
 	SetUserWaypoint = function(point) World.waypoint = point end,
@@ -649,3 +659,5 @@ World.units = {}
 UnitGUID = function(unit) if unit == "player" then return World.player.guid end return World.units[unit] end
 UnitExists = function(unit) return unit == "player" or World.units[unit] ~= nil end
 ObjectiveTrackerFrame = CreateFrame("Frame", "ObjectiveTrackerFrame", UIParent)
+WorldMapFrame.ScrollContainer = CreateFrame("Frame", nil, WorldMapFrame)
+function WorldMapFrame.ScrollContainer:GetNormalizedCursorPosition() return World.cursorX or 0.5, World.cursorY or 0.5 end

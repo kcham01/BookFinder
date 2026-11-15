@@ -163,6 +163,13 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   OpenMap's map: OpenMap's every feature, done better (smoother, cleaner, more useful), the best-looking map of the
   three.
 
+- **"This in-game tracker shouldn't be on my screen: this is the native in-game tracker."** Hidden (out of combat).
+- **"Icons are messed up here" (in the sea off the Eastern Kingdoms) / "No icons showing fully zoomed out."** Pins on
+  continents and the world map are now placed by the game's own layout (GetMapRectOnMap), and shown on the world map.
+- **"There's not a pathfinder for map pins dropped. We've lost so many features from 2.0, it's not even funny."**
+  Ctrl-click on the map drops the pin (the arrow and compass guide to it). 2.0 shipped the three addons' own code;
+  3.0 is the rebuild from scratch, and what is not rebuilt yet is missing until it is (listed in `docs/BUILD.md`).
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)
