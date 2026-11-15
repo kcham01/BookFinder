@@ -99,9 +99,6 @@ function Provider:RefreshAllData()
 	if not BF:Reached("login") or not BF:Get("quests.map") then return end
 	local map = self:GetMap():GetMapID()
 	if not map then return end
-	-- Never on the world map itself: it is no scaled picture of either continent, so world positions don't place on
-	-- it (pins would land in the sea). Continents and zones only, as Questie.
-	if isWorldOrWider(map) then return end
 	if BF:Get("icons.hideOnContinents") and isContinentOrWider(map) then return end
 	local hideUnexplored = BF:Get("icons.hideUnexplored")
 	local limit = BF:Get("icons.limitEnabled") and BF:Get("icons.limit") or math.huge

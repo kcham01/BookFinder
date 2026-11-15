@@ -118,4 +118,26 @@ return {
 		x, y = placed()
 		expect(x > 0 and math.abs(y) < 0.01, ("facing west, north is to the right (%s, %s)"):format(tostring(x), tostring(y)))
 	end,
+
+	["continent: a zone's pins land inside the zone's place on the continent (the game's layout)"] = function(BF)
+		World.player.level = 2
+		World.completed[783] = true
+		-- Elwynn on the Eastern Kingdoms: the game's layout, not world coordinates.
+		World.mapRects = { ["1429:1415"] = { 0.40, 0.50, 0.70, 0.78 } }
+		World.maps = { [1415] = { mapType = 2, size = 50000, name = "Eastern Kingdoms" } }
+		World.mapChildren = { [1415] = { 1429 } }
+		Login()
+		Tick(5)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(1415)
+		local n = 0
+		for _, p in ipairs(MapPins(WorldMapFrame)) do
+			if p.template == "BookFinderMapPinTemplate" then
+				n = n + 1
+				expect(p.normalizedX >= 0.40 and p.normalizedX <= 0.50 and p.normalizedY >= 0.70 and p.normalizedY <= 0.78,
+					("inside Elwynn's place (%.3f, %.3f)"):format(p.normalizedX, p.normalizedY))
+			end
+		end
+		expect(n > 0, "Elwynn's pins on the continent")
+	end,
 }

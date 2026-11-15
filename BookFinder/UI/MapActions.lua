@@ -138,3 +138,20 @@ function FindPlace:Show(box, text)
 	if BF.Dropdown:IsOpen() then BF.Dropdown:Close() end
 	BF.Dropdown:Show(1, box, items)
 end
+
+-- Ctrl-click on the world map drops the map pin there (and the arrow and compass take you to it). A setting turns it off.
+BF.Settings:Define("map.ctrlClickPin", { default = true, page = "Map/More", label = "Ctrl-click drops a pin" })
+
+BF:At("login", function()
+	local canvas = WorldMapFrame and WorldMapFrame.ScrollContainer
+	if not canvas then return end
+	canvas:HookScript("OnMouseUp", function(self, button)
+		if button ~= "LeftButton" or not IsControlKeyDown() or not BF:Get("map.ctrlClickPin") then return end
+		if not self.GetNormalizedCursorPosition then return end
+		local x, y = self:GetNormalizedCursorPosition()
+		local map = WorldMapFrame:GetMapID()
+		if map and x and x >= 0 and x <= 1 and y >= 0 and y <= 1 then
+			BF.Waypoint:Set(map, x, y, L["Map pin"], BF.Zones:MapName(map))
+		end
+	end)
+end, 81)

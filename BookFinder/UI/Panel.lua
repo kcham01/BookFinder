@@ -59,6 +59,7 @@ Panel.tabs = {
 				"icons.townsfolkMinimapScale" } },
 			{ key = "more", label = "More", sections = function()
 				return {
+					{ title = "Map pin", items = { "map.ctrlClickPin" } },
 					{ title = "Arrow and compass", items = { "guide.arrow", "guide.compass", "guide.compassBand",
 						"guide.metres", "guide.arrivalSound" } },
 				}
