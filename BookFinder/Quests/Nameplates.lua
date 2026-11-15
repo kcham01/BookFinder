@@ -29,6 +29,18 @@ local function markerFor(parent)
 	return m
 end
 
+-- "complete" when the NPC takes a finished quest, "available" when it offers one, else nil.
+local function giverKind(npc)
+	local n = BF:Npc(npc)
+	if not n then return nil end
+	for _, q in ipairs(n[BF.N.questEnds] or {}) do
+		if BF.Log:Has(q) and BF.Log:IsComplete(q) then return "complete" end
+	end
+	for _, q in ipairs(n[BF.N.questStarts] or {}) do
+		if BF.Rules:IsShown(q) then return BF.Rules:IsTrivial(q) and "availableTrivial" or "available" end
+	end
+end
+
 local function npcOf(unit)
 	if not UnitExists(unit) then return nil end
 	local guid = UnitGUID(unit)
@@ -44,17 +56,26 @@ local function updatePlate(unit)
 	local plate = C_NamePlate and C_NamePlate.GetNamePlateForUnit and C_NamePlate.GetNamePlateForUnit(unit)
 	if not plate then return end
 	local m = markers[plate]
-	local entry = BF:Get("nameplates.enabled") and not blocked() and Needs:OpenFor(npcOf(unit) or 0)
-	if not entry then
+	local npc = npcOf(unit)
+	local entry = BF:Get("nameplates.enabled") and not blocked() and Needs:OpenFor(npc or 0)
+	local giver = not entry and BF:Get("nameplates.enabled") and not blocked() and npc and giverKind(npc)
+	if not entry and not giver then
 		if m then m:Hide() end
 		return
 	end
 	m = markerFor(plate)
-	BF.Icons:Apply(m.icon, kindOf(entry))
 	local scale = BF:Get("nameplates.scale")
-	m:SetSize(16 * scale, 16 * scale)
 	m:ClearAllPoints()
-	m:SetPoint("LEFT", plate, "LEFT", BF:Get("nameplates.x"), BF:Get("nameplates.y"))
+	if giver then
+		-- A quest to pick up ("!") or hand in ("?"): over the name, as Questie shows it.
+		BF.Icons:Apply(m.icon, giver)
+		m:SetSize(20 * scale, 20 * scale)
+		m:SetPoint("BOTTOM", plate, "TOP", 0, 2)
+	else
+		BF.Icons:Apply(m.icon, kindOf(entry))
+		m:SetSize(16 * scale, 16 * scale)
+		m:SetPoint("LEFT", plate, "LEFT", BF:Get("nameplates.x"), BF:Get("nameplates.y"))
+	end
 	m:Show()
 end
 

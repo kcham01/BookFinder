@@ -170,6 +170,12 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   Ctrl-click on the map drops the pin (the arrow and compass guide to it). 2.0 shipped the three addons' own code;
   3.0 is the rebuild from scratch, and what is not rebuilt yet is missing until it is (listed in `docs/BUILD.md`).
 
+- **"Here is what Questie looks like in game"** (screenshots): Questie's tracker on the screen in place of the game's
+  (zone names, "[33D]" coloured titles, objectives as "0/1 Name", small buttons per quest, no background); a quest
+  giver's tooltip with the "!" icon before "[30] Melor Sends Word"; the "!" over a quest giver's nameplate; small
+  clean icons on the minimap. So: BookFinder's quest list is on the screen, Questie's way (the earlier "nothing on
+  screen" meant: not the game's tracker); the map's Quests tab keeps the game's own log.
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)
