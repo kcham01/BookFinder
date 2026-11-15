@@ -201,6 +201,10 @@ Kept unpacked, untouched, outside the build. Not merged yet.
   originals are the starting points to match line for line in look and behaviour, then improve. No more handing over
   small pieces with long explanations: whole surfaces, finished, short notes.
 
+- **"Duplicate options: only Questie's should be available unless it's an item Questie didn't have."** Where Questie
+  and OpenMap both do a thing (flight masters, townsfolk, quest icons), Questie's is the one; OpenMap's own stays off and
+  has no switch. OpenMap keeps only what Questie lacks (boats, zeppelins, routes, dungeons, people, drawings...).
+
 ## Questions (only what I can't tell from your notes)
 
 - None open. (QuestieTrace, the Books tab and the settings window were answered above.)

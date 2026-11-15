@@ -119,7 +119,6 @@ if present() then
 	toggle("icons", "Dungeons and raids")
 	toggle("boats", "Boats")
 	toggle("zeppelins", "Zeppelins")
-	toggle("flight", "Flight masters")
 	toggle("foundOnly", "Only places you've found", false)
 	toggle("routes", "Boat and zeppelin routes", false)
 	toggle("playerArrow", "Your arrow")
@@ -127,7 +126,6 @@ if present() then
 	toggle("friends", "Friends on the map")
 	toggle("guild", "Guild members on the map")
 	toggle("sketchShown", "Your drawings")
-	toggle("allQuests", "Quests from every zone")
 	toggle("hideWorldPinsInInstances", "Hide world markers in instances", false)
 	toggle("zoomHidePins", "Fade icons while zooming", false)
 	toggle("dungeonMaps", "Dungeon maps")
@@ -275,12 +273,6 @@ OM.buttons = {
 	{ label = "Debug overlay (FPS)", run = function() slash("debug") end },
 }
 
--- Two icons for one thing never show: OpenMap's flight masters and BookFinder's are one switch (Map/ShowMenu.lua),
--- and while OpenMap draws its own on the world map, BookFinder's stay on the minimap only.
-function OM:DrawsFlightMasters()
-	return OM:Key("flight") ~= nil and BF:Get("openmap.flight")
-end
-
 BF:At("login", function()
 	if not present() then return end
 	if not adopt() then BF:After(1, adopt) end
@@ -290,6 +282,11 @@ BF:At("login", function()
 	if t then
 		-- Its first-run "how should the map start" card is OpenMap's own welcome: BookFinder starts it as OpenMap comes.
 		if t.presetAsked == false then t.presetAsked = true end
+		-- Questie's flight masters, townsfolk and quest icons are the ones (Map/Townsfolk.lua, Quests/Marks.lua):
+		-- OpenMap's own of the same things stay off, so nothing shows twice.
+		t.flight, t.allQuests = false, false
+		if type(t.townsfolk) == "table" then for k in pairs(t.townsfolk) do t.townsfolk[k] = false end end
+		redraw()
 		if t.mapButtons ~= false then
 			t.mapButtons = false   -- (written straight: its own setter would print a note about its button)
 			redraw()

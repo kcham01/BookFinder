@@ -70,13 +70,12 @@ Panel.tabs = {
 					{ title = "Quests", items = pack(
 						{ key = "quests.map", icon = "available" }, { key = "quests.minimap", icon = "available" },
 						{ key = "quests.available", icon = "available" }, { key = "quests.turnins", icon = "complete" },
-						{ key = "quests.objectives", icon = "slay" }, { key = "paths.map", icon = "object" },
-						omShow("allQuests")) },
+						{ key = "quests.objectives", icon = "slay" }, { key = "paths.map", icon = "object" }) },
 					{ title = "Townsfolk", items = townsfolkItems() },
 					{ title = "Places", items = pack(
-						{ key = "books.map", icon = "book" }, { key = "books.minimap", icon = "book" },
+						{ key = "books.map", icon = "book", label = "Library books on the map" },
+						{ key = "books.minimap", icon = "book", label = "Library books on the minimap" },
 						omShow("boats"), omShow("zeppelins"),
-						om("flight", { atlas = "TaxiNode_Neutral", texture = "Interface\\Icons\\Ability_Mount_Wyvern_01" }),
 						omShow("routes"), omShow("foundOnly")) },
 					{ title = "People", items = pack(omShow("playerArrow"), omShow("group"), omShow("friends"), omShow("guild"),
 						omShow("sketchShown")) },

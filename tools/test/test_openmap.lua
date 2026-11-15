@@ -69,16 +69,13 @@ return {
 		expect(section, "a section")
 	end,
 
-	["openmap: one switch for flight masters, OpenMap's drawn on the world map"] = function(BF)
+	["openmap: Questie's flight masters and quest icons are the ones, OpenMap's own stay off"] = function(BF)
 		Login()
-		local item = findItem(BF.ShowMenu:Items(), "Flight Master")
-		expect(item, "one Flight Master item")
-		equal(findItem(BF.ShowMenu:Items(), "Flight masters"), nil, "not OpenMap's as well")
-		item.onClick(item, false)
-		equal(OpenMapDB.worldmap.flight, false, "OpenMap's off too")
-		equal(BF:Get("townsfolk.flightMaster"), false, "BookFinder's off")
-		item.onClick(item, true)
-		expect(BF.OpenMap:DrawsFlightMasters(), "OpenMap draws them")
+		local items = BF.ShowMenu:Items()
+		expect(findItem(items, "Flight Master"), "Questie's Flight Master")
+		equal(findItem(items, "Flight masters"), nil, "not OpenMap's as well")
+		equal(OpenMapDB.worldmap.flight, false, "OpenMap's flight masters off")
+		equal(BF.Settings:Definition("openmap.flight"), nil, "no switch for them")
 	end,
 
 	["openmap: the panel's OpenMap tab holds its settings, sliders with OpenMap's ranges"] = function(BF)
