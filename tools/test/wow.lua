@@ -672,7 +672,23 @@ QuestMapFrame = CreateFrame("Frame", "QuestMapFrame", WorldMapFrame)
 QuestMapFrame.DetailsFrame = CreateFrame("Frame", nil, QuestMapFrame)
 GetQuestLogSpecialItemInfo = function(index) return World.questItems and World.questItems[index] end
 C_QuestLog.GetMaxNumQuestsCanAccept = function() return 20 end
-ChatFrame_AddMessageEventFilter = function(e, fn) World.chatFilters = World.chatFilters or {} World.chatFilters[e] = fn end
+-- (every filter of an event runs in turn, as the client chains them; one that returns true drops the message)
+ChatFrame_AddMessageEventFilter = function(e, fn)
+	World.chatFilters = World.chatFilters or {}
+	World.chatFilterLists = World.chatFilterLists or {}
+	local list = World.chatFilterLists[e] or {}
+	World.chatFilterLists[e] = list
+	list[#list + 1] = fn
+	World.chatFilters[e] = function(frame, event, msg, ...)
+		local args = { msg, ... }
+		for _, f in ipairs(list) do
+			local r = { f(frame, event, unpack(args)) }
+			if r[1] then return true end
+			if #r > 1 then args = { select(2, unpack(r)) } end
+		end
+		return false, unpack(args)
+	end
+end
 LinkUtil = { RegisterLinkHandler = function(kind, fn) World.linkHandlers = World.linkHandlers or {} World.linkHandlers[kind] = fn end }
 ItemRefTooltip = CreateFrame("GameTooltip", "ItemRefTooltip", UIParent)
 ItemRefTooltip.lines = {}
