@@ -1,6 +1,6 @@
 # BookFinder inventory: features, functions, quirks
 
-> **2.0.0: Shortest Path Forever and ForeverCore were removed** (the owner's decision, `docs/WANTS.md`). Everything
+> **2.0.0: Shortest Path Forever and ForeverCore were removed** (a decision of the owner's). Everything
 > below about Shortest Path, journeys, travel times, the Nearby services tab, the journey card, the routing rig and
 > ForeverCore describes 1.0 to 1.8.1 and is kept as history. What 2.0.0 is, is in section 0.
 

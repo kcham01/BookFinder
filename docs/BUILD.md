@@ -1,12 +1,12 @@
 # Build notes (for the agent doing the build: read before touching code)
 
-The owner asked to start the build and asked me to keep notes for myself as I go. This file is those notes: the plan,
-where everything lives, what I learned, what is done, what is next. Keep it current; append to the log at the bottom
-after every working session. Owner-facing history stays in `docs/WANTS.md` / `docs/NOTES.md`.
+The owner asked for the build and for working notes kept as it goes. This file is those notes: the plan, the owner's
+decisions (in our words), where everything lives, what was learned, what is done, what is next. Keep it current;
+append to the log at the bottom after every working session.
 
 ## Ground rules (from CLAUDE.md, restated so they are never forgotten mid-build)
 
-- **The owner's standard, get it right the first time, no shortcuts.** Pro grade, made-by-Blizzard feel, nothing slapped together, nothing
+- **The owner's standard: get it right the first time, no shortcuts.** Pro grade, made-by-Blizzard feel, nothing slapped together, nothing
   lost. Finish each piece properly (every state, every tooltip line, every edge case) before moving on; no stubs left
   behind pretending to be features. If a phase is not finished, the log says exactly what is missing.
 
@@ -21,6 +21,32 @@ after every working session. Owner-facing history stays in `docs/WANTS.md` / `do
   custom art unless the game has none.
 - **No route lines on the map** (Books trail out). OpenMap boat/zeppelin route lines and Questie NPC patrol paths stay.
 - **Report honestly**: nothing has run in game until the owner says so. Offline tests only prove logic.
+
+## Decisions (the owner's, written in our words)
+
+- **Never quote the owner in the repository.** Their words, documents and screenshots are never committed, quoted or
+  described here; only the decisions, in our own words. (Their old notes files were removed with their history.)
+- **What BookFinder is**: one product doing everything Questie, OpenMap and Books on map do, nothing lost, as if the
+  game shipped with it; all code BookFinder's own; QuestieDB's data the one borrowed part (credited, GPL-3).
+- **The map's Show dropdown**: every map item of Questie and OpenMap, each once, one flat list in Questie's layout
+  (tick box, name, icon at the right); only Dungeons gets a section; one icon per item; the journey windows and the
+  settings are not in it. The game's own entries in that menu, and the quest log's gear menu, are removed.
+- **One dropdown style everywhere**: the classic tooltip-box dropdown, as Questie's.
+- **One settings window**: laid out like OpenMap's panel, tabs down the right side (Map, Quests, Books, Journey), each
+  one's pages as tabs along the top. The Journey windows (My Journey, by Zone, by Faction, Advanced Search) live there.
+- **The quest list lives in the map's quest panel**; nothing on screen but the arrow and compass to the map pin.
+- **The Books tab** beside the quest log shows the library books.
+- **No route lines on the map**; kept: boat and zeppelin routes, NPC patrol paths. The books' route trail is out.
+- **QuestieTrace** is left out.
+- **The map**: BookFinder's own code with OpenMap as the guide, and better looking; the favourite feature is zooming
+  all the way down to minimap detail. The minimap pictures' list is BookFinder's own (not OpenMap's).
+- **The map window's layout** (the owner's sketch, close to the old build's look):
+  - the player's and the cursor's coordinates at the top left of the title bar, beside the portrait, two lines;
+  - the map on the left, its navigation bar (World, continent, zone) above it;
+  - the quest panel on the right: at its top a search box that searches everything (quests, NPCs, objects, items,
+    as Advanced Search), its results taking the list's place until the box is cleared; the game's "Quests: n/40"
+    counter stays; **no "Quests" heading**; then the quest list;
+  - side tabs on the window's right edge: Quests ("!") and the books.
 
 ## Layout
 
@@ -99,7 +125,7 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
 5. ~~Unit/item/object tooltips, nameplate and target icons.~~ Done (party lines wait for phase 11).
 6. ~~Map pin, arrow and compass (`docs/study/arrow-and-compass.md`).~~ Done.
 7. Books: list (ours), detection, pins, Books tab, route (no trail), cards, minimap button.
-8. ~~The map's Show dropdown in Questie's style (`docs/NOTES.md` section 1).~~ Done (its OpenMap entries appear as phase 12 builds them).
+8. ~~The map's Show dropdown in Questie's style ("Decisions").~~ Done (its OpenMap entries appear as phase 12 builds them).
 9. ~~Settings panel: OpenMap-style panel, tabs down the right (OpenMap, Quests, Books, Journey), pages along the top.~~
    Done (its action tiles, place search and favourite stars come with the map, phase 12).
 10. ~~Quest list in the map's Quests tab; Journey windows (My Journey, by Zone, by Faction, Advanced Search).~~ Done
@@ -194,7 +220,7 @@ See the log. Current phase is the first unchecked one.
   (AddInitializer + AttachTexture). Trivial Quest maps to `quests.lowLevel` ("all" / "hide"). "Questie icons" (OpenMap's
   switch for Questie's icons on its map) is not an entry: in BookFinder those are the quest entries themselves.
   **Not verified in game**: that Forever's map filter menu carries that tag; how the row width makes room for the icon.
-  The owner then asked for the game's own entries to go (decided): `Fill` empties the root
+  Then decided: the game's own entries go. `Fill` empties the root
   description's `elementDescriptions` (the client's list of rows; count kept in `ShowMenu.removed`) before adding
   ours. **Not verified in game** that the field has that name on Forever (if not, ours follow the game's under a
   divider, as before).
@@ -210,13 +236,13 @@ See the log. Current phase is the first unchecked one.
   The same screenshot shows with OpenMap's coordinates in the title bar ("Cursor: x X, y Y |
   Player: ...") and a "Player 45.0, 49.7" box at the map's bottom right: check in game that BookFinder's coordinate
   line (bottom centre of the scroll area) does not double the game's own, if that box is the game's.
-- The owner's photos of the bare game's map (no addons): "Map & Quest Log" window; the Show button's red cross is the
+- Seen in game with no addons: the "Map & Quest Log" window; the Show button's red cross is the
   game's (filters changed from their defaults: kept hidden). The game shows "Player: x, y" at the map's bottom left in
   white small text, so `Map/Coords.lua` now finds that font string (text starting with the client's PLAYER word and
   ":") and adds only "Cursor: x, y" to its right in its font; without it, BookFinder's line says both (bottom centre).
   The gear beside "Quests: n/40" is a second game menu: "Show Quest Objectives" (the quest log's objective lines);
   untouched, question to the owner. Continents in the map's picker: Eastern Kingdoms, Kalimdor, Zephras Isle (phase 12).
-- The quest log's gear menu ("Show Quest Objectives") ditched at the owner's word: `ShowMenu:FindQuestLogGear()`
+- The quest log's gear menu ("Show Quest Objectives") removed, as decided: `ShowMenu:FindQuestLogGear()`
   (QuestMapFrame.QuestsFrame.SettingsDropdown, QuestScrollFrame.SettingsDropdown, else a menu button its parent keeps
   under a key with "Settings" in it) is hidden and kept hidden. **Not verified in game**: the gear's name on Forever.
 - Phase 9 (settings panel) done: `UI/Widgets.lua` (tick box, slider, dropdown, colour swatch, heading; each picks the
@@ -236,7 +262,7 @@ See the log. Current phase is the first unchecked one.
   Map's "On the map" with the map). Moved: the arrow and compass to Map > More ("Arrow and compass"), coordinates to
   Map > Look ("Coordinates"); books on one page with Settings / Filters headings (Books on map's window's sections).
   **Not verified in game**: every template name above on Forever; the side tab art's offsets; the map button's spot.
-- **One dropdown** (DESIGN rule 2; the owner's choice): `UI/Dropdown.lua`, the classic
+- **One dropdown** (DESIGN rule 2; "Decisions"): `UI/Dropdown.lua`, the classic
   tooltip-box dropdown (tooltip backdrop, the game's small font, UI-DropDownRadioChecks tick boxes and radio dots,
   icon at the right, gold title rows, dividers, submenus to the right on hover, switches keep it open, Escape and a
   click elsewhere close it). Every BookFinder menu is it: the map's Show button now opens it on press (OnMouseDown
@@ -336,7 +362,7 @@ See the log. Current phase is the first unchecked one.
 
 ## Next: phase 12, the map (start here in a new session)
 
-- The owner chose **"Own code, OpenMap as guide"** (docs/NOTES.md): BookFinder writes its own stitched map; OpenMap
+- Decided: **own code, OpenMap as guide** ("Decisions"): BookFinder writes its own stitched map; OpenMap
   (public, MIT, https://github.com/openmap-world/openmap: clone into the scratchpad, never into the repository) is read
   only to see how it behaves and looks, and BookFinder should look even better.
 - The owner's favourite feature: **zooming all the way down to minimap detail** (past the painted map's pixels, the
@@ -378,7 +404,7 @@ See the log. Current phase is the first unchecked one.
   ranges" now exist, so they appear in the Show dropdown's Dungeons section.
   Lesson (a real bug the tests caught): `local a, b = x and f()` keeps only f's first value. Use `if x then a, b = f()`.
   Checked the whole addon for the pattern: no other case.
-- Minimap detail's art: the owner chose **"BookFinder builds its own"** (no OpenMap list). First check, before asking
+- Minimap detail's art: decided, **BookFinder builds its own list** (no OpenMap list). First check, before asking
   for game files: `/bf probe` asks the game whether it finds minimap pictures by name (World\Minimaps\<map>\mapX_Y,
   three spellings, Azeroth and Kalimdor) and keeps the answer in SavedVariables (BookFinderDB.global.probe.minimap).
   - If the game knows the names: no list at all. A tile covers 533 1/3 yards; its grid numbers come from the world

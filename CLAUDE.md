@@ -1,7 +1,7 @@
 # BookFinder: directive for any agent working here
 
-Read this first, then `docs/NOTES.md` (the owner's notes, in their words) and `docs/WANTS.md` (every wish and decision,
-newest last). They override anything you assume.
+Read this first, then `docs/BUILD.md`: its "Decisions" (every decision of the owner's, in our words) override
+anything you assume.
 
 ## What BookFinder is
 
@@ -28,8 +28,9 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
    `BooksOnMapFE` group sharing). Match their addon-message protocols exactly.
 5. **Nothing lost**: every feature of the three addons is present. Know them from a player's side, down to every
    tooltip, icon, message, click and setting (`docs/study/`).
-6. **Building now** (the owner asked to start the build). Still record what the owner says in `docs/NOTES.md`. The
-   build's own working notes, plan and log are in `docs/BUILD.md`: read it before touching code, update it as you go.
+6. **Never quote the owner in the repository.** Their words, documents and screenshots are never committed, quoted
+   or described here. Record each decision in your own words in `docs/BUILD.md`, "Decisions". The build's working
+   notes, plan and log are in `docs/BUILD.md` too: read it before touching code, update it as you go.
 7. **Native, not bloated**: the game's own look and art, no clutter, no features nobody asked for.
 8. **Report honestly**: say what was tested and what wasn't; nothing has run in game until the owner says it did.
 
@@ -44,7 +45,7 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
 - **Done (phases 1-11, 13, and OpenMap's pins and people)**: see `docs/BUILD.md`, its plan and its log, newest last.
   Questie's party protocol is checked byte for byte against Questie's own code (`tools/check/`).
 - **Next: phase 12, OpenMap's map**: the stitched world map from the game's own art, zooming down to minimap detail
-  (the owner's favourite), dungeons, boats, flights, the quill... The owner chose **"own code, OpenMap as guide"**.
+  (the owner's favourite), dungeons, boats, flights, the quill... Decided: own code, OpenMap as the guide.
   Settle where the minimap tiles come from before building (`docs/BUILD.md`, "Next").
 - **Tests**: `tools/test/run.sh` (needs `lua5.1`: `apt-get install -y lua5.1`) runs every file of the TOC against
   stand-ins of the game (`tools/test/wow.lua`) and every `tools/test/test_*.lua`: 142 pass. They prove logic only.
@@ -61,19 +62,10 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
 - **Study**: `docs/study/` (per addon, from a player's side; `questie-protocol.md` is Questie's wire format byte by
   byte; `openmap.md` ends with OpenMap's place and pin protocols).
 
-## The owner's design notes (summary; full text in `docs/NOTES.md`)
+## The owner's design decisions
 
-- **The map's Show dropdown**: every map item of Questie and OpenMap, each once, one flat list in Questie's dropdown
-  layout (tick box, name, icon at the right). Only **Dungeons** gets its own section. One icon per item, never both
-  addons' icons for the same thing. Advanced Search, Quests by Zone/Faction, My Journey and Options are not in it.
-- **Settings**: OpenMap's settings panel is the core for all settings, with a column of tabs down its right side like
-  Questie's settings: OpenMap, Quests, Books, Journey (My Journey, Quests by Zone, Quests by Faction, Advanced Search).
-  Inside each, its pages as tabs along the top, like OpenMap's On the map / Look / More. (A new panel of BookFinder's
-  own, laid out that way; not OpenMap's code.)
-- **Books tab** beside the quest log stays, showing the books.
-- **Arrow and compass** at the top of the screen guide you to the map pin you drop (Shortest Path's idea, BookFinder's
-  own code: `docs/study/arrow-and-compass.md`). **No route lines on the map**: the owner hated them; Books' route trail is out too. Kept: OpenMap's boat and zeppelin
-  routes, Questie's NPC patrol paths.
+In `docs/BUILD.md`, "Decisions" (the Show dropdown, the settings window, one dropdown style, the quest list and Books
+tab in the map, the arrow and compass, no route lines, the map and its window layout).
 
 ## Working here
 

@@ -1,8 +1,9 @@
 -- The map's Show dropdown: every map item of Questie and OpenMap, each once, as one flat list in Questie's layout
--- (tick box, name, icon at the right), with only Dungeons in a section of its own (docs/NOTES.md, section 1).
+-- (tick box, name, icon at the right), with only Dungeons in a section of its own (docs/BUILD.md, "Decisions").
 --
 -- It takes over the game's own map filter menu (the world map's Show button): pressing the button opens BookFinder's
--- dropdown (UI/Dropdown.lua, the classic tooltip-box dropdown, DESIGN rule 2): the game's own entries are taken out (decided) and BookFinder's are the menu. Advanced Search, Quests by Zone and by
+-- dropdown (UI/Dropdown.lua, the classic tooltip-box dropdown, DESIGN rule 2): the game's own entries are taken out (decided:
+-- docs/BUILD.md, "Decisions") and BookFinder's are the menu. Advanced Search, Quests by Zone and by
 -- Faction, My Journey and the settings are not in it.
 --
 -- The list below is the whole menu in its order. An entry shows only once its setting exists: a part of BookFinder
@@ -210,8 +211,8 @@ end
 -- The map's Show button is the world map's tracking options button: one of the map's overlay frames, made from the
 -- game's WorldMapTrackingOptionsButtonMixin (told apart from the floor picker, the same kind of button, by that).
 -- Pressing it opens BookFinder's dropdown instead of the game's menu, so the game's entries are never built. Forever's entries (seen in game): Quest
--- Objectives, Show Quest Levels, Quest Difficulty Color, Low-Level Quests, Tracked Items; the owner keeps them all off,
--- and with no switch left they stay off. The button's reset badge (the red cross, which puts the game's entries back
+-- Objectives, Show Quest Levels, Quest Difficulty Color, Low-Level Quests, Tracked Items; with no switch left they stay as
+-- they are (all off on the account that was tested). The button's reset badge (the red cross, which puts the game's entries back
 -- to their defaults) goes with them.
 -- Where the button cannot be found, the menu is changed by its tag instead: the game's rows are emptied, ours added.
 
@@ -235,7 +236,8 @@ end
 
 -- The quest log's gear menu --------------------------------------------------------------------------------------
 --
--- Beside "Quests: n/40" the game has a second menu, a gear with one entry, "Show Quest Objectives". Decided: it goes too. The gear is hidden and kept hidden; its one switch stays as it is (ticked: the quest log keeps its
+-- Beside "Quests: n/40" the game has a second menu, a gear with one entry, "Show Quest Objectives". Decided: it goes too.
+-- The gear is hidden and kept hidden; its one switch stays as it is (ticked: the quest log keeps its
 -- objective lines).
 --
 -- Found by the names the client gives it, else among the quest log's menu buttons as the one its parent keeps under a

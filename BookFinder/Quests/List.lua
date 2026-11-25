@@ -1,6 +1,6 @@
 -- The quest list: BookFinder's own list of the player's quests, in the map's Quests panel where the game's list was,
--- and nothing on screen (docs/WANTS.md, "Quest list in the map, nothing on screen": the list replaces the game's in
--- the map's Quests tab; the tracker on the screen is gone; the arrow and compass still guide).
+-- and nothing on screen (docs/BUILD.md, "Decisions": the list replaces the game's in the map's Quests tab; the
+-- tracker on the screen is gone; the arrow and compass still guide).
 --
 -- What it shows (Questie's list, docs/study/questie.md, "The quest list"): quests grouped by zone, each zone foldable;
 -- each quest's title with its level in its difficulty colour, its objectives with their progress, "Ready for

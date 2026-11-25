@@ -1,6 +1,6 @@
 -- Patrol paths: an NPC that walks has its route drawn as a line, on the world map and on the minimap, for the NPCs
 -- the map marks (quest givers, turn-ins, objectives). Hostile NPCs in their own colour; hovering the NPC's pin
--- highlights its path. (Questie's patrol paths, docs/study/questie.md. The books' route trail is gone: docs/NOTES.md.)
+-- highlights its path. (Questie's patrol paths, docs/study/questie.md. The books' route trail is gone: docs/BUILD.md, "Decisions".)
 --
 -- Settings (Quests > Map / Look): paths.map, paths.minimap, paths.width, paths.opacity, paths.color,
 -- paths.hostileColor, paths.highlight, paths.highlightColor.

@@ -6,5 +6,4 @@ No other addon's code is in this repository or in BookFinder. Addons the owner s
 are never committed. Until 2.2.2 BookFinder was assembled from other addons (Questie, QuestieDB, OpenMap, Books on map
 Forever); that code was removed.
 
-- `docs/WANTS.md`: what BookFinder is meant to be, the owner's wishes and decisions, kept current.
-- `docs/NOTES.md`: the owner's notes, as given.
+- `docs/BUILD.md`: the build's plan, the owner's decisions (in our words) and a log of the work.

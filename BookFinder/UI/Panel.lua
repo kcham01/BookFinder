@@ -1,4 +1,4 @@
--- The settings panel: every setting of BookFinder, once, in one window (docs/NOTES.md, section 2).
+-- The settings panel: every setting of BookFinder, once, in one window (docs/BUILD.md, "Decisions").
 --
 -- Laid out the way the owner chose: OpenMap's panel as the core (a window in the game's frame art, pages of tick boxes
 -- in two columns under gold headings, sliders and choices below them, Defaults), with a column of tabs down its right

@@ -220,7 +220,7 @@ def("dbm.interact", true, P, "HUD: interact")
 --[[ Questie settings with no counterpart here, and why:
 	- iconTheme (Questie / pfQuest / Blizzard art): BookFinder ships no other addon's art; every icon is the game's own,
 	  and each objective kind's icon can be chosen among the game's (icons.slay ... above).
-	- mapShowHideEnabled (Questie's own map button): the map's Show dropdown holds every switch (docs/NOTES.md 1).
+	- mapShowHideEnabled (Questie's own map button): the map's Show dropdown holds every switch (docs/BUILD.md, "Decisions").
 	- tracker window settings (lock, sizer, backdrop, border, hide/minimize in combat or instances, header, fonts'
 	  faces): the quest list lives in the map's Quests tab, not in a window of its own.
 	- showSoDRunes, Isle of Quel'Danas phase: not on WoW: Forever.

@@ -1,4 +1,4 @@
--- The one dropdown: every menu BookFinder opens is this, the classic tooltip-box dropdown the owner likes in Questie
+-- The one dropdown: every menu BookFinder opens is this, the classic tooltip-box dropdown in Questie's style
 -- (docs/DESIGN.md, rule 2: one dropdown; docs/BUILD.md, "Decisions").
 --
 -- A tooltip box; rows of the game's small font; a tick box at the left of a switch (the game's dropdown checks), a

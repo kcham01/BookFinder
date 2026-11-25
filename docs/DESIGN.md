@@ -1,7 +1,7 @@
 # BookFinder: the product
 
 One addon, made for one player: the world map, every quest and the library books, as if the game shipped with it.
-This is what it is meant to be, and the rules every part of it keeps. `docs/WANTS.md` is why; this file is what.
+This is what it is meant to be, and the rules every part of it keeps. `docs/BUILD.md`'s "Decisions" is why; this file is what.
 
 ## What it is
 

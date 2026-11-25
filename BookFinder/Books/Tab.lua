@@ -1,4 +1,5 @@
--- The Books tab beside the quest log: the library books, in the quest log's own place (docs/WANTS.md: a quest-log tab with native art, a search box, collapsible sections, large rows).
+-- The Books tab beside the quest log: the library books, in the quest log's own place (docs/BUILD.md, "Decisions": a
+-- quest-log tab with native art, a search box, collapsible sections, large rows).
 -- It does what Books on map's window did (docs/study/books-on-map.md), without a window of its own:
 --   - "Books: 12/38" and a progress bar with a notch at each reward (10, 20, 25, 38), green once reached;
 --   - the route (when on): the next book, Skip and Recalc;
