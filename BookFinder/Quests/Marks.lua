@@ -56,6 +56,58 @@ local function markSource(source, role, limit)
 	end)
 end
 
+-- A quest started by an item: where the item comes from. Objects that hold it are marked where they stand. Creatures
+-- that drop it are merged into packs (one "!" per area, a few per map at most), leaving out those that rarely drop it:
+-- a commonly dropped item would otherwise cover a whole zone in quest givers (hundreds on one map).
+local ITEM_START_MIN_RATE = 5   -- percent: creatures that drop it less often are left out
+local ITEM_START_PACK = 0.08    -- droppers within this share of the map make one pack
+local ITEM_START_MAX_PACKS = 3  -- packs per quest per map
+
+local function markItemStart(id, item, itemRow, limit)
+	local role = { role = "itemStart", quest = id, item = item }
+	for _, object in ipairs(itemRow[BF.I.objectDrops] or {}) do
+		markSource({ type = "object", id = object }, role, limit)
+	end
+	local rates = BF.Data.drops and BF.Data.drops[item]
+	local packs = {} -- [map] = { { x, y, n, sx, sy }, ... }
+	for _, npc in ipairs(itemRow[BF.I.npcDrops] or {}) do
+		local rate = rates and rates[npc]
+		if not BF.Data.hiddenNpcs[npc] and (not rate or rate >= ITEM_START_MIN_RATE) then
+			local spawns = Objectives:Spawns({ type = "npc", id = npc })
+			if spawns then
+				Zones:EachSpawn(spawns, function(map, x, y, inside)
+					if inside then
+						local pin = pinAt(map, x, y, "in:" .. inside .. ":" .. floor(x * 1000) .. ":" .. floor(y * 1000), nil, inside)
+						pin.roles[#pin.roles + 1] = role
+						return
+					end
+					local list = packs[map]
+					if not list then
+						list = {}
+						packs[map] = list
+					end
+					for _, c in ipairs(list) do
+						if (c.x - x) ^ 2 + (c.y - y) ^ 2 <= ITEM_START_PACK ^ 2 then
+							c.sx, c.sy, c.n = c.sx + x, c.sy + y, c.n + 1
+							c.x, c.y = c.sx / c.n, c.sy / c.n
+							return
+						end
+					end
+					list[#list + 1] = { x = x, y = y, sx = x, sy = y, n = 1 }
+				end)
+			end
+		end
+	end
+	for map, list in pairs(packs) do
+		table.sort(list, function(a, b) return a.n > b.n end)
+		for n = 1, math.min(#list, ITEM_START_MAX_PACKS) do
+			local c = list[n]
+			local pin = pinAt(map, c.x, c.y, "is:" .. id .. ":" .. item .. ":" .. n, nil, nil)
+			pin.roles[#pin.roles + 1] = role
+		end
+	end
+end
+
 local function markGivers(id)
 	local q = BF:Quest(id)
 	if not q then return end
@@ -69,18 +121,8 @@ local function markGivers(id)
 	end
 	if BF:Get("quests.itemStarts") then
 		for _, item in ipairs(q[Q.startItems] or {}) do
-			local sources = {}
 			local itemRow = BF:Item(item)
-			if itemRow then
-				for _, npc in ipairs(itemRow[BF.I.npcDrops] or {}) do
-					if not BF.Data.hiddenNpcs[npc] then sources[#sources + 1] = { type = "npc", id = npc } end
-				end
-				for _, object in ipairs(itemRow[BF.I.objectDrops] or {}) do
-					sources[#sources + 1] = { type = "object", id = object }
-				end
-			end
-			local itemRole = { role = "itemStart", quest = id, item = item }
-			for _, s in ipairs(sources) do markSource(s, itemRole, limit) end
+			if itemRow then markItemStart(id, item, itemRow, limit) end
 		end
 	end
 end

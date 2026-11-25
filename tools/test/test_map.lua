@@ -59,6 +59,23 @@ return {
 		expect(#pinsWithRole(WorldMapFrame, "available", 33) >= 1, "reused from the pool")
 	end,
 
+	["item-started quests: droppers merged into a few packs per map (Crystal in the Mountains on Arathi)"] = function(BF)
+		World.player.level = 30
+		World.questLog = {}
+		World.maps = { [1417] = { size = 3600, mapID = 1417, name = "Arathi Highlands", mapType = 3 } }
+		World.player.map, World.player.x, World.player.y = 1417, 0.5, 0.5
+		Login()
+		Tick(5)
+		BF:Set("quests.itemStarts", true)
+		BF.Marks:Rebuild(true)
+		local marks = 0
+		for _, pin in ipairs(BF.Marks:On(1417)) do
+			for _, r in ipairs(pin.roles) do if r.role == "itemStart" and r.quest == 635 then marks = marks + 1 end end
+		end
+		expect(marks >= 1, "the quest is marked where its item drops")
+		expect(marks <= 3, "at most three packs, not one per dropper: " .. marks)
+	end,
+
 	["world map: the setting hides them"] = function(BF)
 		northshire(BF)
 		WorldMapFrame:Show()
