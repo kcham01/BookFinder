@@ -374,6 +374,11 @@ local TEMPLATE = "BookFinderUserPinTemplate"
 local Provider = CreateFromMixins(MapCanvasDataProviderMixin)
 Pins.Provider = Provider
 
+function Provider:OnAdded(map)
+	MapCanvasDataProviderMixin.OnAdded(self, map)
+	BF.PinPool:Register(map, TEMPLATE, BookFinderUserPinMixin, BF.PinPool.IconParts(24))
+end
+
 function Provider:RemoveAllData() self:GetMap():RemoveAllPinsByTemplate(TEMPLATE) end
 
 function Provider:RefreshAllData()
@@ -390,7 +395,6 @@ BookFinderUserPinMixin = CreateFromMixins(MapCanvasPinMixin)
 
 function BookFinderUserPinMixin:OnLoad()
 	self:SetScalingLimits(1, 1.0, 1.2)
-	if self.SetPassThroughButtons and not InCombatLockdown() then pcall(self.SetPassThroughButtons, self, "RightButton") end
 end
 
 function BookFinderUserPinMixin:OnAcquired(p, x, y)

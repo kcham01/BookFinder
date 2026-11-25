@@ -229,6 +229,7 @@ function Region:GetRegions()
 	return unpack(list)
 end
 function Region:EnableMouse(v) self.mouse = v end
+function Region:IsMouseEnabled() return self.mouse == true end
 function Region:IsMouseOver() return false end
 function Region:GetEffectiveScale() return 1 end
 function Region:GetScale() return self.scale or 1 end
@@ -531,11 +532,6 @@ MapCanvasPinMixin = {
 	GetMap = function(self) return self.owningMap end,
 }
 
--- XML templates the add-on defines, as the harness knows them (template name -> mixin global name).
-World.templates = { BookFinderMapPinTemplate = "BookFinderMapPinMixin", BookFinderPathPinTemplate = "BookFinderPathPinMixin",
-	BookFinderUserPinTemplate = "BookFinderUserPinMixin", BookFinderPersonPinTemplate = "BookFinderPersonPinMixin",
-	BookFinderZoneBadgeTemplate = "BookFinderZoneBadgeMixin" }
-
 local function newCanvas()
 	local map = CreateFrame("Frame", "WorldMapFrame", UIParent)
 	map.shown = false
@@ -550,13 +546,18 @@ local function newCanvas()
 	map.canvas:SetSize(1002, 668)
 	function map:GetCanvas() return self.canvas end
 	function map:SetMapID(id) self.mapID = id; for _, p in ipairs(self.providers) do p:RefreshAllData() end end
+	-- As WoW: Forever's canvas: pins come from map.pinPools[template]; an XML template it can't look up asserts, and
+	-- so does a new mouse-enabled pin with OnEnter/OnLeave scripts of its own (Blizzard_MapCanvas).
 	function map:AcquirePin(template, ...)
-		local mixin = _G[World.templates[template]]
-		local pin = CreateFrame("Frame", nil, self)
-		Mixin(pin, mixin)
+		local pool = self.pinPools and self.pinPools[template]
+		assert(pool, "MapCanvas: no pin pool for " .. tostring(template))
+		local pin, new = pool:Acquire()
+		if new and pin:IsMouseEnabled() then
+			assert(pin:GetScript("OnEnter") == nil, "MapCanvas: a new pin has its own OnEnter")
+			assert(pin:GetScript("OnLeave") == nil, "MapCanvas: a new pin has its own OnLeave")
+		end
 		pin.owningMap, pin.template = self, template
-		pin.Icon, pin.Glow, pin.Step = pin:CreateTexture(), pin:CreateTexture(), pin:CreateFontString()
-		if pin.OnLoad then pin:OnLoad() end
+		if pin.SetPassThroughButtons then pin:SetPassThroughButtons("RightButton") end
 		pin:OnAcquired(...)
 		self.pins[#self.pins + 1] = pin
 		return pin
@@ -564,7 +565,7 @@ local function newCanvas()
 	function map:RemoveAllPinsByTemplate(template)
 		for i = #self.pins, 1, -1 do
 			if self.pins[i].template == template then
-				if self.pins[i].OnReleased then self.pins[i]:OnReleased() end
+				self.pinPools[template]:Release(self.pins[i])
 				table.remove(self.pins, i)
 			end
 		end
@@ -610,7 +611,6 @@ YES, NO = "Yes", "No"
 CreateAtlasMarkup = function(a) return "|A:" .. a .. "|a" end
 issecretvalue = function() return false end
 issecrettable = function() return false end
-World.templates.BookFinderBookPinTemplate = "BookFinderBookPinMixin"
 BackdropTemplateMixin = {}
 C_Item = strict("C_Item", {
 	GetItemNameByID = function() return nil end,

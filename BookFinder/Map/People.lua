@@ -219,6 +219,12 @@ local DOT, BADGE = "BookFinderPersonPinTemplate", "BookFinderZoneBadgeTemplate"
 local Provider = CreateFromMixins(MapCanvasDataProviderMixin)
 People.Provider = Provider
 
+function Provider:OnAdded(map)
+	MapCanvasDataProviderMixin.OnAdded(self, map)
+	BF.PinPool:Register(map, DOT, BookFinderPersonPinMixin, BF.PinPool.IconParts(14))
+	BF.PinPool:Register(map, BADGE, BookFinderZoneBadgeMixin, BF.PinPool.IconParts(18))
+end
+
 local function classColour(class)
 	local c = class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
 	if c then return c.r, c.g, c.b end

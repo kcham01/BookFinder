@@ -66,6 +66,7 @@ local levelsReady = false
 
 function Provider:OnAdded(map)
 	MapCanvasDataProviderMixin.OnAdded(self, map)
+	BF.PinPool:Register(map, TEMPLATE, BookFinderMapPinMixin, BF.PinPool.IconParts(16, true))
 	-- Our pins' own layers in the map's stack: objectives above the map's highlight, givers above them.
 	local manager = map.GetPinFrameLevelsManager and map:GetPinFrameLevelsManager()
 	if manager and manager.InsertFrameLevelAbove then
@@ -106,9 +107,6 @@ BookFinderMapPinMixin = CreateFromMixins(MapCanvasPinMixin)
 
 function BookFinderMapPinMixin:OnLoad()
 	self:SetScalingLimits(1, 1.0, 1.15)
-	-- Right-click goes through to the map (zoom out), as on the game's own pins. Not allowed in combat: tried again
-	-- when the pin is next shown.
-	if self.SetPassThroughButtons and not InCombatLockdown() then pcall(self.SetPassThroughButtons, self, "RightButton") end
 end
 
 function BookFinderMapPinMixin:OnAcquired(pin, x, y, sourceMap)

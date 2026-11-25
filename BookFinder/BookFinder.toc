@@ -48,7 +48,7 @@ Quests\Auto.lua
 Quests\Announce.lua
 Quests\Links.lua
 Map\Waypoint.lua
-Map\Pins.xml
+Map\PinPool.lua
 Map\WorldMap.lua
 Map\Minimap.lua
 Map\Paths.lua

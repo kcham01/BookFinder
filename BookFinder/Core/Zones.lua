@@ -114,8 +114,33 @@ function Zones:FromWorld(map, instance, wx, wy)
 end
 
 --- A point of one map on another (zone to continent, continent to zone...). nil if they are different worlds.
+-- Where a map lies on a bigger map that holds it (a zone on its continent, a continent on the world), as the game lays
+-- them out. Continents and the world are drawn, not surveyed: world positions put a zone's points in the sea there,
+-- so only this places them right.
+local onMap = {}
+local function rectOnMap(from, to)
+	local key = from * 100000 + to
+	local r = onMap[key]
+	if r ~= nil then return r or nil end
+	r = false
+	local fn = rawget(C_Map, "GetMapRectOnMap")
+	if fn then
+		local ok, minX, maxX, minY, maxY = pcall(fn, from, to)
+		if ok and minX and maxX and minY and maxY and maxX > minX and maxY > minY then r = { minX, maxX, minY, maxY } end
+	end
+	onMap[key] = r
+	return r or nil
+end
+Zones.RectOnMap = rectOnMap
+
+--- A point of one map on another (zone to continent, continent to zone, zone to world, neighbouring zones), or nil.
 function Zones:Translate(fromMap, x, y, toMap)
 	if fromMap == toMap then return x, y end
+	local r = rectOnMap(fromMap, toMap)
+	if r then return r[1] + (r[2] - r[1]) * x, r[3] + (r[4] - r[3]) * y end
+	r = rectOnMap(toMap, fromMap)
+	if r then return (x - r[1]) / (r[2] - r[1]), (y - r[3]) / (r[4] - r[3]) end
+	-- maps side by side: world positions
 	local instance, wx, wy = Zones:ToWorld(fromMap, x, y)
 	if not instance then return nil end
 	return Zones:FromWorld(toMap, instance, wx, wy)

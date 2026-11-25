@@ -178,6 +178,7 @@ Paths.Provider = Provider
 
 function Provider:OnAdded(map)
 	MapCanvasDataProviderMixin.OnAdded(self, map)
+	BF.PinPool:Register(map, TEMPLATE, BookFinderPathPinMixin, function() end, true)
 	-- Lines under every quest icon: their own layer, right above the map's highlight (objectives sit above it).
 	local manager = map.GetPinFrameLevelsManager and map:GetPinFrameLevelsManager()
 	if manager and manager.InsertFrameLevelAbove then

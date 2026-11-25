@@ -69,6 +69,19 @@ end
 local Provider = CreateFromMixins(MapCanvasDataProviderMixin)
 BookMap.Provider = Provider
 
+local function bookParts(pin)
+	pin:SetSize(20, 20)
+	pin.Icon = pin:CreateTexture(nil, "ARTWORK")
+	pin.Icon:SetAllPoints()
+	pin.Step = pin:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+	pin.Step:SetPoint("BOTTOMRIGHT", 3, -3)
+end
+
+function Provider:OnAdded(map)
+	MapCanvasDataProviderMixin.OnAdded(self, map)
+	BF.PinPool:Register(map, TEMPLATE, BookFinderBookPinMixin, bookParts)
+end
+
 function Provider:RemoveAllData()
 	self:GetMap():RemoveAllPinsByTemplate(TEMPLATE)
 end
@@ -97,7 +110,6 @@ BookFinderBookPinMixin = CreateFromMixins(MapCanvasPinMixin)
 
 function BookFinderBookPinMixin:OnLoad()
 	self:SetScalingLimits(1, 1.0, 1.15)
-	if self.SetPassThroughButtons and not InCombatLockdown() then pcall(self.SetPassThroughButtons, self) end
 end
 
 function BookFinderBookPinMixin:OnAcquired(book, place, x, y, shows, continent)

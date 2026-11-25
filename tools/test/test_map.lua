@@ -40,6 +40,25 @@ return {
 		equal(pin.Icon.texture, "Interface\\GossipFrame\\ActiveQuestIcon", "turn-in icon (no atlas in this client)")
 	end,
 
+	["world map: pins from BookFinder's own pools; the mouse through a child frame, none on the pin"] = function(BF)
+		northshire(BF)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(1429)
+		local pin = pinsWithRole(WorldMapFrame, "available", 33)[1]
+		expect(WorldMapFrame.pinPools["BookFinderMapPinTemplate"], "pool registered on the map")
+		expect(not pin:IsMouseEnabled(), "the pin itself takes no mouse (the canvas never wires it)")
+		expect(pin.Hit and pin.Hit:IsMouseEnabled(), "a child frame takes the mouse")
+		pin.Hit:GetScript("OnEnter")(pin.Hit)
+		expect(table.concat(GameTooltip.lines, "\n"):find("Eagan Peltskinner", 1, true), "hover shows the pin's tooltip")
+		pin.Hit:GetScript("OnLeave")(pin.Hit)
+		BF:Set("quests.map", false)
+		WorldMapFrame:SetMapID(1429)
+		equal(WorldMapFrame.pinPools["BookFinderMapPinTemplate"]:GetNumActive(), 0, "released back to the pool")
+		BF:Set("quests.map", true)
+		WorldMapFrame:SetMapID(1429)
+		expect(#pinsWithRole(WorldMapFrame, "available", 33) >= 1, "reused from the pool")
+	end,
+
 	["world map: the setting hides them"] = function(BF)
 		northshire(BF)
 		WorldMapFrame:Show()
