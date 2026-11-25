@@ -446,23 +446,30 @@ end
 GetQuestLogSelection = function() return 0 end
 SelectQuestLogEntry = function() end
 
-GetItemCount = function(id, bank) return (World.bags[id] or 0) + (bank and World.bank and World.bank[id] or 0) end
-GetNumSkillLines = function() return #World.skills end
-GetSkillLineInfo = function(i) local s = World.skills[i] return s.name, false, false, s.rank, 0, 0, s.max end
-GetFactionInfoByID = function(id)
-	local v = World.reputations[id]
-	if not v then return nil end
-	return "Faction " .. id, "", 4, 0, 42000, v
+-- Gone on WoW: Forever (the modern client): these read as nil there, so they read as nil here. Their C_ forms answer.
+for _, name in ipairs({ "GetItemCount", "GetFactionInfoByID", "GetNumSkillLines", "GetSkillLineInfo", "GetSpellInfo" }) do
+	savedVariables[name] = true
 end
+C_Reputation = strict("C_Reputation", {
+	GetFactionDataByID = function(id)
+		local v = World.reputations[id]
+		if not v then return nil end
+		return { factionID = id, name = "Faction " .. id, reaction = 4, currentStanding = v }
+	end,
+})
 IsSpellKnown = function() return false end
 C_Spell = strict("C_Spell", { GetSpellName = function(id) return World.spellNames and World.spellNames[id] or nil end })
 C_SkillInfo = strict("C_SkillInfo", {
+	GetNumSkillLines = function() return #World.skills end,
+	GetSkillLineInfo = function(i)
+		local s = World.skills[i]
+		return s and { name = s.name, isHeader = false, rank = s.rank, max = s.max, skillID = s.id } or nil
+	end,
 	GetSkillLineInfoByID = function(id)
 		for _, s in ipairs(World.skills) do if s.id == id then return { name = s.name, rank = s.rank, max = s.max } end end
 		return nil
 	end,
 })
-GetSpellInfo = function(id) return World.spellNames and World.spellNames[id] or nil end
 
 C_ChatInfo = strict("C_ChatInfo", {
 	RegisterAddonMessagePrefix = function() return true end,
@@ -610,6 +617,7 @@ C_Item = strict("C_Item", {
 	GetItemIconByID = function() return 134400 end,
 	GetItemQualityByID = function() return 3 end,
 	GetItemInfo = function(id) return "Item " .. id, "|Hitem:" .. id .. "|h[Item " .. id .. "]|h" end,
+	GetItemCount = function(id, bank) return (World.bags[id] or 0) + (bank and World.bank and World.bank[id] or 0) end,
 })
 ITEM_QUALITY_COLORS = { [3] = { r = 0, g = 0.44, b = 0.87 } }
 DressUpItemLink = function(link) World.triedOn = link end

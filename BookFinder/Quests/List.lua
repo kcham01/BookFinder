@@ -433,8 +433,8 @@ function List:Click(r, button)
 	end
 	-- A chat box open and Shift held: link the quest.
 	local edit = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
-	if how == "shiftleft" and edit and GetQuestLink then
-		ChatEdit_InsertLink(GetQuestLink(r.quest))
+	if how == "shiftleft" and edit and BF.Game.QuestLink(r.quest) then
+		ChatEdit_InsertLink(BF.Game.QuestLink(r.quest))
 		return
 	end
 	if how == BF:Get("list.clickPin") then List:PinQuest(r.quest)

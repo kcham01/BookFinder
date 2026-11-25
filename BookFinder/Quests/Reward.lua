@@ -82,7 +82,7 @@ function Reward:Text(questID)
 	local xp = Reward:XP(questID, atMax)
 	if xp > 0 then parts[#parts + 1] = (BreakUpLargeNumbers and BreakUpLargeNumbers(xp) or tostring(xp)) .. " " .. L["xp"] end
 	local money = Reward:Money(questID)
-	if money > 0 and GetCoinTextureString then parts[#parts + 1] = "|cffffffff" .. GetCoinTextureString(money) .. "|r" end
+	if money > 0 and BF.Game.Coins(money) then parts[#parts + 1] = "|cffffffff" .. BF.Game.Coins(money) .. "|r" end
 	return table.concat(parts, " ")
 end
 
@@ -90,7 +90,7 @@ end
 function Reward:ReputationLines(questID)
 	local lines = {}
 	for _, pair in ipairs(Reward:Reputation(questID) or {}) do
-		local name = GetFactionInfoByID and GetFactionInfoByID(pair[1])
+		local name = BF.Game.Faction(pair[1])
 		if name then
 			lines[#lines + 1] = ("%s%d %s"):format(pair[2] >= 0 and "+" or "", pair[2], name)
 		end

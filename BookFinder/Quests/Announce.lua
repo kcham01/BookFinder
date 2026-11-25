@@ -30,7 +30,7 @@ local function chatChannel()
 end
 
 local function link(id)
-	return GetQuestLink and GetQuestLink(id) or ("[" .. (BF:QuestName(id) or id) .. "]")
+	return BF.Game.QuestLink(id) or ("[" .. (BF:QuestName(id) or id) .. "]")
 end
 
 local said = {} -- a message is said once a session
@@ -45,7 +45,7 @@ function Announce:Say(kindSetting, fmt, ...)
 	if said[message] then return true end
 	said[message] = true
 	if self then BF:Print(message) end
-	if group then SendChatMessage("{rt1} BookFinder: " .. message, chatChannel()) end
+	if group then BF.Game.Chat("{rt1} BookFinder: " .. message, chatChannel()) end
 	return true
 end
 

@@ -172,7 +172,7 @@ local INDOOR = { [0] = 300, 240, 180, 120, 80, 50 }
 
 local function minimapYards()
 	local zoom = Minimap:GetZoom()
-	local indoors = GetCVar("minimapZoom") + 0 ~= zoom and GetCVar("minimapInsideZoom") + 0 == zoom
+	local indoors = BF.Game.CVarNumber("minimapZoom") ~= zoom and BF.Game.CVarNumber("minimapInsideZoom") == zoom
 	return (indoors and INDOOR or OUTDOOR)[zoom] or OUTDOOR[0]
 end
 
@@ -184,7 +184,7 @@ local function updateMinimap()
 	local yards = minimapYards()
 	local radius = yards / 2
 	local ppy = Minimap:GetWidth() / yards
-	local rotate = GetCVar("rotateMinimap") == "1"
+	local rotate = BF.Game.CVar("rotateMinimap") == "1"
 	local facing = rotate and (GetPlayerFacing() or 0) or 0
 	local cs, sn = math.cos(facing), math.sin(facing)
 	local size = BF:Get("books.minimapSize")

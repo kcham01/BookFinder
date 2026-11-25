@@ -92,7 +92,7 @@ end
 local factionNames = {}
 local function factionName(id)
 	if factionNames[id] then return factionNames[id] end
-	local name = GetFactionInfoByID and GetFactionInfoByID(id)
+	local name = BF.Game.Faction(id)
 	if not name then
 		for words, value in pairs(Data.factionIDs or {}) do if value == id then name = title(words) end end
 	end

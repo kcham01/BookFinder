@@ -136,7 +136,7 @@ end
 -- Breadcrumbs ----------------------------------------------------------------------------------------------------------
 
 local function link(id)
-	return GetQuestLink and GetQuestLink(id) or ("[" .. (BF:QuestName(id) or id) .. "]")
+	return BF.Game.QuestLink(id) or ("[" .. (BF:QuestName(id) or id) .. "]")
 end
 
 --- After a quest is taken: its breadcrumbs still to do (and open to the player) are said; with the setting, the quest is

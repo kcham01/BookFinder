@@ -22,7 +22,7 @@ local CELL = 200 -- yards per index cell
 -- Indoors is told by which zoom setting the minimap follows: the game keeps one for each.
 local function minimapYards()
 	local zoom = Minimap:GetZoom()
-	local indoors = GetCVar("minimapZoom") + 0 ~= zoom and GetCVar("minimapInsideZoom") + 0 == zoom
+	local indoors = BF.Game.CVarNumber("minimapZoom") ~= zoom and BF.Game.CVarNumber("minimapInsideZoom") == zoom
 	return (indoors and INDOOR or OUTDOOR)[zoom] or OUTDOOR[0]
 end
 
@@ -154,7 +154,7 @@ local function draw()
 	local radius = yards / 2
 	local w, h = Minimap:GetWidth(), Minimap:GetHeight()
 	local pixelsPerYard = w / yards
-	local rotate = GetCVar("rotateMinimap") == "1"
+	local rotate = BF.Game.CVar("rotateMinimap") == "1"
 	local facing = rotate and (GetPlayerFacing() or 0) or 0
 	local cs, sn = cos(facing), sin(facing)
 	local square = isSquare()
@@ -223,7 +223,7 @@ driver:SetScript("OnUpdate", function(_, elapsed)
 	local _, x, y = Zones:PlayerWorld()
 	local facing = GetPlayerFacing() or 0
 	local zoom = Minimap:GetZoom()
-	local moved = x ~= lastX or y ~= lastY or zoom ~= lastZoom or (GetCVar("rotateMinimap") == "1" and facing ~= lastFacing)
+	local moved = x ~= lastX or y ~= lastY or zoom ~= lastZoom or (BF.Game.CVar("rotateMinimap") == "1" and facing ~= lastFacing)
 	if moved or elapsedSince > 1 or index.version ~= Marks.version then
 		elapsedSince = 0
 		lastX, lastY, lastFacing, lastZoom = x, y, facing, zoom

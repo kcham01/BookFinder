@@ -59,7 +59,7 @@ end
 --- How the player has it: "handedIn", "carried" (bags or bank), "ticked" (by hand), or nil (still missing).
 function Books:How(book)
 	if BF.Player:HasCompleted(book.quest) then return "handedIn" end
-	if GetItemCount(book.item, true) > 0 then return "carried" end
+	if BF.Game.ItemCount(book.item, true) > 0 then return "carried" end
 	if state().ticked and state().ticked[book.key] then return "ticked" end
 	return nil
 end

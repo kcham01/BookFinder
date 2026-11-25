@@ -119,8 +119,7 @@ Player.skills = {} -- [skillID] = rank
 
 local function skillName(id)
 	local spell = skillSpells[id]
-	local name = spell and ((C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(spell))
-		or (GetSpellInfo and GetSpellInfo(spell)))
+	local name = spell and BF.Game.SpellName(spell)
 	return name or skillEnglish[id]
 end
 
@@ -142,7 +141,7 @@ local function loadSkills()
 				skills[id] = info.rank
 			end
 		end
-		return
+		if next(skills) then return end
 	end
 	if not next(Player.skillIdByName) then
 		for id in pairs(skillEnglish) do
@@ -151,10 +150,9 @@ local function loadSkills()
 			Player.skillIdByName[skillEnglish[id]] = id
 		end
 	end
-	for i = 1, GetNumSkillLines() do
-		local name, isHeader, _, rank = GetSkillLineInfo(i)
-		local id = name and not isHeader and Player.skillIdByName[name]
-		if id then skills[id] = rank end
+	for _, line in ipairs(BF.Game.SkillLines()) do
+		local id = not line.isHeader and (skillEnglish[line.skillID or 0] and line.skillID or Player.skillIdByName[line.name])
+		if id and line.rank then skills[id] = line.rank end
 	end
 end
 
@@ -173,7 +171,7 @@ end
 
 --- The player's reputation with a faction, in points from the bottom of Neutral (as quests count it), or nil.
 function Player:Reputation(factionID)
-	local name, _, _, _, _, value = GetFactionInfoByID(factionID)
+	local name, value = BF.Game.Faction(factionID)
 	if not name then return nil end
 	return value
 end

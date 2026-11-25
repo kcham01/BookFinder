@@ -52,9 +52,7 @@ function Rules:Level(id)
 end
 
 local function greenRange()
-	if UnitQuestTrivialLevelRange then return UnitQuestTrivialLevelRange("player") end
-	if GetQuestGreenRange then return GetQuestGreenRange("player") end
-	return 8
+	return BF.Game.GreenRange() or 8
 end
 
 --- Grey to the player: too low to be worth much.
@@ -121,9 +119,7 @@ local function noneTaken(list)
 end
 
 local function spellKnown(spell)
-	if IsPlayerSpell then return IsPlayerSpell(spell) end
-	if IsSpellKnown then return IsSpellKnown(spell) end
-	return false
+	return BF.Game.SpellKnown(spell)
 end
 
 local function reputationAtLeast(pair)
