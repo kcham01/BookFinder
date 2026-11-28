@@ -121,6 +121,16 @@ return {
 			for _, r in ipairs(pin.roles) do if r.party == BOB and r.quest == 7 then onMap = true end end
 		end
 		expect(onMap, "Bob's kobolds on the map")
+		local marks = 0
+		for _, pin in ipairs(BF.Marks:On(1429)) do
+			for _, r in ipairs(pin.roles) do if r.party == BOB and r.quest == 7 then marks = marks + 1 end end
+		end
+		expect(marks <= 4, "a few packs, not one per kobold: " .. marks)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(1429)
+		for _, p in ipairs(WorldMapFrame.pins) do
+			if p.pin and BF.Look:PartyOnly(p.pin) then equal(p.alpha, 0.6, "Bob's mark drawn faint") end
+		end
 		local t = table.concat(World.ShowTooltip("Unit", { guid = "Creature-0-1-0-12-6-0000AB12CD" }, "Kobold Vermin"), "\n")
 		expect(t:find(BOB .. ": 2/10", 1, true), "Bob's progress on the tooltip")
 		from(BF, BOB, { ver = "12.9.0", msgVer = 5, msgId = 2, id = 7 })

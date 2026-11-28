@@ -113,9 +113,14 @@ function BookFinderMapPinMixin:OnAcquired(pin, x, y, sourceMap)
 	self.pin, self.sourceMap = pin, sourceMap
 	self.mapX, self.mapY = x, y
 	local kind, scaleKey, giver = Look:Kind(pin)
+	self.kind = kind
 	Icons:Apply(self.Icon, kind)
 	local size = scaleKey == "townsfolk" and BASE_SIZE * BF:Get("icons.townsfolkMapScale")
 		or BASE_SIZE * BF:Get("icons.mapScale") * BF:Get("icons.scale." .. scaleKey)
+	-- A party member's objective only: smaller and fainter than the player's own.
+	local party = Look:PartyOnly(pin)
+	if party then size = size * 0.85 end
+	self:SetAlpha(party and 0.6 or 1)
 	self:SetSize(size, size)
 	if levelsReady then self:UseFrameLevelType(giver and LEVEL_GIVERS or LEVEL_OBJECTIVES) end
 	local c = BF:Get("icons.glowMap") and Look:Glow(pin, false)
@@ -131,7 +136,7 @@ function BookFinderMapPinMixin:OnAcquired(pin, x, y, sourceMap)
 end
 
 function BookFinderMapPinMixin:OnReleased()
-	self.pin, self.sourceMap = nil, nil
+	self.pin, self.sourceMap, self.kind = nil, nil, nil
 end
 
 --- Every BookFinder pin under the cursor (several at one spot are listed together).
@@ -153,11 +158,42 @@ local function pinsUnderCursor(self)
 	return list
 end
 
+-- Hovering an objective lights every icon of the same quest's objectives in Questie's hover blue (givers and turn-ins
+-- keep theirs), so the quest's spread across the map shows at a glance. Leaving draws each one again as its kind.
+local HOVER = { 0.6, 1, 1 }
+local lit = {}
+
+local function objectiveQuest(pin)
+	local lead = pin and Look:Lead(pin)
+	return lead and lead.role == "objective" and lead.quest or nil
+end
+
+local function light(self)
+	local quest = objectiveQuest(self.pin)
+	if not quest then return end
+	for other in self:GetMap():EnumeratePinsByTemplate(TEMPLATE) do
+		if other.pin and objectiveQuest(other.pin) == quest then
+			other.Icon:SetVertexColor(HOVER[1], HOVER[2], HOVER[3], 1)
+			lit[#lit + 1] = other
+		end
+	end
+end
+
+local function unlight()
+	for i = #lit, 1, -1 do
+		local other = lit[i]
+		if other.pin and other.kind then Icons:Apply(other.Icon, other.kind) end
+		lit[i] = nil
+	end
+end
+
 function BookFinderMapPinMixin:OnMouseEnter()
+	light(self)
 	BF.PinTooltip:Show(self, pinsUnderCursor(self), false)
 end
 
 function BookFinderMapPinMixin:OnMouseLeave()
+	unlight()
 	BF.PinTooltip:Hide()
 end
 

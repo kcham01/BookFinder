@@ -608,6 +608,7 @@ IsControlKeyDown = function() return World.ctrl == true end
 IsAltKeyDown = function() return false end
 IsModifierKeyDown = function() return World.shift == true or World.ctrl == true end
 ChatEdit_GetActiveWindow = function() return nil end
+C_Navigation = strict("C_Navigation", { GetFrame = function() return nil end })
 C_SuperTrack = strict("C_SuperTrack", {
 	SetSuperTrackedUserWaypoint = function(v) World.superTracked = v end,
 	IsSuperTrackingUserWaypoint = function() return World.superTracked == true end,

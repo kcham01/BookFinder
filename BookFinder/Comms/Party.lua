@@ -27,6 +27,8 @@ end
 
 -- The map layer -------------------------------------------------------------------------------------------------------
 
+local PARTY_PACKS_PER_MAP = 4
+
 Marks:RegisterLayer("party", function(add)
 	if not BF:Get("party.objectives") or GetNumGroupMembers() > 5 then return end
 	for questID, players in pairs(Party.quests) do
@@ -37,20 +39,37 @@ Marks:RegisterLayer("party", function(add)
 				for i, o in ipairs(objectives) do
 					local rec = data[i]
 					if rec and not o.finished and not own[i] then
-						local placed = {} -- [map] = { {x, y}, ... }: one mark per small area per objective
+						-- Their spawns merged into packs (as the player's own objectives are, a little wider), and only the
+						-- biggest few packs per map: a party member's objective is a hint, not a carpet of icons.
+						local radius = math.max(0.04, BF:Get("icons.clusterObjectives") / 100 * 1.5)
+						local packs = {} -- [map] = { { x, y, n, sx, sy, source }, ... }
 						for _, s in ipairs(rec.sources or {}) do
 							Zones:EachSpawn(Objectives:Spawns(s), function(map, x, y, inside)
 								if inside then return end
-								local list = placed[map] or {}
-								placed[map] = list
-								for _, p in ipairs(list) do
-									if (p[1] - x) ^ 2 + (p[2] - y) ^ 2 < 0.015 ^ 2 then return end
+								local list = packs[map]
+								if not list then
+									list = {}
+									packs[map] = list
 								end
-								list[#list + 1] = { x, y }
-								add(map, x, y, "p:" .. questID .. ":" .. i .. ":" .. #list .. ":" .. map,
-									{ role = "objective", quest = questID, objective = { index = i, name = rec.name, icon = rec.icon,
-										text = ("%s: %d/%d"):format(rec.name or "", o.have, o.need) }, source = s, party = player })
+								for _, c in ipairs(list) do
+									if (c.x - x) ^ 2 + (c.y - y) ^ 2 <= radius * radius then
+										c.n, c.sx, c.sy = c.n + 1, c.sx + x, c.sy + y
+										c.x, c.y = c.sx / c.n, c.sy / c.n
+										return
+									end
+								end
+								list[#list + 1] = { x = x, y = y, sx = x, sy = y, n = 1, source = s }
 							end)
+						end
+						local objective = { index = i, name = rec.name, icon = rec.icon,
+							text = ("%s: %d/%d"):format(rec.name or "", o.have, o.need) }
+						for map, list in pairs(packs) do
+							table.sort(list, function(a, b) return a.n > b.n end)
+							for n = 1, math.min(#list, PARTY_PACKS_PER_MAP) do
+								local c = list[n]
+								add(map, c.x, c.y, "p:" .. questID .. ":" .. player .. ":" .. i .. ":" .. n .. ":" .. map,
+									{ role = "objective", quest = questID, objective = objective, source = c.source, party = player })
+							end
 						end
 					end
 				end

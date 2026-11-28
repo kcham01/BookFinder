@@ -73,6 +73,13 @@ function Look:QuestColour(quest)
 end
 
 --- The pin's glow colour: the quest's own colour for objectives when chosen, else gold for givers, white else.
+--- Whether a pin holds only party members' objectives (drawn smaller and fainter than the player's own).
+function Look:PartyOnly(pin)
+	if #pin.roles == 0 then return false end
+	for _, r in ipairs(pin.roles) do if not r.party then return false end end
+	return true
+end
+
 function Look:Glow(pin, minimap)
 	local lead = Look:Lead(pin)
 	local perQuest = BF:Get(minimap and "icons.colorsMinimap" or "icons.colorsMap")

@@ -106,6 +106,20 @@ return {
 		equal(count(), every, "off again: every spawn")
 	end,
 
+	["hovering an objective lights the quest's other objective icons; leaving puts them back"] = function(BF)
+		northshire(BF)
+		WorldMapFrame:Show()
+		WorldMapFrame:SetMapID(1429)
+		local objectives = pinsWithRole(WorldMapFrame, "objective", 7)
+		local giver = pinsWithRole(WorldMapFrame, "available", 33)[1]
+		local before = giver.Icon.color and giver.Icon.color[1]
+		objectives[1]:OnMouseEnter()
+		for _, p in ipairs(objectives) do equal(p.Icon.color[1], 0.6, "lit") end
+		equal(giver.Icon.color and giver.Icon.color[1], before, "a giver keeps its colour")
+		objectives[1]:OnMouseLeave()
+		for _, p in ipairs(objectives) do equal(p.Icon.color[1], 1, "back") end
+	end,
+
 	["world map: the setting hides them"] = function(BF)
 		northshire(BF)
 		WorldMapFrame:Show()

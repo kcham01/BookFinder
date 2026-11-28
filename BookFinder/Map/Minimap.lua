@@ -106,6 +106,9 @@ local function style(f, pin)
 	Icons:Apply(f.Icon, kind)
 	local size = scaleKey == "townsfolk" and BASE_SIZE * BF:Get("icons.townsfolkMinimapScale")
 		or BASE_SIZE * BF:Get("icons.minimapScale") * BF:Get("icons.scale." .. scaleKey)
+	-- A party member's objective only: smaller and fainter than the player's own.
+	f.party = Look:PartyOnly(pin)
+	if f.party then size = size * 0.85 end
 	f:SetSize(size, size)
 	local c = BF:Get("icons.glowMinimap") and Look:Glow(pin, true)
 	if c then
@@ -199,7 +202,7 @@ local function draw()
 							alpha = 1 - (1 - fadeAlpha) * math.min(1, (dist - fadeFrom) / math.max(1, radius - fadeFrom))
 						end
 						if overPlayer and dist < overDistance then alpha = math.min(alpha, overAlpha) end
-						f:SetAlpha(alpha)
+						f:SetAlpha(f.party and alpha * 0.6 or alpha)
 					end
 				end
 			end
