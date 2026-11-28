@@ -165,62 +165,63 @@ function ShowMenu:Items()
 	return items
 end
 
--- The fallback: the client's own menu system, used only where the Show button cannot be found (the menu is then
--- changed by its tag: the game's rows emptied, BookFinder's items written in the client's menu calls).
-
-local function toMenu(parent, items)
-	for _, item in ipairs(items) do
-		if item.divider then parent:CreateDivider()
-		elseif item.title then parent:CreateTitle(item.text)
-		elseif item.submenu then toMenu(parent:CreateButton(item.text), item.submenu())
-		else
-			local cb = parent:CreateCheckbox(item.text, item.checked, item.func)
-			if cb.SetResponse and MenuResponse then cb:SetResponse(MenuResponse.Refresh) end
-			if item.icon and Icons.kinds[item.icon] and cb.AddInitializer then
-				local kind = item.icon
-				cb:AddInitializer(function(button)
-					local t = button:AttachTexture()
-					t:SetSize(16, 16)
-					t:SetPoint("RIGHT")
-					Icons:Apply(t, kind)
-				end)
-			end
-		end
-	end
-end
-
--- The game's own entries go. The client keeps a description's rows in elementDescriptions; where it does not (another
--- client), they stay, and BookFinder's follow them under a divider.
+-- If the game's own menu opens all the same, its rows are emptied where the client keeps them (elementDescriptions);
+-- the menu is closed for BookFinder's in any case (below).
 local function removeGameEntries(root)
-	local rows = type(root.elementDescriptions) == "table" and root.elementDescriptions
+	local rows = type(root) == "table" and type(root.elementDescriptions) == "table" and root.elementDescriptions
 	if not rows then return false end
 	ShowMenu.removed = #rows
 	wipe(rows)
 	return true
 end
 
-function ShowMenu:Fill(root)
-	if not removeGameEntries(root) then root:CreateDivider() end
-	local items = ShowMenu:Items()
-	table.remove(items, 1) -- the client's menu has its own heading
-	toMenu(root, items)
-end
-
 -- The button --------------------------------------------------------------------------------------------------
 --
--- The map's Show button is the world map's tracking options button: one of the map's overlay frames, made from the
--- game's WorldMapTrackingOptionsButtonMixin (told apart from the floor picker, the same kind of button, by that).
--- Pressing it opens BookFinder's dropdown instead of the game's menu, so the game's entries are never built. Forever's entries (seen in game): Quest
--- Objectives, Show Quest Levels, Quest Difficulty Color, Low-Level Quests, Tracked Items; with no switch left they stay as
--- they are (all off on the account that was tested). The button's reset badge (the red cross, which puts the game's entries back
--- to their defaults) goes with them.
--- Where the button cannot be found, the menu is changed by its tag instead: the game's rows are emptied, ours added.
+-- The map's Show button is the world map's tracking options button, one of the map's overlay frames. In the owner's
+-- test it was not found by the one way first tried (its OnLoad), so the game's menu opened with BookFinder's rows
+-- under it. Now it is known three ways: a method only its own mixin has (not the floor picker's, the same kind of
+-- button), the tag of the menu it builds, or, failing both, the game's menu itself when it opens: BookFinder takes the
+-- button then, closes the game's menu and opens its own.
+--
+-- A clear button lies over the game's and takes the click, so the game's menu is never built: BookFinder's dropdown
+-- opens instead, holding only BookFinder's entries (decided: the game's entries go, and its reset badge with them).
+
+-- A menu description that records only its tag: anything else asked of it answers itself.
+local function tagRecorder()
+	local rec = {}
+	local stub = setmetatable({}, { __index = function() return function() return rec.stub end end })
+	rec.stub = stub
+	rawset(stub, "SetTag", function(_, tag) rec.tag = tag end)
+	return rec
+end
+
+local function menuTag(frame)
+	local generator = rawget(frame, "menuGenerator") or rawget(frame, "generator")
+	if type(generator) ~= "function" then return nil end
+	local rec = tagRecorder()
+	pcall(generator, frame, rec.stub)
+	return rec.tag
+end
+
+local function ownMethod(frame)
+	local mixin = rawget(_G, "WorldMapTrackingOptionsButtonMixin")
+	if type(mixin) ~= "table" then return false end
+	local other = rawget(_G, "WorldMapFloorNavigationFrameMixin")
+	other = type(other) == "table" and other or {}
+	for key, fn in pairs(mixin) do
+		if type(fn) == "function" and other[key] ~= fn and rawget(frame, key) == fn then return true end
+	end
+	return false
+end
 
 function ShowMenu:FindButton()
-	local mixin = WorldMapTrackingOptionsButtonMixin
-	if not mixin or not WorldMapFrame then return nil end
-	for _, frame in ipairs(WorldMapFrame.overlayFrames or {}) do
-		if type(frame) == "table" and frame.OnLoad == mixin.OnLoad and frame.SetupMenu then return frame end
+	if not WorldMapFrame then return nil end
+	local frames = WorldMapFrame.overlayFrames or {}
+	for _, frame in ipairs(frames) do
+		if type(frame) == "table" and ownMethod(frame) then return frame end
+	end
+	for _, frame in ipairs(frames) do
+		if type(frame) == "table" and menuTag(frame) == TAG then return frame end
 	end
 end
 
@@ -280,23 +281,60 @@ local function ditch(frame)
 	end
 end
 
+local function open(anchor)
+	BF.Dropdown:Toggle(anchor, function() return ShowMenu:Items() end)
+end
+
+--- Lays BookFinder's clear button over the game's Show button. True once it is there.
+function ShowMenu:Cover(button)
+	if ShowMenu.cover then return true end
+	if type(button) ~= "table" or not button.GetFrameLevel then return false end
+	ShowMenu.button = button
+	local cover = CreateFrame("Button", "BookFinderShowButton", button)
+	cover:SetAllPoints(button)
+	cover:EnableMouse(true)
+	cover:SetFrameLevel(button:GetFrameLevel() + 5)
+	cover:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	cover:SetScript("OnClick", function() open(button) end)
+	-- The game's button still lights under the pointer and keeps its tooltip.
+	cover:SetScript("OnEnter", function()
+		if button.LockHighlight then button:LockHighlight() end
+		local onEnter = button:GetScript("OnEnter")
+		if onEnter then pcall(onEnter, button) end
+	end)
+	cover:SetScript("OnLeave", function()
+		if button.UnlockHighlight then button:UnlockHighlight() end
+		local onLeave = button:GetScript("OnLeave")
+		if onLeave then pcall(onLeave, button) end
+	end)
+	ShowMenu.cover = cover
+	hideReset(button)
+	return true
+end
+
+local function closeGameMenus()
+	local manager = Menu and Menu.GetManager and Menu.GetManager()
+	if manager and manager.CloseMenus then pcall(manager.CloseMenus, manager) end
+end
+
 BF:At("login", function()
-	local button = ShowMenu:FindButton()
-	if button then
-		ShowMenu.button = button
-		-- The button opens its menu when pressed: that press now opens BookFinder's dropdown. The game's menu is also
-		-- given BookFinder's items, so even a client that opens it some other way shows only BookFinder's switches.
-		button:SetScript("OnMouseDown", function(self)
-			BF.Dropdown:Toggle(self, function() return ShowMenu:Items() end)
+	if not ShowMenu:Cover(ShowMenu:FindButton()) and WorldMapFrame and WorldMapFrame.HookScript then
+		-- The map's buttons are made with the map: looked for again each time it opens.
+		WorldMapFrame:HookScript("OnShow", function()
+			if not ShowMenu.cover then ShowMenu:Cover(ShowMenu:FindButton()) end
 		end)
-		button:SetupMenu(function(_, root)
-			if root.SetTag then root:SetTag("MENU_BOOKFINDER_SHOW") end
-			local items = ShowMenu:Items()
-			toMenu(root, items)
+	end
+	-- Last way: the game's menu opened all the same. Its rows are emptied, the button that opened it is covered, and
+	-- the game's menu gives way to BookFinder's on the next frame.
+	if Menu and Menu.ModifyMenu then
+		Menu.ModifyMenu(TAG, function(owner, root)
+			removeGameEntries(root)
+			ShowMenu:Cover(owner)
+			BF:After(0, function()
+				closeGameMenus()
+				if not BF.Dropdown:IsOpen(owner) then open(owner) end
+			end)
 		end)
-		hideReset(button)
-	elseif Menu and Menu.ModifyMenu then
-		Menu.ModifyMenu(TAG, function(_, root) ShowMenu:Fill(root) end)
 	end
 	local gear = ShowMenu:FindQuestLogGear()
 	if gear then

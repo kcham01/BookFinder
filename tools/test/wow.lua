@@ -667,6 +667,7 @@ Menu = strict("Menu", {
 		World.menuModifiers[tag] = World.menuModifiers[tag] or {}
 		table.insert(World.menuModifiers[tag], fn)
 	end,
+	GetManager = function() return { CloseMenus = function() World.menusClosed = true end } end,
 })
 
 --- A menu description as the client's: records rows; World.OpenMenu(tag) runs every modifier on a fresh one.
@@ -693,13 +694,13 @@ local function newDescription(kind, text)
 	return d
 end
 World.NewMenuDescription = function() return newDescription("root") end
-function World.OpenMenu(tag)
+function World.OpenMenu(tag, owner)
 	local root = newDescription("root")
 	-- The game's own entries come first, as in the client.
 	for _, label in ipairs(World.gameMenuEntries or { "Low-Level Quests", "Quest Objectives" }) do
 		root:CreateCheckbox(label, function() return true end, function() end)
 	end
-	for _, fn in ipairs(World.menuModifiers[tag] or {}) do fn(nil, root) end
+	for _, fn in ipairs(World.menuModifiers[tag] or {}) do fn(owner, root) end
 	return root
 end
 --- Runs a row's initializers on a stand-in menu button; returns the textures attached (the row's icon).

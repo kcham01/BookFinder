@@ -9,8 +9,8 @@ end
 
 -- Presses the Show button; returns the dropdown's shown rows' items.
 local function press()
-	local button = WorldMapFrame.overlayFrames[2]
-	button.scripts.OnMouseDown(button)
+	local button = BookFinderShowButton
+	button.scripts.OnClick(button, "LeftButton")
 	local items = {}
 	for _, row in ipairs(BookFinderDropdown1.rows) do if row.shown then items[#items + 1] = row.item end end
 	return items, button
@@ -110,35 +110,47 @@ return {
 	["pressing again closes it; so does a click elsewhere"] = function()
 		setup()
 		local _, button = press()
-		button.scripts.OnMouseDown(button)
+		button.scripts.OnClick(button, "LeftButton")
 		expect(not BookFinderDropdown1.shown, "closed by the button")
 		press()
 		Fire("GLOBAL_MOUSE_DOWN", "LeftButton")
 		expect(not BookFinderDropdown1.shown, "closed by a click elsewhere")
 	end,
 
-	["the Show button, not the floor picker; the reset badge hidden"] = function(BF)
+	["the Show button, not the floor picker; covered by BookFinder's; the reset badge hidden"] = function(BF)
 		setup()
-		equal(BF.ShowMenu.button, WorldMapFrame.overlayFrames[2], "the tracking options button")
-		expect(WorldMapFrame.overlayFrames[1].scripts.OnMouseDown == nil, "the floor picker untouched")
-		local reset = WorldMapFrame.overlayFrames[2].ResetButton
+		local game = WorldMapFrame.overlayFrames[2]
+		equal(BF.ShowMenu.button, game, "the tracking options button")
+		equal(BookFinderShowButton.parent, game, "the cover lies on it")
+		expect(BookFinderShowButton:GetFrameLevel() > game:GetFrameLevel(), "above it")
+		expect(not WorldMapFrame.overlayFrames[1].scripts.OnMouseDown, "the floor picker untouched")
+		local reset = game.ResetButton
 		expect(not reset.shown, "no reset badge")
 		reset:Show()
 		expect(not reset.shown, "and it stays away")
 	end,
 
-	["the game's own menu, if opened, holds only BookFinder's items"] = function()
+	["found by its menu's tag when its mixin's methods don't match (as in the owner's test)"] = function(BF)
+		WorldMapTrackingOptionsButtonMixin = { OnLoad = function() end, OnMouseDown = function() end }
+		WorldMapFrame.overlayFrames[2].OnLoad = function() end
 		setup()
-		local root = World.OpenShowButton()
-		equal(root.rows[1].text, "Show:", "heading")
-		equal(root.rows[2].text, "Repair", "BookFinder's first")
+		equal(BF.ShowMenu.button, WorldMapFrame.overlayFrames[2], "found by the tag")
+		local items = press()
+		expect(BookFinderDropdown1.shown and #items > 5, "BookFinder's dropdown")
 	end,
 
-	["no Show button to be found: the menu changed by its tag"] = function()
-		WorldMapTrackingOptionsButtonMixin = { OnLoad = function() end } -- a client where no overlay frame is the Show button
+	["not found at all: the game's menu, when it opens, gives way to BookFinder's"] = function(BF)
+		WorldMapTrackingOptionsButtonMixin = { OnLoad = function() end }
+		local game = WorldMapFrame.overlayFrames[2]
+		game.OnLoad, game.generator = function() end, nil
 		setup()
-		local root = World.OpenMenu(TAG)
-		equal(root.rows[1].text, "Repair", "the game's rows emptied, ours in")
+		expect(not BF.ShowMenu.cover, "not found at login")
+		local root = World.OpenMenu(TAG, game)
+		equal(#root.rows, 0, "the game's rows emptied")
+		Tick(0.1)
+		expect(World.menusClosed, "the game's menu closed")
+		expect(BookFinderDropdown1.shown, "BookFinder's dropdown open in its place")
+		equal(BF.ShowMenu.button, game, "and the button covered from now on")
 	end,
 
 	["the quest log's gear menu is gone, and stays gone"] = function()
