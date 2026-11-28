@@ -16,37 +16,45 @@ local function texts(frame, found)
 end
 
 return {
-	["world map: the game's own player line kept, only the cursor added beside it"] = function(BF)
+	["world map: two lines at the top left of the title bar, the player's and the cursor's"] = function(BF)
+		setup()
+		WorldMapFrame:Show()
+		Tick(0.5)
+		local player, cursor = BF.Coords.playerText, BF.Coords.cursorText
+		equal(player:GetParent():GetParent(), WorldMapFrame.BorderFrame, "in the window's title bar")
+		local p = player.points[#player.points]
+		equal(p[1], "TOPLEFT", "at its top left")
+		expect(p[4] >= 50, "beside the portrait")
+		equal(cursor.points[#cursor.points][2], player, "the cursor's line under the player's")
+		expect(player.text:find("Player", 1, true) and player.text:find("48.2, 42.1", 1, true), "player: " .. player.text)
+		equal(cursor.text, "", "no cursor line while the cursor is off the map")
+		World.cursorX, World.cursorY = 0.25, 0.75
+		Tick(0.5)
+		expect(cursor.text:find("Cursor", 1, true) and cursor.text:find("25.0, 75.0", 1, true), "cursor: " .. cursor.text)
+	end,
+
+	["world map: the game's own player line hidden while BookFinder's shows, back when it is off"] = function(BF)
 		setup()
 		local footer = CreateFrame("Frame", nil, WorldMapFrame)
 		local game = footer:CreateFontString()
 		game:SetText("Player: 48.2, 42.1")
 		WorldMapFrame:Show()
 		Tick(1.5)
-		local line = BF.Coords.mapText
-		equal(line.text, "", "nothing while the cursor is off the map")
-		World.cursorX, World.cursorY = 0.25, 0.75
-		Tick(0.5)
-		equal(line.text, "Cursor: 25.0, 75.0", "the cursor only")
-		local p = line.points[#line.points]
-		equal(p[2], game, "beside the game's line")
-	end,
-
-	["world map: the player's coordinates, decimals as chosen"] = function(BF)
-		setup()
-		WorldMapFrame:Show()
-		Tick(0.5)
-		local line = BF.Coords.mapText
-		expect(line and line.text and line.text:find("48.2, 42.1", 1, true), "player at 48.2, 42.1: " .. tostring(line and line.text))
-		BF:Set("coords.precision", 2)
-		Tick(0.5)
-		expect(line.text:find("48.23, 42.11", 1, true), "two decimals")
-		World.cursorX, World.cursorY = 0.25, 0.75
-		Tick(0.5)
-		expect(line.text:find("Cursor: 25.00, 75.00", 1, true), "the cursor: " .. line.text)
+		equal(game:GetAlpha(), 0, "hidden: not said twice")
 		BF:Set("coords.map", false)
 		Tick(0.5)
-		equal(line.text, "", "off")
+		equal(game:GetAlpha(), 1, "back")
+		equal(BF.Coords.playerText.text, "", "ours off")
+	end,
+
+	["world map: decimals as chosen"] = function(BF)
+		setup()
+		WorldMapFrame:Show()
+		BF:Set("coords.precision", 2)
+		World.cursorX, World.cursorY = 0.25, 0.75
+		Tick(0.5)
+		expect(BF.Coords.playerText.text:find("48.23, 42.11", 1, true), "two decimals")
+		expect(BF.Coords.cursorText.text:find("25.00, 75.00", 1, true), "the cursor too")
 	end,
 
 	["minimap: off until chosen"] = function(BF)

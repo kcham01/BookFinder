@@ -494,14 +494,43 @@ local function build()
 	frame:SetScript("OnShow", function() if List.dirty ~= false then List:Refresh() end end)
 	keepHidden(QuestScrollFrame.Contents)
 	keepHidden(QuestScrollFrame.ScrollBar)
+	List.frame = frame
+	-- The search box searches everything, as Advanced Search does (quests, NPCs, objects, items): while it holds words,
+	-- their results take the list's place; cleared, the list is back.
+	local results = CreateFrame("ScrollFrame", "BookFinderQuestSearch", QuestScrollFrame, template)
+	results:SetAllPoints(QuestScrollFrame)
+	results:SetFrameLevel(frame:GetFrameLevel() + 1)
+	local resultsContent = CreateFrame("Frame", nil, results)
+	resultsContent:SetSize(1, 1)
+	results:SetScrollChild(resultsContent)
+	results:Hide()
+	local rows = BF.Rows:New(resultsContent, BF:CharacterState("questSearchFolded"))
+	List.results, List.resultRows = results, rows
+	local function showResults(text)
+		text = strtrim(text or "")
+		List.searchText = text ~= "" and text or nil
+		if not List.searchText then
+			results:Hide()
+			frame:Show()
+			return
+		end
+		frame:Hide()
+		results:Show()
+		local width = (QuestScrollFrame:GetWidth() or 280) - 24
+		resultsContent:SetWidth(width)
+		rows:Begin(width, 4)
+		BF.Search:Results(rows, List.searchText)
+		rows:Finish()
+		results:SetVerticalScroll(0)
+	end
+	rows.onFold = function() showResults(List.searchText) end
+	List.ShowResults = showResults
 	local box = searchBox()
 	if box and box.HookScript then
-		box:HookScript("OnTextChanged", function(self)
-			List.filter = self:GetText()
-			List:Refresh()
-		end)
+		local hint = rawget(box, "Instructions")
+		if type(hint) == "table" and hint.SetText then hint:SetText(L["Search quests, NPCs, objects, items"]) end
+		box:HookScript("OnTextChanged", function(self) showResults(self:GetText()) end)
 	end
-	List.frame = frame
 end
 
 -- Nothing on screen: the game's on-screen quest tracker stays hidden (out of combat: it holds secure item buttons).

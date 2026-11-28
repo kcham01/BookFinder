@@ -114,6 +114,15 @@ loads every file listed in the TOC, in order, against the stand-ins in `tools/te
   check first, and give up quietly. Questie turns nameplate icons and XP lookups off **in instances** and **in
   combat** on Forever for this reason; do the same.
 - Character names are two words ("Firstname Lastname"); `UnitName` can return the surname as the realm.
+- **Old global functions are gone** (seen in the owner's tests): `GetItemCount` (C_Item.GetItemCount),
+  `GetFactionInfoByID` (C_Reputation.GetFactionDataByID), and by the same token the skill lines (C_SkillInfo), spell
+  info (C_Spell) and more. Every such call goes through `Core/Game.lua`, modern form first; the stand-ins read the
+  removed globals as nil, as the client does.
+- **The map canvas asserts on pins** made from XML templates with their own OnEnter/OnLeave (Blizzard_MapCanvas, seen
+  in the owner's test of the other build). BookFinder's pins come from its own Lua pools (`Map/PinPool.lua`), take no
+  mouse themselves, and a child frame takes it; the stand-in canvas asserts as the client's does.
+- **Continents and the world map are drawn, not surveyed**: a zone's point placed on them by world position lands in
+  the sea. `Zones:Translate` uses the game's layout (C_Map.GetMapRectOnMap) first.
 
 ## Plan (phases; each ends with a commit and a log line below)
 
@@ -441,3 +450,25 @@ See the log. Current phase is the first unchecked one.
   canvas lines with "Your drawings" (Show dropdown). The canvas asks `Canvas.inputHook` first, so while the quill is on
   presses draw instead of panning. Opened by the Quill button beside Find a place, or `/bf draw`.
   Not done: a drawing attached to a map pin (OpenMap's card "Drawing"); map notes (OpenMap's painted areas tool).
+- Combined with the other session's build (claude/lucid-maxwell-8b72jh), this branch as the base (it holds the later
+  decisions: own map, the map window's layout). Brought over, in this branch's structure: the in-game fixes above
+  (`Core/Game.lua`, `Map/PinPool.lua`, the game's layout for continents), quests started by a dropped item marked as at
+  most three packs per map (Crystal in the Mountains had put 519 on Arathi), the error catcher (`Core/Errors.lua`,
+  /bf errors; BookFinder's own errors said once in chat, others kept quietly), quest icons in the gossip window
+  (`Quests/FrameIcons.lua`), close spawns of one creature as one icon (icons.clusterSpawns), the arrow and compass as
+  2.0 had them (`Map/Guide.lua`), the minimap button following the minimap's shape and size, hover lighting a quest's
+  objective icons, party members' objectives in a few faint packs, smooth scaling of small icons. Not brought over, by
+  the decisions: OpenMap shipped inside BookFinder, the quest log's own side tabs (the map window's are used), the
+  on-screen tracker. **Waiting on the owner**: Questie's own icon files (the other build used them; rule 1 keeps
+  someone else's files out, so the game's icons stay until the owner says otherwise).
+- The Show button: in the owner's test it was not found, and the game's menu opened with BookFinder's rows under it.
+  Now found three ways (a method only its own mixin has, its menu's tag, or the game's menu itself when it opens) and
+  covered by a clear button of BookFinder's, so only BookFinder's dropdown opens.
+- The map window's layout, from the owner's sketch ("Decisions"): the player's and the cursor's coordinates as two lines
+  at the top left of the title bar, beside the portrait (the game's own bottom "Player:" line hidden meanwhile); the
+  quest panel's search box searches everything as Advanced Search does (`Search:Results`, shared by both), its results
+  in the list's place until it is cleared; the game's "Quests: n/40" kept, no heading; the Books tab's buttons sized to
+  their words in one row, the list opening at the top. **Not verified in game**: where the title bar's text sits on
+  Forever (the lines are placed 60 pixels in from the window's top left, past the portrait), whether the game's quest
+  search box keeps its own filtering under ours (hidden: BookFinder's list replaces the game's rows).
+

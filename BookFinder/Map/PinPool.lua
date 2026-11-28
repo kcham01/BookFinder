@@ -94,5 +94,10 @@ function PinPool.IconParts(size, glow)
 		end
 		pin.Icon = pin:CreateTexture(nil, "ARTWORK")
 		pin.Icon:SetAllPoints()
+		-- As Questie's: not snapped to the pixel grid, so small icons scale smoothly instead of jagged.
+		for _, t in ipairs({ pin.Icon, glow and pin.Glow or nil }) do
+			if t.SetTexelSnappingBias then t:SetTexelSnappingBias(0) end
+			if t.SetSnapToPixelGrid then t:SetSnapToPixelGrid(false) end
+		end
 	end
 end

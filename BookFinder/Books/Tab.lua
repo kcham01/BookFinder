@@ -280,6 +280,7 @@ function Tab:Refresh()
 	end
 	content:SetHeight(math.max(y, 1))
 	frame.routeButton:SetText(Route:IsOn() and L["Stop the route"] or L["Optimized route"])
+	if Tab.LayoutFooter then Tab.LayoutFooter() end
 	frame.skip:SetShown(Route:IsOn())
 	frame.recalc:SetShown(Route:IsOn())
 end
@@ -364,18 +365,61 @@ local function build()
 	content:SetSize(1, 1)
 	scroll:SetScrollChild(content)
 
-	frame.showAll = button(frame, "Show all", 90, function() Books:TickAll(false) end)
-	frame.showAll:SetPoint("BOTTOMLEFT", 10, 10)
-	frame.hideAll = button(frame, "Hide all", 90, function() Books:TickAll(true) end)
-	frame.hideAll:SetPoint("LEFT", frame.showAll, "RIGHT", 4, 0)
-	frame.routeButton = button(frame, "Optimized route", 130, function() Route:Toggle() Tab:Refresh() end)
-	frame.routeButton:SetPoint("BOTTOMRIGHT", -10, 10)
+	-- The footer: one row across the list's width. Each button as wide as its words, the room left shared out evenly;
+	-- more words than room, every button narrower by the same share (never past the list's edges).
+	local footer = CreateFrame("Frame", nil, frame)
+	footer:SetPoint("BOTTOMLEFT", 10, 10)
+	footer:SetPoint("BOTTOMRIGHT", -10, 10)
+	footer:SetHeight(22)
+	frame.showAll = button(footer, "Show all", 90, function() Books:TickAll(false) end)
+	frame.hideAll = button(footer, "Hide all", 90, function() Books:TickAll(true) end)
+	frame.routeButton = button(footer, "Optimized route", 130, function() Route:Toggle() Tab:Refresh() end)
+	local row = { frame.showAll, frame.hideAll, frame.routeButton }
+	for _, b in ipairs(row) do
+		if b.SetNormalFontObject then
+			b:SetNormalFontObject("GameFontNormalSmall")
+			b:SetHighlightFontObject("GameFontHighlightSmall")
+			if b.SetDisabledFontObject then b:SetDisabledFontObject("GameFontDisableSmall") end
+		end
+	end
+	local GAP = 4
+	local function layoutFooter()
+		local w = footer:GetWidth()
+		if not w or w <= 0 then return end
+		local need, total = {}, GAP * (#row - 1)
+		for i, b in ipairs(row) do
+			local fs = b.GetFontString and b:GetFontString()
+			need[i] = math.ceil(((fs and fs:GetStringWidth()) or 60) + 20)
+			total = total + need[i]
+		end
+		local words = total - GAP * (#row - 1)
+		local extra = 0
+		if total > w then
+			local k = (w - GAP * (#row - 1)) / words
+			for i = 1, #row do need[i] = math.floor(need[i] * k) end
+		else
+			extra = (w - total) / #row
+		end
+		local x = 0
+		for i, b in ipairs(row) do
+			b:ClearAllPoints()
+			b:SetWidth(need[i] + extra)
+			b:SetPoint("LEFT", footer, "LEFT", x, 0)
+			x = x + need[i] + extra + GAP
+		end
+	end
+	Tab.LayoutFooter = layoutFooter
+	footer:SetScript("OnSizeChanged", layoutFooter)
 	frame.skip = button(frame, "Skip", 60, function() Route:Skip() end)
-	frame.skip:SetPoint("BOTTOMLEFT", frame.showAll, "TOPLEFT", 0, 4)
+	frame.skip:SetPoint("BOTTOMLEFT", footer, "TOPLEFT", 0, 4)
 	frame.recalc = button(frame, "Recalc", 70, function() Route:Recalc() end)
 	frame.recalc:SetPoint("LEFT", frame.skip, "RIGHT", 4, 0)
 
-	frame:SetScript("OnShow", function() if Tab.dirty ~= false then Tab:Refresh() end end)
+	frame:SetScript("OnShow", function()
+		scroll:SetVerticalScroll(0) -- opens at the top: the first set's heading in view
+		if Tab.dirty ~= false then Tab:Refresh() end
+		layoutFooter()
+	end)
 	Tab.frame = frame
 end
 

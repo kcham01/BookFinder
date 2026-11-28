@@ -25,6 +25,22 @@ local function rowWith(fragment)
 end
 
 return {
+	["the footer's buttons: each as wide as its words, all inside the row, wide or narrow"] = function(BF)
+		setup()
+		local f = BookFinderBooksTab
+		local footer = f.showAll:GetParent()
+		for _, width in ipairs({ 360, 150 }) do
+			footer:SetWidth(width)
+			BF.BooksTab.LayoutFooter()
+			local total = 0
+			for _, b in ipairs({ f.showAll, f.hideAll, f.routeButton }) do total = total + b:GetWidth() end
+			expect(total + 8 <= width + 0.5, "inside a row of " .. width .. ": " .. total)
+		end
+		footer:SetWidth(360)
+		BF.BooksTab.LayoutFooter()
+		expect(f.routeButton:GetWidth() > f.hideAll:GetWidth(), "the longer words get the wider button")
+	end,
+
 	["/bom opens the map on the Books tab: the count, the four sets, the rewards"] = function(BF)
 		setup()
 		expect(WorldMapFrame.shown and BookFinderBooksTab.shown, "the Books tab open")

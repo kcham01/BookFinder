@@ -73,14 +73,20 @@ return {
 		expect(rowFor("Kobold Camp Cleanup"), "open again")
 	end,
 
-	["the search box narrows the list"] = function(BF)
+	["the search box searches everything; its results take the list's place until it is cleared"] = function(BF)
 		setup()
 		local box = QuestScrollFrame.SearchBox
 		box.text = "bandana"
 		box.scripts.OnTextChanged(box)
-		local t = table.concat(texts(), "\n")
-		expect(t:find("Brotherhood of Thieves", 1, true), "the bandana quest")
-		expect(not t:find("Kobold Camp Cleanup", 1, true), "not the kobolds")
+		expect(BookFinderQuestSearch.shown and not BookFinderQuestList.shown, "the results in the list's place")
+		local shown = {}
+		for _, r in ipairs(BF.QuestList.resultRows:Shown()) do shown[#shown + 1] = r.text.text or "" end
+		local t = table.concat(shown, "\n")
+		expect(t:find("Quests", 1, true), "a Quests heading in the results")
+		expect(t:find("Items", 1, true) and t:find("Bandana", 1, true), "items too (the bandanas)")
+		box.text = ""
+		box.scripts.OnTextChanged(box)
+		expect(BookFinderQuestList.shown and not BookFinderQuestSearch.shown, "cleared: the list is back")
 	end,
 
 	["clicks: open, map pin, untrack; right-click menu"] = function(BF)

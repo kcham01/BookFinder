@@ -69,6 +69,10 @@ local function acquire()
 		f.Glow:SetPoint("CENTER")
 		f.Icon = f:CreateTexture(nil, "ARTWORK")
 		f.Icon:SetAllPoints()
+		for _, t in ipairs({ f.Icon, f.Glow }) do -- smooth scaling, as Questie's
+			if t.SetTexelSnappingBias then t:SetTexelSnappingBias(0) end
+			if t.SetSnapToPixelGrid then t:SetSnapToPixelGrid(false) end
+		end
 		f:EnableMouse(true)
 		f:SetScript("OnEnter", function(self)
 			local pins = {}

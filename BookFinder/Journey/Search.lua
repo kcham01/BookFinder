@@ -295,10 +295,17 @@ render = function()
 		if any then rows:Buttons({ { "Clear the map", function() Search:ClearMap() render() end, 140 } }) end
 		return rows:Finish()
 	end
+	Search:Results(rows, text)
+	return rows:Finish()
+end
+
+--- Lays a search's results out in a Rows list: a foldable heading per kind (Quests, NPCs, Objects, Items) with its
+--- count, a line per result opening its details. The Advanced Search page and the quest panel's search box use it.
+function Search:Results(rows, text)
 	local results, counts = Search:Find(text)
 	for _, k in ipairs(KINDS) do
 		local list = results[k.key]
-		if #list > 0 and not rows:Heading(k.key, L[k.label], counts[k.key]) then
+		if list and #list > 0 and not rows:Heading(k.key, L[k.label], counts[k.key]) then
 			for _, e in ipairs(list) do
 				local label = k.key == "quests" and Rules:ColoredTitle(e[1], nil, true) or (e[2] or "?")
 				rows:Line(label .. "  |cff888888(" .. e[1] .. ")|r", { small = true,
@@ -307,10 +314,9 @@ render = function()
 			if counts[k.key] > #list then rows:Line(L["... and %d more"]:format(counts[k.key] - #list), { hint = true }) end
 		end
 	end
-	if not next(results) or (counts.quests + counts.npcs + counts.objects + counts.items) == 0 then
+	if not next(results) or ((counts.quests or 0) + (counts.npcs or 0) + (counts.objects or 0) + (counts.items or 0)) == 0 then
 		rows:Line(L["Nothing found."], { hint = true })
 	end
-	return rows:Finish()
 end
 
 --- Shows a quest, NPC, object or item's details on the Advanced Search page (and opens the panel there).

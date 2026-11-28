@@ -213,6 +213,7 @@ function Region:SetText(t) self.text = t end
 function Region:GetText() return self.text end
 function Region:SetFormattedText(fmt, ...) self.text = fmt:format(...) end
 function Region:GetStringWidth() return #(self.text or "") * 6 end
+function Region:GetFontString() local owner = self return { GetStringWidth = function() return #(owner.text or "") * 6 end } end
 function Region:GetStringHeight() return 12 end
 function Region:SetPoint(...) self.points[#self.points + 1] = { ... } end
 function Region:ClearAllPoints() self.points = {} end
@@ -557,6 +558,7 @@ local function newCanvas()
 	map.ScrollContainer = CreateFrame("ScrollFrame", nil, map)
 	function map.ScrollContainer:GetNormalizedCursorPosition() return World.cursorX or 0.5, World.cursorY or 0.5 end
 	function map.ScrollContainer:IsMouseOver() return World.cursorX ~= nil end
+	map.BorderFrame = CreateFrame("Frame", nil, map) -- the window's frame: title bar, portrait at its top left
 	map.canvas = CreateFrame("Frame", nil, map)
 	map.canvas:SetSize(1002, 668)
 	function map:GetCanvas() return self.canvas end

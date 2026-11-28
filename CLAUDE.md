@@ -39,26 +39,30 @@ addons do, with nothing lost, as one product that feels made by Blizzard:
 - **Code**: `BookFinder/` is the addon (TOC `BookFinder/BookFinder.toc`). Folders: `Core` (events, settings, data access,
   zones, player), `Data` (generated from QuestieDB by `tools/data/convert.py`: never edit by hand), `Quests` (log,
   rules, objectives, marks, tooltips, nameplates, the quest list, automation, announcements, sounds, chat links),
-  `Map` (world map and minimap pins, paths, coordinates, arrow and compass, townsfolk, the Show dropdown, map pins,
-  friends and guild), `Books`, `Comms` (Questie's protocol, party objectives), `Journey`, `UI` (one dropdown, widgets,
+  `Map` (world map and minimap pins from Lua pools, the seamless canvas, paths, coordinates, arrow and compass,
+  townsfolk, the Show dropdown, map pins, friends and guild, dungeons, the quill), `Books`, `Comms` (Questie's protocol, party objectives), `Journey`, `UI` (one dropdown, widgets,
   the settings panel, the map window's tabs, minimap button, commands).
-- **Done (phases 1-11, 13, and OpenMap's pins and people)**: see `docs/BUILD.md`, its plan and its log, newest last.
+- **Done (phases 1-11, 13, phase 12's steps 1-7, the combine with the other session's build, the map window's
+  layout)**: see `docs/BUILD.md`, its plan and its log, newest last. Every game call that changed on Forever goes
+  through `Core/Game.lua`; `/bf errors` gives the owner one report to copy.
   Questie's party protocol is checked byte for byte against Questie's own code (`tools/check/`).
-- **Next: phase 12, OpenMap's map**: the stitched world map from the game's own art, zooming down to minimap detail
-  (the owner's favourite), dungeons, boats, flights, the quill... Decided: own code, OpenMap as the guide.
-  Settle where the minimap tiles come from before building (`docs/BUILD.md`, "Next").
+- **Next**: the owner's next in-game test (ask for `/bf errors` and screenshots); the rest of phase 12 (minimap detail
+  up close, waiting on the owner's `/bf probe`; zone blending; boats; map notes; favourites); the owner's answer on
+  Questie's icon files (left out for now, rule 1). See `docs/BUILD.md`, its last log entries and "Next".
 - **Tests**: `tools/test/run.sh` (needs `lua5.1`: `apt-get install -y lua5.1`) runs every file of the TOC against
-  stand-ins of the game (`tools/test/wow.lua`) and every `tools/test/test_*.lua`: 142 pass. They prove logic only.
-  **Nothing has run in game yet**: the owner is about to test. Every "Not verified in game" in `docs/BUILD.md` is a
-  guess to check against their screenshots.
-- **Branches**: the work is on the session's branch (pushed), in pull request kcham01/BookFinder#13 (open, not
-  merged; #14 is older and contained in it). `main` is behind: it ends at "Notes: answered questions cleared".
-  A new session gets its own branch name: start it from this branch's latest commit (a fast-forward, nothing lost).
+  stand-ins of the game (`tools/test/wow.lua`, which acts like Forever where tests found it differs: removed globals read
+  as nil, the map canvas asserts on pins as the client's does) and every `tools/test/test_*.lua`: 169 pass (a full run
+  takes several minutes). They prove logic only. The owner has run builds in game: the errors seen are fixed, nothing
+  since has run there. Every "Not verified in game" in `docs/BUILD.md` is a guess to check against their screenshots.
+- **Branches**: the work is on the session's branch (pushed); no pull request is open (#11 to #15 are merged). `main`
+  is behind: it ends at the merge of kcham01/BookFinder#15. The other session's branch (claude/lucid-maxwell-8b72jh) is
+  combined into this one. A new session gets its own branch name: start it from this branch's latest commit.
 - **Reference files are gone with each session** (they live only in a session's scratchpad, never in the repository):
   Questie 12.9.0 with QuestieDB 1.1.1 and Books on map 2.3.0 (ask the owner to send them again when needed), OpenMap
   v0.8.9 (public: `git clone https://github.com/openmap-world/openmap` into the scratchpad). QuestieTrace: ignored.
-- The repository holds no other addon's code, and none of the owner's review files, anywhere in its history. Copies
-  survive only behind the old pull requests #1 to #12; removing those needs the repository recreated.
+- The repository holds no other addon's code, none of the owner's review files and none of their words, anywhere in
+  its branches' history (the old notes files were removed from every branch). Copies survive only behind the old pull
+  requests #1 to #15; removing those needs the repository recreated.
 - **Study**: `docs/study/` (per addon, from a player's side; `questie-protocol.md` is Questie's wire format byte by
   byte; `openmap.md` ends with OpenMap's place and pin protocols).
 
