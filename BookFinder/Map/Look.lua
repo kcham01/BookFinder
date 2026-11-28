@@ -26,6 +26,8 @@ local function completeKind(quest)
 	return "complete"
 end
 
+Look.AvailableKind, Look.CompleteKind = availableKind, completeKind
+
 -- found: an NPC or object the player put on the map from Advanced Search (shown until taken off).
 local rank = { complete = 3, found = 2.5, available = 2, itemStart = 2, objective = 1, townsfolk = 0.5 }
 

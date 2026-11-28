@@ -11,6 +11,7 @@
 Core\Init.lua
 Core\Locale.lua
 Core\Game.lua
+Core\Errors.lua
 
 Data\Enums.lua
 Data\Zones.lua
@@ -42,6 +43,7 @@ Map\Icons.lua
 Map\Look.lua
 Quests\PinTooltip.lua
 Quests\Tooltips.lua
+Quests\FrameIcons.lua
 Quests\Nameplates.lua
 Quests\List.lua
 Quests\Auto.lua

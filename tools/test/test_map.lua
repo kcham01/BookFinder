@@ -76,6 +76,36 @@ return {
 		expect(marks <= 3, "at most three packs, not one per dropper: " .. marks)
 	end,
 
+	["spawns of one creature close together show as one icon (icons.clusterSpawns)"] = function(BF)
+		northshire(BF)
+		-- The giver of Wolves Across the Border standing at three spots a few yards apart, and a fourth far off: three
+		-- icons merge into one, the fourth stays.
+		local giver = BF:Quest(33)[BF.Q.startNpcs][1]
+		local spawns = BF.Objectives.Spawns
+		BF.Objectives.Spawns = function(self, source)
+			if source.type == "npc" and source.id == giver then
+				return { [12] = { { 48.0, 42.0 }, { 48.1, 42.1 }, { 48.2, 42.0 }, { 70, 70 } } }
+			end
+			return spawns(self, source)
+		end
+		local function count()
+			BF.Marks:Rebuild(true)
+			local n = 0
+			for _, pin in ipairs(BF.Marks:On(1429)) do
+				for _, r in ipairs(pin.roles) do if r.role == "available" or r.role == "complete" then n = n + 1 end end
+			end
+			return n
+		end
+		BF:Set("icons.clusterSpawns", 0)
+		local every = count()
+		BF:Set("icons.clusterSpawns", 28)
+		local merged = count()
+		expect(merged >= 1, "still marked")
+		equal(every - merged, 2, "three close spots of one creature shown once (" .. merged .. " vs " .. every .. ")")
+		BF:Set("icons.clusterSpawns", 0)
+		equal(count(), every, "off again: every spawn")
+	end,
+
 	["world map: the setting hides them"] = function(BF)
 		northshire(BF)
 		WorldMapFrame:Show()

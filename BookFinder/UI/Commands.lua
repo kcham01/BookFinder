@@ -116,6 +116,12 @@ local handlers = {
 	end,
 }
 
+--- Adds a command word: /bf <word> runs fn(rest); `about` is its line in /bf help.
+function Commands:Add(word, about, fn)
+	handlers[word] = fn
+	HELP[#HELP + 1] = { word, about }
+end
+
 function Commands:Run(input)
 	input = strtrim(input or "")
 	local word, rest = input:match("^(%S*)%s*(.-)$")

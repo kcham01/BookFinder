@@ -97,12 +97,16 @@ date = os.date
 
 local errors = {}
 World.errors = errors
-geterrorhandler = function()
-	return function(err)
-		errors[#errors + 1] = tostring(err) .. "\n" .. debug.traceback()
-		return err
-	end
+local function harnessHandler(err)
+	errors[#errors + 1] = tostring(err) .. "\n" .. debug.traceback()
+	return err
 end
+local currentHandler = harnessHandler
+geterrorhandler = function() return currentHandler end
+seterrorhandler = function(fn) currentHandler = fn end
+debugstack = function() return debug.traceback() end
+debuglocals = function() return "" end
+GetBuildInfo = function() return "1.16.1", "60000", "Nov 1 2026", 16001 end
 
 -- Timers ---------------------------------------------------------------------------------------------------------
 
@@ -480,6 +484,17 @@ C_ChatInfo = strict("C_ChatInfo", {
 		return true
 	end,
 })
+
+-- The gossip window's quest buttons' mixins (their Setup(info) lays a button out).
+GossipSharedAvailableQuestButtonMixin = { Setup = function(self, info) self.Icon:SetTexture("game-available") end }
+GossipSharedActiveQuestButtonMixin = { Setup = function(self, info) self.Icon:SetTexture("game-active") end }
+function World.GossipButton(mixin, info)
+	local b = CreateFrame("Button")
+	b.Icon = b:CreateTexture()
+	Mixin(b, mixin)
+	b:Setup(info)
+	return b
+end
 
 hooksecurefunc = function(t, name, fn)
 	if type(t) == "string" then t, name, fn = _G, t, name end

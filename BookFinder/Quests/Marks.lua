@@ -43,13 +43,46 @@ local function spotKey(source, map, x, y, inside)
 	return source.type .. source.id .. ":" .. floor(x * 10000) .. ":" .. floor(y * 10000)
 end
 
+-- Spawns of one creature or object closer than icons.clusterSpawns yards show as one icon. Each spot placed is kept in
+-- a grid of cells that size, so only the cells around a spawn are looked at.
+local function nearPlaced(grid, map, x, y, merge)
+	local w, h = Zones:MapSize(map)
+	if not (w and h and w > 0 and h > 0) then return false end
+	local px, py = x * w, y * h
+	local cx, cy = floor(px / merge), floor(py / merge)
+	local cells = grid[map]
+	if not cells then
+		cells = {}
+		grid[map] = cells
+	end
+	for i = cx - 1, cx + 1 do
+		for j = cy - 1, cy + 1 do
+			for _, p in ipairs(cells[i * 65536 + j] or {}) do
+				local dx, dy = p[1] - px, p[2] - py
+				if dx * dx + dy * dy <= merge * merge then return true end
+			end
+		end
+	end
+	local key = cx * 65536 + cy
+	local cell = cells[key]
+	if not cell then
+		cell = {}
+		cells[key] = cell
+	end
+	cell[#cell + 1] = { px, py }
+	return false
+end
+
 --- Adds a role at every spawn of a source (an NPC or object), up to `limit` spots.
 local function markSource(source, role, limit)
 	local spawns = Objectives:Spawns(source)
 	if not spawns then return end
 	local count = 0
+	local merge = BF:Get("icons.clusterSpawns") or 0
+	local grid = {}
 	Zones:EachSpawn(spawns, function(map, x, y, inside)
 		if limit and count >= limit then return end
+		if merge > 0 and not inside and nearPlaced(grid, map, x, y, merge) then return end
 		count = count + 1
 		local pin = pinAt(map, x, y, spotKey(source, map, x, y, inside), not inside and source or nil, inside)
 		pin.roles[#pin.roles + 1] = role
@@ -348,7 +381,7 @@ BF:At("login", function()
 	end
 	BF:Listen("BF_SETTING_CHANGED", function(_, key)
 		if key:find("^quests%.") or key == "icons.hideUntracked" or key == "icons.availableLimit"
-			or key == "icons.clusterObjectives" then
+			or key == "icons.clusterObjectives" or key == "icons.clusterSpawns" then
 			allSoon()
 		end
 	end)
